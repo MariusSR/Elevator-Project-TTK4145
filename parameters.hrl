@@ -1,0 +1,2 @@
+-define(NumberOfFloors, 4).
+
