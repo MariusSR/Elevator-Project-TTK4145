@@ -3,7 +3,7 @@
 %% driver over TCP. A loop-function is spawned, which is always  %%
 %% available for receiving requests about reading from and       %%
 %% writing to the elevator hardware. The function loop runs      %%
-%% forever whereas start retuns the PID for loop.                %%
+%% forever whereas start returns the PID for loop.               %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 -module(driver_communication).
@@ -45,7 +45,7 @@ loop(Socket) ->
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Help functions taking care og the actual communication with   %%
-%% the elevator driver. Where applicable it also send in return  %%
+%% the elevator driver. Where applicable it also sends in return %%
 %% the corresponding data to the procces asking for information. %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
