@@ -13,6 +13,7 @@
 -define(RECEIVE_PORT, 1234).
 -define(BROADCAST_PORT, 5678).
 -define(TIMEOUT, 2000).
+-define(BROADCAST_SLEEP, 5000).
 
 start() ->
 	init_node_cluster(),
@@ -25,7 +26,7 @@ start() ->
 init_node_cluster() ->
 	ThisNode = list_to_atom("elevator@" ++ get_IP()),
 	{ok, pid} = net_kernel:start(ThisNode, longnames),
-	erlang:set_cookie(ThisNode, 'top_secret').
+	erlang:set_cookie(ThisNode, 'top_secret').					%%TODO: Make the cookie an atom
 
 %%% Get local IP address on format 123.456.789.012
 get_IP() ->
@@ -39,7 +40,7 @@ broadcast_self() ->
 
 broadcast_self(BroadcastSocket) ->
 	gen_udp:send(BroadcastSocket, {255, 255, 255, 255}, ?RECEIVE_PORT, node()),
-	timer:sleep(5000),
+	timer:sleep(?BROADCAST_SLEEP),
 	broadcast_self(BroadcastSocket).
 
 %%% Listen for new nodes to connect
