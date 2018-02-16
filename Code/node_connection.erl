@@ -50,8 +50,9 @@ listen_for_nodes() ->
 
 listen_for_nodes(ReceiveSocket) ->
 	case gen_udp:recv(ReceiveSocket, 0, ?TIMEOUT) of
-		{ok, {_Address, _Port, Node}} ->
-			case lists:member(Node, nodes()) of
+		{ok, {_Address, _Port, NodeName}} ->
+			Node = list_to_atom(NodeName),			%Burde en ikke gjøre om Nodename til en atom?
+			case lists:member(Node, [node()|nodes()]) of
 				false ->
 					net_kernel:connect_node(Node),
 					io:format("New node connected: ~w~n", [Node])
