@@ -12,8 +12,8 @@
 
 -define(RECEIVE_PORT, 5679).
 -define(BROADCAST_PORT, 5678).
--define(TIMEOUT, 2000).
 -define(BROADCAST_SLEEP, 5000).
+-define(TIMEOUT, 2000).
 -define(TICKTIME, 1000).
 -define(COOKIE, 'top_secret').
 
@@ -33,8 +33,8 @@ init_node_cluster() ->
 
 %% Get local IP address on format 123.456.789.012
 get_IP() ->
-	{ok, Addresses} = inet:getif(), 			% Undocumented function returning all local IPs
-	inet_parse:ntoa(element(1, hd(Addresses))). % Choose the first IP and parses it to a string
+	{ok, Addresses} = inet:getif(), 		% Undocumented function returning all local IPs
+	inet_parse:ntoa(element(1, hd(Addresses))).     % Choose the first IP and parses it to a string
 
 %% Broadcast its own node name
 broadcast_self() ->
