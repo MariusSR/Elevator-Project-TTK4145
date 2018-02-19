@@ -25,7 +25,7 @@ start() ->
 
 %% Start node cluster with coockie
 init_node_cluster() ->
-	%os:cmd("epmd -daemon"), %% check what this is
+	os:cmd("epmd -daemon"), %% check what this is
 	%timer:sleep(100), % perhaps needed
 	ThisNode = list_to_atom("elevator@" ++ get_IP()),
 	{ok, _Pid} = net_kernel:start([ThisNode, longnames, ?TICKTIME]),
