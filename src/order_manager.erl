@@ -3,9 +3,10 @@
 
 start() ->
     node_connection:start(),
-    register(shell, self()),
-    spawn(fun() -> send_msg() end),
-	spawn(fun() -> recv_msg() end),
+    A = spawn(fun() -> send_msg() end),
+	B = spawn(fun() -> recv_msg() end),
+    register(sender, A),
+    register(recver, B),
     io:format("Helllo, can you here me?\n"),
     node().
 
@@ -14,7 +15,7 @@ send_msg() ->
         [] ->
             timer:sleep(500);
         _ ->
-            io:format("HER")
+            {recver, hd(nodes())} ! "Hey there"
     end,
     timer:sleep(400),
     send_msg().
@@ -22,8 +23,8 @@ send_msg() ->
 
 recv_msg() ->
     receive
-		{hello, from, OtherShell} ->
-			io:format("~w~n", [OtherShell]);
+		{Msg} ->
+			io:format("~w~n", [Msg]);
 	
 		Unexpected ->
 			io:format("unexpected message: ~p~n", [Unexpected])
