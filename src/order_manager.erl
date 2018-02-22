@@ -18,7 +18,7 @@ node_communication(LocalOrderList) ->
         {add_order, Order, ExternalOrderList, ExternalElevator} ->
             {order_manager, ExternalElevator} ! {ack_order, Order, LocalOrderList, node()},
             MissingOrders = ExternalOrderList -- LocalOrderList,
-            node_communication([LocalOrderList | MissingOrders] ++ Order);
+            node_communication([[LocalOrderList | MissingOrders] | Order]);
 
         {ack_order, Order, ExternalOrderList, ExternalElevator} ->
             {order_manager, ExternalElevator} ! {led_on, Order},
@@ -33,10 +33,10 @@ node_communication(LocalOrderList) ->
             % CHANGE TO {elevator_controller, Node} ! {led_off, Order},
             io:format("LEDs turned OFF for order ~p\n", [Order]),
             MissingOrders = ExternalOrderList -- LocalOrderList,
-            node_communication([X || X <- [LocalOrderList | MissingOrders], X /= Order]);  % removes all instances of the order
+            node_communication([X || X <- [LocalOrderList | MissingOrders], X /= Order]);  % removes all instances of Order
         
         {led_on, Order} ->
-            % {elevator_controller, Node} ! {led_on, Order},
+            % CHANGE TO{elevator_controller, Node} ! {led_on, Order},
             io:format("LEDs turned ON for order ~p\n", [Order]),
             node_communication(LocalOrderList);
 
