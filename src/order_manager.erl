@@ -1,14 +1,12 @@
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% This module handles all communication between seperate nodes, %%
-%% i.e. every message from node A to node B is sent from this    %%
-%% module on node A and received in the very same module on      %%
-%% node B. It is then locally routed to the correct module.      %%
-%%    The module consists in essence of only one funciton which  %%
-%% operates as a main loop taking a list as argument. The list   %%
-%% contains all locally known orders. The list is reguallarly    %%
-%% shared (and taken the union of) between different nodes to    %%
-%% avoid missing orders.                                         %%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% This module handles all communication between seperate nodes, i.e. every message  %%
+%% from node A to node B is sent from this module on node A and received in the very %%
+%% same module on node B. It is then locally routed to the correct module.           %%
+%%    The module consists in essence of only one funciton which operates as a main   %%
+%% loop taking a list as argument. The list contains all locally known orders. The   %%
+%% list is reguallarly shared (and taken the union of) between different nodes to    %%
+%% avoid missing orders.                                                             %%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
 -module(order_manager).
