@@ -1,11 +1,10 @@
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% This module takes care of setting up the node cluster as well %%
-%% as adding new nodes as they get online. This is done with the %%
-%% functions broadcast_self() and listen_for_nodes(). The former %%
-%% broadcasts its own node name over UDP to other nodes, while   %%
-%% the latter looks for new nodes to connect. The initial local  %%
-%% cluster setup with longnames is done in init_node_cluster().  %%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% This module takes care of setting up the node cluster as well as adding new nodes %%
+%% as they get online. This is done with the functions broadcast_self() and          %%
+%% listen_for_nodes(). The former broadcasts its own node name over UDP to other     %%
+%% nodes, while the latter looks for new nodes to connect. The initial local cluster %%
+%% setup with longnames is done in init_node_cluster().                              %%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 -module(node_connection).
 -export([start/0]).
