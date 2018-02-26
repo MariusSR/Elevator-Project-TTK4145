@@ -1,13 +1,21 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% This module handles all communication between seperate nodes, %%
+%% i.e. every message from node A to node B is sent from this    %%
+%% module on node A and received in the very same module on      %%
+%% node B. It is then locally routed to the correct module.      %%
+%%    The module consists in essence of only one funciton which  %%
+%% operates as a main loop taking a list as argument. The list   %%
+%% contains all locally known orders. The list is reguallarly    %%
+%% shared (and taken the union of) between different nodes to    %%
+%% avoid missing orders.                                         %%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
 -module(order_manager).
 -export([node_communication/0]).
 
-% Det er noe vi ikke har skjønt med [ | ] operasjonen
-    % A ++ B returnerer feks [1, 2, 3, 4] der A = [1, 2, 3] og B = [4]
-    % [A | B] returnerer da [[1, 2, 3], 4]....
-
-%Skal vi sender Order som 5 eller [5]??
-
-% TODO: spawn from gloabl spawner, remember only coments for LED now
+% TODO: spawn from gloabl spawner, remember there is only coments for LED now
+% TODO: remove unnecessary comments
 
 node_communication() ->
     register(order_manager, self()),
@@ -19,20 +27,12 @@ node_communication(LocalOrderList) ->
     receive
         {new_order, Order} ->
             io:format("Received: new_order\n"),
-            % AlreadyExists = lists:member(Order, LocalOrderList),
-            % if AlreadyExists -> node_communication(LocalOrderList) end,
-            % lists:foreach(fun(Node) -> {order_manager, Node} ! {add_order, Order, LocalOrderList, node()} end, nodes()),
-            % node_communication(LocalOrderList ++ Order);    % For debuging
-            % %node_communication(LocalOrderList);
-
             case lists:member(hd(Order), LocalOrderList) of
                 true -> node_communication(LocalOrderList);
                 false -> 
                     lists:foreach(fun(Node) -> {order_manager, Node} ! {add_order, Order, LocalOrderList, node()} end, nodes()),
-                    %node_communication(LocalOrderList ++ Order)    % For debuging
                     node_communication(LocalOrderList)
             end;
-
 
         {add_order, Order, ExternalOrderList, ExternalElevator} ->
             io:format("Received: add_order\n"),
@@ -44,7 +44,7 @@ node_communication(LocalOrderList) ->
             io:format("Received: ack_order\n"),
             {order_manager, ExternalElevator} ! {led_on, Order},
             MissingOrders = ExternalOrderList -- LocalOrderList,
-            node_communication(LocalOrderList ++ MissingOrders ++ Order);
+            node_communication(LocalOrderList ++ MissingOrders ++ [Order]);
         
         {order_finished, Order} ->
             io:format("Received: order_finished\n"),
@@ -60,11 +60,11 @@ node_communication(LocalOrderList) ->
         
         {led_on, Order} ->
             io:format("Received: led_on\n"),
-            % CHANGE TO{elevator_controller, Node} ! {led_on, Order},
+            % CHANGE TO {elevator_controller, Node} ! {led_on, Order},
             io:format("LEDs turned ON for order ~p\n", [Order]),
             node_communication(LocalOrderList);
 
-        {get_orderList, PID} ->                         %Skal det være stor L i get_orderList?
+        {get_orderList, PID} ->
             io:format("Received: get_orderList\n"),
             PID ! LocalOrderList,
             node_communication(LocalOrderList)
