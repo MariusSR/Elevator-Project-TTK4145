@@ -32,7 +32,7 @@ init_node_cluster() ->
 
 %% Get local IP address on format 123.456.789.012
 get_IP() ->
-	{ok, Addresses} = inet:getif(), 		% Undocumented function returning all local IPs
+	{ok, Addresses} = inet:getif(), 				% Undocumented function returning all local IPs
 	inet_parse:ntoa(element(1, hd(Addresses))).     % Choose the first IP and parses it to a string
 
 %% Broadcast its own node name
@@ -53,7 +53,7 @@ listen_for_nodes() ->
 listen_for_nodes(ReceiveSocket) ->
 	case gen_udp:recv(ReceiveSocket, 0, ?TIMEOUT) of
 		{ok, {_Address, _Port, NodeName}} ->
-			Node = list_to_atom(NodeName),			%Burde en ikke gjøre om Nodename til en atom?
+			Node = list_to_atom(NodeName),
 			case lists:member(Node, [node()|nodes()]) of
 				false ->
 					net_kernel:connect_node(Node),
