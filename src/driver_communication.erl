@@ -58,8 +58,8 @@ main_loop(Socket) ->
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% Help functions taking care og the communication with the elevator driver that	 %%
-%% sends data back to the procces asking for information.  						     %%
+%% Help functions taking care og the communication with the elevator driver that     %%
+%% sends data back to the procces asking for information.  			     %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 get_order_button_func(Socket, PID, Button_type, Floor) ->
