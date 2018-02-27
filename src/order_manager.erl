@@ -16,7 +16,6 @@
 % TODO: remove unnecessary comments
 
 node_communication() ->
-    register(order_manager, self()),
     node_communication([]).
 
 node_communication(LocalOrderList) ->
@@ -25,18 +24,19 @@ node_communication(LocalOrderList) ->
     receive
         {new_order, Order} ->
             io:format("Received: new_order\n"),
-            case lists:member(hd(Order), LocalOrderList) of
+            case lists:member(Order, LocalOrderList) of
                 true -> node_communication(LocalOrderList);
                 false -> 
                     lists:foreach(fun(Node) -> {order_manager, Node} ! {add_order, Order, LocalOrderList, node()} end, nodes()),
-                    node_communication(LocalOrderList)
+                    %node_communication(LocalOrderList)
+                    node_communication(LocalOrderList ++ [Order]) %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%debug
             end;
 
         {add_order, Order, ExternalOrderList, ExternalElevator} ->
             io:format("Received: add_order\n"),
             {order_manager, ExternalElevator} ! {ack_order, Order, LocalOrderList, node()},
             MissingOrders = ExternalOrderList -- LocalOrderList,
-            node_communication(LocalOrderList ++ MissingOrders ++ Order);
+            node_communication(LocalOrderList ++ MissingOrders ++ [Order]);
 
         {ack_order, Order, ExternalOrderList, ExternalElevator} ->
             io:format("Received: ack_order\n"),
@@ -51,18 +51,21 @@ node_communication(LocalOrderList) ->
 
         {remove_order, Order, ExternalOrderList} ->
             io:format("Received: remove_order\n"),
-            % CHANGE TO {elevator_controller, Node} ! {led_off, Order},
+            {Button_type, Floor} = Order,
+            driver ! {set_order_button_LED, Button_type, Floor, 0},
             io:format("LEDs turned OFF for order ~p\n", [Order]),
             MissingOrders = ExternalOrderList -- LocalOrderList,
+            %%%%%% TODO: REMEMBER TO REMOVE ALL ORDERS AT THAT FLOOR %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             node_communication([X || X <- LocalOrderList ++ MissingOrders, X /= Order]);  % removes all instances of Order
         
         {led_on, Order} ->
             io:format("Received: led_on\n"),
-            % CHANGE TO {elevator_controller, Node} ! {led_on, Order},
+            {Button_type, Floor} = Order,
+            driver ! {set_order_button_LED, Button_type, Floor, 1},
             io:format("LEDs turned ON for order ~p\n", [Order]),
             node_communication(LocalOrderList);
 
-        {get_orderList, PID} ->
+        {get_orderlist, PID} ->
             io:format("Received: get_orderList\n"),
             PID ! LocalOrderList,
             node_communication(LocalOrderList)

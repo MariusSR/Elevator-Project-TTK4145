@@ -58,7 +58,7 @@ listen_for_nodes(ReceiveSocket) ->
 				false ->
 					net_kernel:connect_node(Node),
 					io:format("New node connected: ~w~n", [Node]);
-				_ -> 
+				true -> 
 					ok
 			end;
 
