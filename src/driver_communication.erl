@@ -22,11 +22,14 @@ main_loop(Socket) ->
 		{set_motor_dir, down_dir} ->
 			gen_tcp:send(Socket, [1, 255, 0, 0]);
 
-		{set_order_button_LED, up_button, Floor, Value}   when Floor >= 1 , Floor =< ?NUMBER_OF_FLOORS ->
+		{set_order_button_LED, up_button, Floor, Value}
+			when Floor >= 1 , Floor =< ?NUMBER_OF_FLOORS , Value >= 0 , Value =< 1 ->
 			gen_tcp:send(Socket, [2, 0, Floor - 1, Value]);
-		{set_order_button_LED, down_button, Floor, Value}  when Floor >= 1 , Floor =< ?NUMBER_OF_FLOORS ->
+		{set_order_button_LED, down_button, Floor, Value} 
+			when Floor >= 1 , Floor =< ?NUMBER_OF_FLOORS , Value >= 0 , Value =< 1 ->
 			gen_tcp:send(Socket, [2, 1, Floor - 1, Value]);
-		{set_order_button_LED, cab_button, Floor, Value} when Floor >= 1 , Floor =< ?NUMBER_OF_FLOORS ->
+		{set_order_button_LED, cab_button, Floor, Value}
+			when Floor >= 1 , Floor =< ?NUMBER_OF_FLOORS , Value >= 0 , Value =< 1 ->
 			gen_tcp:send(Socket, [2, 2, Floor - 1, Value]);
 
 		{set_door_open_LED, Value}   when Value =:= 0 ; Value =:= 1 ->

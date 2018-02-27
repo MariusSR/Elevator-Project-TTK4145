@@ -28,8 +28,7 @@ node_communication(LocalOrderList) ->
                 true -> node_communication(LocalOrderList);
                 false -> 
                     lists:foreach(fun(Node) -> {order_manager, Node} ! {add_order, Order, LocalOrderList, node()} end, nodes()),
-                    %node_communication(LocalOrderList)
-                    node_communication(LocalOrderList ++ [Order]) %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%debug
+                    node_communication(LocalOrderList)     
             end;
 
         {add_order, Order, ExternalOrderList, ExternalElevator} ->
@@ -41,6 +40,9 @@ node_communication(LocalOrderList) ->
         {ack_order, Order, ExternalOrderList, ExternalElevator} ->
             io:format("Received: ack_order\n"),
             {order_manager, ExternalElevator} ! {led_on, Order},
+            {Button_type, Floor} = Order,
+            driver ! {set_order_button_LED, Button_type, Floor, 1},
+            io:format("LED turned ON for order ~p\n", [Order]),
             MissingOrders = ExternalOrderList -- LocalOrderList,
             node_communication(LocalOrderList ++ MissingOrders ++ [Order]);
         
@@ -53,7 +55,7 @@ node_communication(LocalOrderList) ->
             io:format("Received: remove_order\n"),
             {Button_type, Floor} = Order,
             driver ! {set_order_button_LED, Button_type, Floor, 0},
-            io:format("LEDs turned OFF for order ~p\n", [Order]),
+            io:format("LED turned OFF for order ~p\n", [Order]),
             MissingOrders = ExternalOrderList -- LocalOrderList,
             %%%%%% TODO: REMEMBER TO REMOVE ALL ORDERS AT THAT FLOOR %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             node_communication([X || X <- LocalOrderList ++ MissingOrders, X /= Order]);  % removes all instances of Order
