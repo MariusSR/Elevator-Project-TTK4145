@@ -1,1 +1,1 @@
--define(NumberOfFloors, 4).
+-define(NUMBER_OF_FLOORS, 4).

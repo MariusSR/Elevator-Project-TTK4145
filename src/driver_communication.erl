@@ -18,7 +18,7 @@ loop(Socket) ->
 		{motor_dir, Dir} ->
 			set_motor_dir_func(Socket, Dir);
 
-		{order_button_LED, Button_type, Floor, Value} -> %when %lists:member(Button_type, [0, 1, 2]), %lists:member(Floor, lists:seq(0, ?NumberOfFloors)), %lists:member(Value, [0, 1]) ->
+		{order_button_LED, Button_type, Floor, Value} -> %when %lists:member(Button_type, [0, 1, 2]), %lists:member(Floor, lists:seq(0, ?NUMBER_OF_FLOORS)), %lists:member(Value, [0, 1]) ->
 			gen_tcp:send(Socket, [2, Button_type, Floor, Value]);
 
 		{door_open_LED, Value} when Value =:= 0 ; Value =:= 1 ->
