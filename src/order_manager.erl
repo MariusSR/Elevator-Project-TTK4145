@@ -72,5 +72,10 @@ node_communication(LocalOrderList) ->
         {get_orderlist, PID} when is_pid(PID) ->
             io:format("Received: get_orderList\n"),
             PID ! LocalOrderList,
-            node_communication(LocalOrderList)
+            node_communication(LocalOrderList);
+
+        % test "functions"
+        {clear_queue} ->
+            lists:foreach(fun(Order) -> order_manager ! {order_finished, Order}, LocalOrderList end) 
+        
     end.
