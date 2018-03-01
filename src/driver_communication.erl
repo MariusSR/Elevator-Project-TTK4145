@@ -22,33 +22,30 @@ main_loop(Socket) ->
 		{set_motor_dir, down_dir} ->
 			gen_tcp:send(Socket, [1, 255, 0, 0]);
 
-		{set_order_button_LED, up_button, Floor, Value}
-			when Floor >= 1 , Floor =< ?NUMBER_OF_FLOORS , Value >= 0 , Value =< 1 ->
+		{set_order_button_LED, up_button, Floor, Value}   when Floor >= 1 andalso Floor =< ?NUMBER_OF_FLOORS andalso (Value =:= 0 orelse Value =:= 1) ->
 			gen_tcp:send(Socket, [2, 0, Floor - 1, Value]);
-		{set_order_button_LED, down_button, Floor, Value} 
-			when Floor >= 1 , Floor =< ?NUMBER_OF_FLOORS , Value >= 0 , Value =< 1 ->
+		{set_order_button_LED, down_button, Floor, Value} when Floor >= 1 andalso Floor =< ?NUMBER_OF_FLOORS andalso (Value =:= 0 orelse Value =:= 1) ->
 			gen_tcp:send(Socket, [2, 1, Floor - 1, Value]);
-		{set_order_button_LED, cab_button, Floor, Value}
-			when Floor >= 1 , Floor =< ?NUMBER_OF_FLOORS , Value >= 0 , Value =< 1 ->
+		{set_order_button_LED, cab_button, Floor, Value}  when Floor >= 1 andalso Floor =< ?NUMBER_OF_FLOORS andalso (Value =:= 0 orelse Value =:= 1) ->
 			gen_tcp:send(Socket, [2, 2, Floor - 1, Value]);
 
-		{set_door_open_LED, Value}   when Value =:= 0 ; Value =:= 1 ->
+		{set_door_open_LED, Value}   when Value =:= 0 orelse Value =:= 1 ->
 			gen_tcp:send(Socket, [4, Value, 0, 0]);
 
-		{set_stop_button_LED, Value} when Value =:= 0 ; Value =:= 1 ->
+		{set_stop_button_LED, Value} when Value =:= 0 orelse Value =:= 1 ->
 			gen_tcp:send(Socket, [5, Value, 0, 0]);
 
-		{get_order_button_status, up_button, Floor, PID} ->
+		{get_order_button_status, up_button, Floor, PID}   when Floor >= 1 andalso Floor =< ?NUMBER_OF_FLOORS andalso is_pid(PID) ->
 			get_order_button_func(Socket, PID, 0, Floor - 1);
-		{get_order_button_status, down_button, Floor, PID} ->
+		{get_order_button_status, down_button, Floor, PID} when Floor >= 1 andalso Floor =< ?NUMBER_OF_FLOORS andalso is_pid(PID) ->
 			get_order_button_func(Socket, PID, 1, Floor - 1);
-		{get_order_button_status, cab_button, Floor, PID} ->
+		{get_order_button_status, cab_button, Floor, PID}  when Floor >= 1 andalso Floor =< ?NUMBER_OF_FLOORS andalso is_pid(PID) ->
 			get_order_button_func(Socket, PID, 2, Floor - 1);
 		
-		{get_stop_button_status, PID} ->
+		{get_stop_button_status, PID} when is_pid(PID) ->
 			get_stop_button_func(Socket, PID);
 
-		{get_floor, PID} ->
+		{get_floor, PID} when is_pid(PID) ->
 			get_floor_func(Socket, PID);
 		
 		Unexpected ->
