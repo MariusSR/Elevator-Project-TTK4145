@@ -63,6 +63,7 @@ main_loop(Socket) ->
 		
 		Unexpected ->
 			io:format("unexpected message: ~p~n", [Unexpected])
+
 	end, 
 	main_loop(Socket).
 
@@ -76,7 +77,7 @@ return_order_button_status(Socket, PID, Button_type, Floor) when is_pid(PID) and
 	gen_tcp:send(Socket, [6, Button_type, Floor, 0]),
 		case gen_tcp:recv(Socket, ?MSG_LENGTH, ?TIMEOUT) of
 			{ok, [6, Is_pressed, 0, 0]} ->
-				 % The driver module returns button type as a zero indexed integer but we want an atom
+				 % The elevator server returns button type as a zero indexed integer but we want an atom
 				Button_type_atom = element(Button_type + 1, {up_button, down_button, cab_button}),
 				PID ! {order_button_status, Button_type_atom, Floor + 1, Is_pressed};
 			{error, Reason} ->

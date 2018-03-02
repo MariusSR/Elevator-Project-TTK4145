@@ -32,7 +32,7 @@ when is_integer(Floor) andalso Floor > 1 andalso Floor < ?NUMBER_OF_FLOORS andal
     receive
         {order_button_status, Button_type, Floor, 1} ->
             order_manager ! {new_order, {Button_type, Floor}};
-        {order_button_status, Button_type, Floor, 0} ->
+        {order_button_status, _Button_type, _Floor, 0} ->
             ok;
         {error, Reason} ->
             io:format("ERROR: receiving button status for button type ~p on floor ~p failed due to: ~s~n", [Button_type, Floor, Reason]);
