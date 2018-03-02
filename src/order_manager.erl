@@ -8,7 +8,6 @@
 %% avoid missing orders.                                                             %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-
 -module(order_manager).
 -export([node_communication/0]).
 
@@ -25,9 +24,8 @@ node_communication(LocalOrderList) ->
         {new_order, Order} when is_tuple(Order) ->
             io:format("Received: new_order\n"),
             case lists:member(Order, LocalOrderList) of
-                true  -> node_communication(LocalOrderList), io:format("true~n");
+                true  -> node_communication(LocalOrderList);
                 false -> 
-                    io:format("false~n"),
                     lists:foreach(fun(Node) -> {order_manager, Node} ! {add_order, Order, LocalOrderList, node()} end, nodes()),
                     node_communication(LocalOrderList)     
             end;
@@ -44,7 +42,7 @@ node_communication(LocalOrderList) ->
             io:format("Received: ack_order\n"),
             {order_manager, ExternalElevator} ! {led_on, Order},
             {Button_type, Floor} = Order,
-            driver ! {set_order_button_LED, Button_type, Floor, 1},
+            driver ! {set_order_button_LED, Button_type, Floor, on},
             io:format("LED turned ON for order ~p\n", [Order]),
             MissingOrders = ExternalOrderList -- LocalOrderList,
             node_communication(LocalOrderList ++ MissingOrders ++ [Order]);
@@ -57,7 +55,7 @@ node_communication(LocalOrderList) ->
         {remove_order, Order, ExternalOrderList} when is_tuple(Order) andalso is_list(ExternalOrderList) ->
             io:format("Received: remove_order\n"),
             {Button_type, Floor} = Order,
-            driver ! {set_order_button_LED, Button_type, Floor, 0},
+            driver ! {set_order_button_LED, Button_type, Floor, off},
             io:format("LED turned OFF for order ~p\n", [Order]),
             MissingOrders = ExternalOrderList -- LocalOrderList,
             %%%%%% TODO: REMEMBER TO REMOVE ALL ORDERS AT THAT FLOOR %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -66,7 +64,7 @@ node_communication(LocalOrderList) ->
         {led_on, Order} when is_tuple(Order) ->
             io:format("Received: led_on\n"),
             {Button_type, Floor} = Order,
-            driver ! {set_order_button_LED, Button_type, Floor, 1},
+            driver ! {set_order_button_LED, Button_type, Floor, on},
             io:format("LEDs turned ON for order ~p\n", [Order]),
             node_communication(LocalOrderList);
 
@@ -75,7 +73,10 @@ node_communication(LocalOrderList) ->
             PID ! LocalOrderList,
             node_communication(LocalOrderList);
 
-        % test "functions"
+        % Function for debug use only, to be removed!
         {clear_queue} ->
-            lists:foreach(fun(Order) -> {order_manager, hd(nodes())} ! {order_finished, Order} end , LocalOrderList) 
+            lists:foreach(fun(Order) -> {order_manager, hd(nodes())} ! {order_finished, Order} end , LocalOrderList);
+
+        Unexpected ->
+			io:format("Unexpected message in order_managers node_communication: ~p~n", [Unexpected])
     end.
