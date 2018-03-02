@@ -31,13 +31,15 @@ node_communication(LocalOrderList) ->
                     node_communication(LocalOrderList)     
             end;
 
-        {add_order, Order, ExternalOrderList, ExternalElevator} when is_tuple(Order) andalso is_list(ExternalOrderList) andalso is_pid(ExternalElevator) ->
+        {add_order, Order, ExternalOrderList, ExternalElevator}
+        when is_tuple(Order) andalso is_list(ExternalOrderList) andalso is_pid(ExternalElevator) ->
             io:format("Received: add_order\n"),
             {order_manager, ExternalElevator} ! {ack_order, Order, LocalOrderList, node()},
             MissingOrders = ExternalOrderList -- LocalOrderList,
             node_communication(LocalOrderList ++ MissingOrders ++ [Order]);
 
-        {ack_order, Order, ExternalOrderList, ExternalElevator} when is_tuple(Order) andalso is_list(ExternalOrderList) andalso is_pid(ExternalElevator) ->
+        {ack_order, Order, ExternalOrderList, ExternalElevator}
+        when is_tuple(Order) andalso is_list(ExternalOrderList) andalso is_pid(ExternalElevator) ->
             io:format("Received: ack_order\n"),
             {order_manager, ExternalElevator} ! {led_on, Order},
             {Button_type, Floor} = Order,
