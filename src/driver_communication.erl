@@ -6,11 +6,15 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 -module(driver_communication).
--export([start/0]).
+-export([start/0, start/1]).
 -include("parameters.hrl").
 
 start() ->
 	{ok, Socket} = gen_tcp:connect(localhost, 15657, [list, {active, false}]),
+	main_loop(Socket).
+
+start(Port) ->
+	{ok, Socket} = gen_tcp:connect(localhost, Port, [list, {active, false}]),
 	main_loop(Socket).
 
 main_loop(Socket) ->
