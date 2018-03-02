@@ -62,15 +62,15 @@ main_loop(Socket) ->
 			return_floor_status(Socket, PID);
 		
 		Unexpected ->
-			io:format("unexpected message: ~p~n", [Unexpected])
+			io:format("Unexpected message in main_loop of driver module: ~p~n", [Unexpected])
 
 	end, 
 	main_loop(Socket).
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% Help functions taking care of communication with the elevator driver. The return	 %%
-%% values are sent back to the process asking for information
+%% Help functions taking care of communication with the elevator driver. The return  %%
+%% values are sent back to the process asking for information                        %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 return_order_button_status(Socket, PID, Button_type, Floor) when is_pid(PID) andalso is_integer(Button_type) andalso is_integer(Floor) andalso Floor >= 1 andalso Floor =< ?NUMBER_OF_FLOORS ->
