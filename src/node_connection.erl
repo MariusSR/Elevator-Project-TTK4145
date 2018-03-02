@@ -6,15 +6,18 @@
 %% setup with longnames is done in init_node_cluster().                              %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+
+%%%%%%% TODO: document why epmd is used.
+
 -module(node_connection).
 -export([start/0]).
 
--define(RECEIVE_PORT, 5679).
--define(BROADCAST_PORT, 5678).
+-define(RECEIVE_PORT,    5679).
+-define(BROADCAST_PORT,  5678).
 -define(BROADCAST_SLEEP, 5000).
--define(TIMEOUT, 2000).
--define(TICKTIME, 1000).
--define(COOKIE, 'top_secret').
+-define(TIMEOUT,         2000).
+-define(TICKTIME,        1000).
+-define(COOKIE,  'top_secret').
 
 start() ->
 	init_node_cluster(),
@@ -64,8 +67,9 @@ listen_for_nodes(ReceiveSocket) ->
 
 		{error, timeout} ->
 			ok;
-
 		{error, Reason} ->
-			io:format("ERROR: receiving node failed due to: ~s~n", [Reason])
+			io:format("ERROR: receiving node failed due to: ~s~n", [Reason]);
+		Unexpected ->
+			io:format("unexpected message in listen for nodes: ~p~n", [Unexpected])
 	end,
 	listen_for_nodes(ReceiveSocket).
