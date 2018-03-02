@@ -14,12 +14,13 @@ read_button_loop(?NUMBER_OF_FLOORS) ->
     lists:foreach(fun(Button_type) -> send_order_to_order_manager_if_button_is_pressed(Button_type, ?NUMBER_OF_FLOORS) end, [down_button, cab_button]),
     read_button_loop(1);
 
-read_button_loop(Floor) when Floor > 1 , Floor < ?NUMBER_OF_FLOORS ->
+read_button_loop(Floor) when is_integer(Floor) andalso Floor > 1 andalso Floor < ?NUMBER_OF_FLOORS ->
     lists:foreach(fun(Button_type) -> send_order_to_order_manager_if_button_is_pressed(Button_type, Floor) end, [up_button, down_button, cab_button]),
     read_button_loop(Floor + 1).
 
 %% Checks if the button of type Button_type at floor Floor is pressed. If pressed, sends order to order_manager.
-send_order_to_order_manager_if_button_is_pressed(Button_type, Floor) ->
+send_order_to_order_manager_if_button_is_pressed(Button_type, Floor)
+when is_integer(Floor) andalso Floor > 1 andalso Floor < ?NUMBER_OF_FLOORS andalso is_atom(Button_type) ->
     driver ! {get_order_button_status, Button_type, Floor, self()},
     receive
         {order_button_status, Button_type, Floor, 1} ->
@@ -33,4 +34,4 @@ send_order_to_order_manager_if_button_is_pressed(Button_type, Floor) ->
     after
         ?TIMEOUT ->
             io:format("Timeout in button reader module\n")
-    end.
+    end
