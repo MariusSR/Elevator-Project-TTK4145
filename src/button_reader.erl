@@ -34,4 +34,4 @@ when is_integer(Floor) andalso Floor > 1 andalso Floor < ?NUMBER_OF_FLOORS andal
     after
         ?TIMEOUT ->
             io:format("Timeout in button reader module\n")
-    end
+    end.
