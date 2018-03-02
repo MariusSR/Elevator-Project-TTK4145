@@ -8,7 +8,6 @@
 %% avoid missing orders.                                                             %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-
 -module(order_manager).
 -export([node_communication/0]).
 
@@ -76,6 +75,9 @@ node_communication(LocalOrderList) ->
 
         % Function for debug use only, to be removed!
         {clear_queue} ->
-            lists:foreach(fun(Order) -> order_manager ! {order_finished, Order}, LocalOrderList end) 
+            lists:foreach(fun(Order) -> order_manager ! {order_finished, Order}, LocalOrderList end);
+
+        Unexpected ->
+			io:format("Unexpected message in order_managers node_communication: ~p~n", [Unexpected])
         
     end.
