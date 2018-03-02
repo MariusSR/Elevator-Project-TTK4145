@@ -27,7 +27,7 @@ read_button_loop(Floor) when is_integer(Floor) andalso Floor > 1 andalso Floor <
 
 %% Checks if the button of type Button_type at floor Floor is pressed. If pressed, sends order to order_manager.
 send_new_order_to_ordermanager(Button_type, Floor)
-when is_integer(Floor) andalso Floor > 1 andalso Floor < ?NUMBER_OF_FLOORS andalso is_atom(Button_type) ->
+when is_integer(Floor) andalso Floor >= 1 andalso Floor =< ?NUMBER_OF_FLOORS andalso is_atom(Button_type) ->
     driver ! {get_order_button_status, Button_type, Floor, self()},
     receive
         {order_button_status, Button_type, Floor, 1} ->
