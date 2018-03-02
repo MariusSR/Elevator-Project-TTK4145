@@ -76,7 +76,7 @@ main_loop(Socket) ->
 %% values are sent back to the process asking for information                        %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-return_order_button_status(Socket, PID, Button_type, Floor) when is_pid(PID) andalso is_integer(Button_type) andalso is_integer(Floor) andalso Floor >= 1 andalso Floor =< ?NUMBER_OF_FLOORS ->
+return_order_button_status(Socket, PID, Button_type, Floor) when is_pid(PID) andalso is_integer(Button_type) andalso is_integer(Floor) andalso Floor >= 0 andalso Floor < ?NUMBER_OF_FLOORS ->
 	gen_tcp:send(Socket, [6, Button_type, Floor, 0]),
 		case gen_tcp:recv(Socket, ?MSG_LENGTH, ?TIMEOUT) of
 			{ok, [6, Is_pressed, 0, 0]} ->
