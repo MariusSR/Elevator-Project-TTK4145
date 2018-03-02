@@ -67,8 +67,9 @@ listen_for_nodes(ReceiveSocket) ->
 
 		{error, timeout} ->
 			ok;
-
 		{error, Reason} ->
-			io:format("ERROR: receiving node failed due to: ~s~n", [Reason])
+			io:format("ERROR: receiving node failed due to: ~s~n", [Reason]);
+		Unexpected ->
+			io:format("unexpected message in listen for nodes: ~p~n", [Unexpected])
 	end,
 	listen_for_nodes(ReceiveSocket).
