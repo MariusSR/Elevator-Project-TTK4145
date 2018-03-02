@@ -25,21 +25,22 @@ node_communication(LocalOrderList) ->
         {new_order, Order} when is_tuple(Order) ->
             io:format("Received: new_order\n"),
             case lists:member(Order, LocalOrderList) of
-                true  -> node_communication(LocalOrderList);
+                true  -> node_communication(LocalOrderList), io:format("true~n");
                 false -> 
+                    io:format("false~n"),
                     lists:foreach(fun(Node) -> {order_manager, Node} ! {add_order, Order, LocalOrderList, node()} end, nodes()),
                     node_communication(LocalOrderList)     
             end;
 
         {add_order, Order, ExternalOrderList, ExternalElevator}
-        when is_tuple(Order) andalso is_list(ExternalOrderList) andalso is_pid(ExternalElevator) ->
+        when is_tuple(Order) andalso is_list(ExternalOrderList) ->
             io:format("Received: add_order\n"),
             {order_manager, ExternalElevator} ! {ack_order, Order, LocalOrderList, node()},
             MissingOrders = ExternalOrderList -- LocalOrderList,
             node_communication(LocalOrderList ++ MissingOrders ++ [Order]);
 
-        {ack_order, Order, ExternalOrderList, ExternalElevator} 
-        when is_tuple(Order) andalso is_list(ExternalOrderList) andalso is_pid(ExternalElevator) ->
+        {ack_order, Order, ExternalOrderList, ExternalElevator}
+        when is_tuple(Order) andalso is_list(ExternalOrderList)  ->
             io:format("Received: ack_order\n"),
             {order_manager, ExternalElevator} ! {led_on, Order},
             {Button_type, Floor} = Order,
@@ -76,6 +77,5 @@ node_communication(LocalOrderList) ->
 
         % test "functions"
         {clear_queue} ->
-            lists:foreach(fun(Order) -> order_manager ! {order_finished, Order}, LocalOrderList end) 
-        
+            lists:foreach(fun(Order) -> {order_manager, hd(nodes())} ! {order_finished, Order} end , LocalOrderList) 
     end.
