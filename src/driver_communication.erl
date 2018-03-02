@@ -21,25 +21,35 @@ main_loop(Socket) ->
 			gen_tcp:send(Socket, [1, 0, 0, 0]);
 		{set_motor_dir, down_dir} ->
 			gen_tcp:send(Socket, [1, 255, 0, 0]);
+		
+		{set_order_button_LED, up_button,   Floor, on}  when is_integer(Floor) andalso Floor >= 1 andalso Floor =< ?NUMBER_OF_FLOORS ->
+			gen_tcp:send(Socket, [2, 0, Floor - 1, 1]);
+		{set_order_button_LED, up_button,   Floor, off} when is_integer(Floor) andalso Floor >= 1 andalso Floor =< ?NUMBER_OF_FLOORS ->
+			gen_tcp:send(Socket, [2, 0, Floor - 1, 0]);
+		{set_order_button_LED, down_button, Floor, on}  when is_integer(Floor) andalso Floor >= 1 andalso Floor =< ?NUMBER_OF_FLOORS ->
+			gen_tcp:send(Socket, [2, 1, Floor - 1, 1]);
+		{set_order_button_LED, down_button, Floor, off} when is_integer(Floor) andalso Floor >= 1 andalso Floor =< ?NUMBER_OF_FLOORS ->
+			gen_tcp:send(Socket, [2, 1, Floor - 1, 0]);
+		{set_order_button_LED, cab_button,  Floor, on}  when is_integer(Floor) andalso Floor >= 1 andalso Floor =< ?NUMBER_OF_FLOORS ->
+			gen_tcp:send(Socket, [2, 2, Floor - 1, 1]);
+		{set_order_button_LED, cab_button,  Floor, off} when is_integer(Floor) andalso Floor >= 1 andalso Floor =< ?NUMBER_OF_FLOORS ->
+			gen_tcp:send(Socket, [2, 2, Floor - 1, 0]);
 
-		{set_order_button_LED, up_button, Floor, Value}   when Floor >= 1 andalso Floor =< ?NUMBER_OF_FLOORS andalso (Value =:= 0 orelse Value =:= 1) ->
-			gen_tcp:send(Socket, [2, 0, Floor - 1, Value]);
-		{set_order_button_LED, down_button, Floor, Value} when Floor >= 1 andalso Floor =< ?NUMBER_OF_FLOORS andalso (Value =:= 0 orelse Value =:= 1) ->
-			gen_tcp:send(Socket, [2, 1, Floor - 1, Value]);
-		{set_order_button_LED, cab_button, Floor, Value}  when Floor >= 1 andalso Floor =< ?NUMBER_OF_FLOORS andalso (Value =:= 0 orelse Value =:= 1) ->
-			gen_tcp:send(Socket, [2, 2, Floor - 1, Value]);
+		{set_door_open_LED, on} ->
+			gen_tcp:send(Socket, [4, 1, 0, 0]);
+		{set_door_open_LED, off} ->
+			gen_tcp:send(Socket, [4, 0, 0, 0]);
 
-		{set_door_open_LED, Value}   when Value =:= 0 orelse Value =:= 1 ->
-			gen_tcp:send(Socket, [4, Value, 0, 0]);
+		{set_stop_button_LED, on} ->
+			gen_tcp:send(Socket, [5, 1, 0, 0]);
+		{set_stop_button_LED, off} ->
+			gen_tcp:send(Socket, [5, 0, 0, 0]);
 
-		{set_stop_button_LED, Value} when Value =:= 0 orelse Value =:= 1 ->
-			gen_tcp:send(Socket, [5, Value, 0, 0]);
-
-		{get_order_button_status, up_button, Floor, PID}   when Floor >= 1 andalso Floor =< ?NUMBER_OF_FLOORS andalso is_pid(PID) ->
+		{get_order_button_status, up_button, Floor, PID}   when is_integer(Floor) andalso Floor >= 1 andalso Floor =< ?NUMBER_OF_FLOORS andalso is_pid(PID) ->
 			get_order_button_func(Socket, PID, 0, Floor - 1);
-		{get_order_button_status, down_button, Floor, PID} when Floor >= 1 andalso Floor =< ?NUMBER_OF_FLOORS andalso is_pid(PID) ->
+		{get_order_button_status, down_button, Floor, PID} when is_integer(Floor) andalso Floor >= 1 andalso Floor =< ?NUMBER_OF_FLOORS andalso is_pid(PID) ->
 			get_order_button_func(Socket, PID, 1, Floor - 1);
-		{get_order_button_status, cab_button, Floor, PID}  when Floor >= 1 andalso Floor =< ?NUMBER_OF_FLOORS andalso is_pid(PID) ->
+		{get_order_button_status, cab_button, Floor, PID}  when is_integer(Floor) andalso Floor >= 1 andalso Floor =< ?NUMBER_OF_FLOORS andalso is_pid(PID) ->
 			get_order_button_func(Socket, PID, 2, Floor - 1);
 		
 		{get_stop_button_status, PID} when is_pid(PID) ->
@@ -59,7 +69,7 @@ main_loop(Socket) ->
 %% sends data back to the procces asking for information.  			     %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-get_order_button_func(Socket, PID, Button_type, Floor) ->
+get_order_button_func(Socket, PID, Button_type, Floor) when is_pid(PID) andalso is_integer(Button_type) andalso is_integer(Floor) andalso Floor >= 1 andalso Floor =< ?NUMBER_OF_FLOORS ->
 	gen_tcp:send(Socket, [6, Button_type, Floor, 0]),
 		case gen_tcp:recv(Socket, 4, 2000) of
 			{ok, [6, Is_pressed, 0, 0]} ->
@@ -69,7 +79,7 @@ get_order_button_func(Socket, PID, Button_type, Floor) ->
 				PID ! {error, Reason}
 		end.
 
-get_floor_func(Socket, PID) ->
+get_floor_func(Socket, PID) when is_pid(PID) ->
 	gen_tcp:send(Socket, [7, 0, 0, 0]),
 		case gen_tcp:recv(Socket, 4, 2000) of
 			{ok, [7, 1, _Latest_floor, 0]} ->
@@ -80,7 +90,7 @@ get_floor_func(Socket, PID) ->
 				PID ! {error, Reason}
 		end.
 
-get_stop_button_func(Socket, PID) ->
+get_stop_button_func(Socket, PID) when is_pid(PID) ->
 	gen_tcp:send(Socket, [8, 0, 0, 0]),
 		case gen_tcp:recv(Socket, 4, 2000) of
 			{ok, [8, Is_pressed, 0, 0]} ->
