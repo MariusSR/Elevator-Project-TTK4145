@@ -2,7 +2,7 @@
 %% This module takes care of communication with the elevator driver over TCP. A      %%
 %% loop-function is spawned, which is always available for receiving requests about  %%
 %% reading from and writing to the elevator hardware. The function loop runs forever %%
-%% whereas start returns the PID for loop.              			  			     %%
+%% whereas start returns the PID for loop.              			     %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 -module(driver_communication).
