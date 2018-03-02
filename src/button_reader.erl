@@ -37,7 +37,7 @@ when is_integer(Floor) andalso Floor > 1 andalso Floor < ?NUMBER_OF_FLOORS andal
         {error, Reason} ->
             io:format("ERROR: receiving button status for button type ~p on floor ~p failed due to: ~s~n", [Button_type, Floor, Reason]);
         Unexpected ->
-            io:format("Unexpexted message received for button type ~p on floor ~p: ~p\n", [Button_type, Floor, Unexpected])
+            io:format("Unexpexted message received for button type ~p on floor ~p in the button_reader module: ~p\n", [Button_type, Floor, Unexpected])
     after
         ?TIMEOUT ->
             io:format("Timeout in button reader module\n")
