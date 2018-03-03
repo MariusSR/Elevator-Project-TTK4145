@@ -74,15 +74,11 @@ node_communication(LocalOrderList) ->
             node_communication(LocalOrderList);
 
         % Function for debug use only, to be removed!
-        {clear_queue} ->
-            lists:foreach(fun(Order) -> {order_manager, hd(nodes())} ! {order_finished_no_reccursion, Order} end , LocalOrderList),
+        clear_queue ->
+            lists:foreach(fun(Order) -> {order_manager, hd(nodes())} ! {order_finished, Order} end , LocalOrderList),
             node_communication(LocalOrderList);
 
-        {order_finished_no_reccursion, Order} when is_tuple(Order) ->
-            io:format("Received: order_finished\n"),
-            lists:foreach(fun(Node) -> {order_manager, Node} ! {remove_order, Order, LocalOrderList} end, [node()|nodes()]);
-
         Unexpected ->
-			io:format("Unexpected message in order_managers node_communication: ~p~n", [Unexpected]),
+	    io:format("Unexpected message in order_managers node_communication: ~p~n", [Unexpected]),
             node_communication(LocalOrderList)
     end.
