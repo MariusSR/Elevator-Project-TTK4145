@@ -13,6 +13,9 @@ start() ->
     A = spawn(fun()-> button_reader:read_button_loop(1) end),
     io:format("button_reader PID: ~p\n", [A]),
 
+    B = spawn(fun()-> fsm:start() end),
+    io:format("FSM PID: ~p\n", [B]),
+
     io:format("Start completed\n\n").
 
 start_local() ->
