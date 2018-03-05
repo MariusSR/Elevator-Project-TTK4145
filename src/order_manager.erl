@@ -80,5 +80,5 @@ node_communication(LocalOrderList) ->
 
         Unexpected ->
 	    io:format("Unexpected message in order_managers node_communication: ~p~n", [Unexpected]),
-            node_communication(LocalOrderList)
+        node_communication(LocalOrderList)
     end.
