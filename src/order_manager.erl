@@ -15,6 +15,7 @@
 % TODO: remove unnecessary comments
 
 node_communication() ->
+    driver ! turn_off_all_leds,
     node_communication([]).
 
 node_communication(LocalOrderList) ->
@@ -27,12 +28,13 @@ node_communication(LocalOrderList) ->
                 true  -> node_communication(LocalOrderList);
                 false -> 
                     lists:foreach(fun(Node) -> {order_manager, Node} ! {add_order, Order, LocalOrderList, node()} end, nodes()),
+                    order_manager ! {add_order, Order, LocalOrderList, node()},                                                                 %%%%%%%%%%%% debug
                     node_communication(LocalOrderList)     
             end;
 
         {add_order, Order, ExternalOrderList, ExternalElevator}
         when is_tuple(Order) andalso is_list(ExternalOrderList) ->
-            io:format("Received: add_order\n"),
+            io:format("Received: add_order~p\n", [Order]),
             {order_manager, ExternalElevator} ! {ack_order, Order, LocalOrderList, node()},
             MissingOrders = ExternalOrderList -- LocalOrderList,
             node_communication(LocalOrderList ++ MissingOrders ++ [Order]);
@@ -59,7 +61,7 @@ node_communication(LocalOrderList) ->
             io:format("LED turned OFF for order ~p\n", [Order]),
             MissingOrders = ExternalOrderList -- LocalOrderList,
             %%%%%% TODO: REMEMBER TO REMOVE ALL ORDERS AT THAT FLOOR %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            node_communication([X || X <- LocalOrderList ++ MissingOrders, X /= Order]);  % removes all instances of Order
+            node_communication([X || X <- LocalOrderList ++ MissingOrders, X /= Order]); % removes all instances of Order
         
         {led_on, Order} when is_tuple(Order) ->
             io:format("Received: led_on\n"),
@@ -74,11 +76,17 @@ node_communication(LocalOrderList) ->
             node_communication(LocalOrderList);
 
         % Function for debug use only, to be removed!
-        clear_queue ->
-            lists:foreach(fun(Order) -> {order_manager, hd(nodes())} ! {order_finished, Order} end , LocalOrderList),
-            node_communication(LocalOrderList);
+        
+        reset ->
+           lists:foreach(fun(Node) -> {order_manager, Node} ! reset_queue_and_button_leds end, nodes()),
+            order_manager ! reset_queue_and_button_leds,
+            node_communication([]);
 
-        Unexpected ->
-	    io:format("Unexpected message in order_managers node_communication: ~p~n", [Unexpected]),
-        node_communication(LocalOrderList)
+        reset_queue_and_button_leds ->
+            driver ! turn_off_all_leds,
+            node_communication([]);
+
+    Unexpected ->
+            io:format("Unexpected message in order_managers node_communication: ~p~n", [Unexpected]),
+            node_communication(LocalOrderList)
     end.

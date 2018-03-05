@@ -63,6 +63,9 @@ main_loop(Socket) ->
 
 		{get_floor, PID} when is_pid(PID) ->
 			return_floor_status(Socket, PID);
+
+		turn_off_all_leds ->
+			turn_off_leds_at_floor(1);
 		
 		Unexpected ->
 			io:format("Unexpected message in main_loop of driver module: ~p~n", [Unexpected])
@@ -90,9 +93,9 @@ return_order_button_status(Socket, PID, Button_type, Floor) when is_pid(PID) and
 return_floor_status(Socket, PID) when is_pid(PID) ->
 	gen_tcp:send(Socket, [7, 0, 0, 0]),
 		case gen_tcp:recv(Socket, ?MSG_LENGTH, ?TIMEOUT) of
-			{ok, [7, 1, _Latest_floor, 0]} ->
-				PID ! {between_floors};
-			{ok, [7, 0, Latest_floor, 0]} ->
+			{ok, [7, 0, _Latest_floor, 0]} ->
+				PID ! between_floors;
+			{ok, [7, 1, Latest_floor, 0]} ->
 				PID ! {floor, Latest_floor + 1};
 			{error, Reason} ->
 				PID ! {error, Reason}
@@ -106,3 +109,17 @@ return_stop_button_status(Socket, PID) when is_pid(PID) ->
 			{error, Reason} ->
 				PID ! {error, Reason}
 		end.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+turn_off_leds_at_floor(1) ->
+    lists:foreach(fun(Button_type) -> driver ! {set_order_button_LED, Button_type, 1, off} end, [up_button, cab_button]),
+    turn_off_leds_at_floor(2);
+
+turn_off_leds_at_floor(?NUMBER_OF_FLOORS) -> 
+    lists:foreach(fun(Button_type) -> driver ! {set_order_button_LED, Button_type, ?NUMBER_OF_FLOORS, off} end, [down_button, cab_button]);
+
+turn_off_leds_at_floor(Floor) when is_integer(Floor) andalso Floor > 1 andalso Floor < ?NUMBER_OF_FLOORS ->
+    lists:foreach(fun(Button_type) -> driver ! {set_order_button_LED, Button_type, Floor, off} end, [up_button, down_button, cab_button]),
+    turn_off_leds_at_floor(Floor + 1).
