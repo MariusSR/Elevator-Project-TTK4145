@@ -30,10 +30,8 @@ send_new_order_to_ordermanager(Button_type, Floor)
 when is_integer(Floor) andalso Floor >= 1 andalso Floor =< ?NUMBER_OF_FLOORS andalso is_atom(Button_type) ->
     driver ! {get_order_button_status, Button_type, Floor, self()},
     receive
-        %{order_button_status, cab_button, Floor, 1} ->
-        %    order_manager ! {new_cab_order, {new_cab_cab, Floor}};
         {order_button_status, Button_type, Floor, 1} ->
-            order_manager ! {new_order, {Button_type, Floor}};
+            node_communicator ! {new_order, {Button_type, Floor}};
         {order_button_status, _Button_type, _Floor, 0} ->
             ok;
         {error, Reason} ->
