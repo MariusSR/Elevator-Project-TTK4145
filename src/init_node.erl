@@ -10,11 +10,13 @@ start() ->
     register(order_manager, spawn(fun()-> order_manager:node_communication() end)),
     io:format("ordermanager PID: ~p\n", [whereis(order_manager)]),
 
+    register(fsm, spawn(fun()-> fsm:start() end)),
+    io:format("FSM PID: ~p\n", [whereis(fsm)]),
+
     A = spawn(fun()-> button_reader:read_button_loop(1) end),
     io:format("button_reader PID: ~p\n", [A]),
 
-    B = spawn(fun()-> fsm:start() end),
-    io:format("FSM PID: ~p\n", [B]),
+   
 
     io:format("Start completed\n\n").
 
@@ -26,6 +28,9 @@ start_local() ->
 
     register(order_manager, spawn(fun()-> order_manager:node_communication() end)),
     io:format("ordermanager PID: ~p\n", [whereis(order_manager)]),
+
+    register(fsm, spawn(fun()-> fsm:start() end)),
+    io:format("FSM PID: ~p\n", [whereis(fsm)]),
 
     A = spawn(fun()-> button_reader:read_button_loop(1) end),
     io:format("button_reader PID: ~p\n", [A]),
@@ -40,6 +45,9 @@ start_local(Port) ->
 
     register(order_manager, spawn(fun()-> order_manager:node_communication() end)),
     io:format("ordermanager PID: ~p\n", [whereis(order_manager)]),
+
+    register(fsm, spawn(fun()-> fsm:start() end)),
+    io:format("FSM PID: ~p\n", [whereis(fsm)]),
 
     A = spawn(fun()-> button_reader:read_button_loop(1) end),
     io:format("button_reader PID: ~p\n", [A]),
