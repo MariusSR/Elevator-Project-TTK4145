@@ -46,7 +46,8 @@ main_loop(Orders, Elevator_states) ->
         {remove_order, {Button_type, Floor}} when is_atom(Button_type) andalso Floor >= 1 andalso Floor =< ?NUMBER_OF_FLOORS ->
             Updated_unassigned_hall_orders = [X || X <- Orders#orders.unassigned_hall_orders, X /= {Button_type, Floor}],
             Updated_assigned_hall_orders   = [X || X <- Orders#orders.assigned_hall_orders,   X /= {Button_type, Floor}],
-            Updated_orders = Orders#orders{unassigned_hall_orders = Updated_unassigned_hall_orders, assigned_hall_orders = Updated_assigned_hall_orders},
+            Updated_orders = Orders#orders{unassigned_hall_orders = Updated_unassigned_hall_orders,
+                                             assigned_hall_orders = Updated_assigned_hall_orders},
             main_loop(Updated_orders, Elevator_states);
 
         %% Update state of Node in Elevator_states, adding it if non-existing
