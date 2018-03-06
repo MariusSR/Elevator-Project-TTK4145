@@ -54,16 +54,13 @@ main_loop(Orders, Elevator_states) ->
             Updated_states = dict:store(Node, New_state, Elevator_states),
             main_loop(Orders, Updated_states);
 
-        %% 
+        %% Checks is the elevator should stop at Floor
         {should_i_stop_at, Floor, up_dir} ->
             lists:member({up_button, Floor},   Orders#orders.unassigned_hall_orders) or lists:member(Floor, Orders#orders.cab_orders);
-
         {should_i_stop_at, Floor, down_dir} ->
             lists:member({down_button, Floor}, Orders#orders.unassigned_hall_orders) or lists:member(Floor, Orders#orders.cab_orders);
-            
         {should_i_stop_at, _Floor, stop_dir} ->
             io:format("Error in order_manager, asked should_i_stop when already in state stoped\n"),
             true
-        
 
     end.
