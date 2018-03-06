@@ -1,92 +1,50 @@
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% This module handles all communication between seperate nodes, i.e. every message  %%
-%% from node A to node B is sent from this module on node A and received in the very %%
-%% same module on node B. It is then locally routed to the correct module.           %%
-%%    The module consists in essence of only one funciton which operates as a main   %%
-%% loop taking a list as argument. The list contains all locally known orders. The   %%
-%% list is reguallarly shared (and taken the union of) between different nodes to    %%
-%% avoid missing orders.                                                             %%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 -module(order_manager).
--export([node_communication/0]).
+-export([start/0]).
+-include("parameters.hrl").
 
-% TODO: spawn from gloabl spawner, remember there is only coments for LED now
-% TODO: remove unnecessary comments
+-record(orderlist, {assigned = [], unassigned = [], cab_orders = []}).
+-record(state, {is_idle, direction, floor}).
 
-node_communication() ->
-    driver ! turn_off_all_leds,
-    node_communication([]).
+start() ->
+    main_loop([], []). % temporary to avoid green comoplains
 
-node_communication(LocalOrderList) ->
-    io:format("LocalOrderList: ~p\n", [LocalOrderList]),
 
+
+main_loop(Orderlist, Global_states) ->
+    io:format("Main loop of order_manager/scheduler started\n"),
     receive
-        {new_order, Order} when is_tuple(Order) ->
-            io:format("Received: new_order\n"),
-            case lists:member(Order, LocalOrderList) of
-                true  -> node_communication(LocalOrderList);
-                false -> 
-                    lists:foreach(fun(Node) -> {order_manager, Node} ! {add_order, Order, LocalOrderList, node()} end, nodes()),
-                    order_manager ! {add_order, Order, LocalOrderList, node()},                                                                 %%%%%%%%%%%% debug
-                    node_communication(LocalOrderList)     
+        {add_order, {cab_button, Floor}, PID} when is_pid(PID) ->
+            Order = {cab_button, Floor},
+            case lists:member(Order, Orderlist#orderlist.cab_orders) of
+                true ->
+                    B = "HVA SKJED HVS DEN FINNES FRA FØR?";
+                false ->
+                    PID ! {order_added, Order},
+                    New_order_list = create_updated_orderlist(Orderlist, Order),
+                    main_loop(New_order_list, Global_states)
             end;
 
-        {add_order, Order, ExternalOrderList, ExternalElevator}
-        when is_tuple(Order) andalso is_list(ExternalOrderList) ->
-            io:format("Received: add_order~p\n", [Order]),
-            {order_manager, ExternalElevator} ! {ack_order, Order, LocalOrderList, node()},
-            MissingOrders = ExternalOrderList -- LocalOrderList,
-            node_communication(LocalOrderList ++ MissingOrders ++ [Order]);
+        {add_order, {Order}} ->
+            ok
+    end.
 
-        {ack_order, Order, ExternalOrderList, ExternalElevator}
-        when is_tuple(Order) andalso is_list(ExternalOrderList)  ->
-            io:format("Received: ack_order\n"),
-            {order_manager, ExternalElevator} ! {led_on, Order},
-            {Button_type, Floor} = Order,
-            driver ! {set_order_button_LED, Button_type, Floor, on},
-            io:format("LED turned ON for order ~p\n", [Order]),
-            MissingOrders = ExternalOrderList -- LocalOrderList,
-            node_communication(LocalOrderList ++ MissingOrders ++ [Order]);
-        
-        {order_finished, Order} when is_tuple(Order) ->
-            io:format("Received: order_finished\n"),
-            lists:foreach(fun(Node) -> {order_manager, Node} ! {remove_order, Order, LocalOrderList} end, [node()|nodes()]),
-            node_communication(LocalOrderList);
 
-        {remove_order, Order, ExternalOrderList} when is_tuple(Order) andalso is_list(ExternalOrderList) ->
-            io:format("Received: remove_order\n"),
-            {Button_type, Floor} = Order,
-            driver ! {set_order_button_LED, Button_type, Floor, off},
-            io:format("LED turned OFF for order ~p\n", [Order]),
-            MissingOrders = ExternalOrderList -- LocalOrderList,
-            %%%%%% TODO: REMEMBER TO REMOVE ALL ORDERS AT THAT FLOOR %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            node_communication([X || X <- LocalOrderList ++ MissingOrders, X /= Order]); % removes all instances of Order
-        
-        {led_on, Order} when is_tuple(Order) ->
-            io:format("Received: led_on\n"),
-            {Button_type, Floor} = Order,
-            driver ! {set_order_button_LED, Button_type, Floor, on},
-            io:format("LEDs turned ON for order ~p\n", [Order]),
-            node_communication(LocalOrderList);
+create_updated_orderlist(Orderlist, {cab_button, Floor})
+when is_record(Orderlist, orderlist) andalso Floor >= 1 andalso Floor =< ?NUMBER_OF_FLOORS ->
+    Cab_order = {cab_button, Floor},
+    case lists:member(Cab_order, Orderlist#orderlist.cab_orders) of
+        true ->
+            Orderlist;
+        false ->
+            Orderlist#orderlist{cab_orders = Orderlist#orderlist.cab_orders ++ [Cab_order]}
+    end;
 
-        {get_orderlist, PID} when is_pid(PID) ->
-            io:format("Received: get_orderList\n"),
-            PID ! LocalOrderList,
-            node_communication(LocalOrderList);
-
-        % Function for debug use only, to be removed!
-        
-        reset ->
-           lists:foreach(fun(Node) -> {order_manager, Node} ! reset_queue_and_button_leds end, nodes()),
-            order_manager ! reset_queue_and_button_leds,
-            node_communication([]);
-
-        reset_queue_and_button_leds ->
-            driver ! turn_off_all_leds,
-            node_communication([]);
-
-    Unexpected ->
-            io:format("Unexpected message in order_managers node_communication: ~p~n", [Unexpected]),
-            node_communication(LocalOrderList)
+create_updated_orderlist(Orderlist, {Button_type, Floor})
+when is_record(Orderlist, orderlist) andalso is_atom(Button_type) andalso Floor >= 1 andalso Floor =< ?NUMBER_OF_FLOORS ->
+    Hall_order = {Button_type, Floor},
+    case lists:member(Hall_order, Orderlist#orderlist.assigned ++ Orderlist#orderlist.unassigned) of
+        true ->
+            Orderlist;
+        false ->
+            Orderlist#orderlist{unassigned = Orderlist#orderlist.unassigned ++ [Hall_order]}
     end.
