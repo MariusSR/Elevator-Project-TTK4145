@@ -2,7 +2,7 @@
 -export([start/0]).
 -include("parameters.hrl").
 
--record(orderlist, {assigned = [], unassigned = [], cab_orders = []}).
+-record(orders, {assigned_hall_orders = [], unassigned_hall_orders = [], cab_orders = []}).
 -record(state, {is_idle, direction, floor}).
 
 start() ->
@@ -10,41 +10,43 @@ start() ->
 
 
 
-main_loop(Orderlist, Global_states) ->
+main_loop(Orders, Global_states) ->
     io:format("Main loop of order_manager/scheduler started\n"),
     receive
-        {add_order, {cab_button, Floor}, PID} when is_pid(PID) ->
-            Order = {cab_button, Floor},
-            case lists:member(Order, Orderlist#orderlist.cab_orders) of
+        %% Acknowledge the cab order and append it to 'cab_orders' of Orders if not already known
+        {add_order, {cab_button, Floor}, PID} when Floor >= 1 andalso Floor =< ?NUMBER_OF_FLOORS andalso is_pid(PID) ->
+            PID ! {ack_order, {cab_button, Floor}},
+            case lists:member(Floor, Orders#orders.cab_orders) of
                 true ->
-                    B = "HVA SKJED HVS DEN FINNES FRA FØR?";
+                    main_loop(Orders, Global_states);
                 false ->
-                    PID ! {order_added, Order},
-                    New_order_list = create_updated_orderlist(Orderlist, Order),
-                    main_loop(New_order_list, Global_states)
+                    Updated_order_list = Orders#orders{cab_orders = Orders#orders.cab_orders ++ [Floor]},
+                    main_loop(Updated_order_list, Global_states)
             end;
 
-        {add_order, {Order}} ->
-            ok
-    end.
+        %% Acknowledge the hall order and append it to 'unassigned' of Orders if not already known
+        {add_order, {Button_type, Floor}, PID} when is_atom(Button_type) andalso Floor >= 1 andalso Floor =< ?NUMBER_OF_FLOORS andalso is_pid(PID) ->
+            Hall_order = {Button_type, Floor},
+            PID ! {ack_order, Hall_order},
+            case lists:member(Hall_order, Orders#orders.assigned_hall_orders ++ Orders#orders.unassigned_hall_orders) of
+                true ->
+                    main_loop(Orders, Global_states);
+                false ->
+                    Updated_order_list = Orders#orders{unassigned_hall_orders = Orders#orders.unassigned_hall_orders ++ [Hall_order]},
+                    main_loop(Updated_order_list, Global_states)
+            end;
 
+        %% Removes all occourences of a cab order from 'cab_orders' of Orders
+        {remove_order, {cab_button, Floor}} when Floor >= 1 andalso Floor =< ?NUMBER_OF_FLOORS ->
+            Updated_cab_orders = [X || X <- Orders#orders.cab_orders, X /= Floor],
+            Updated_order_list = Orders#orders{cab_orders = Updated_cab_orders},
+            main_loop(Updated_order_list, Global_states);
 
-create_updated_orderlist(Orderlist, {cab_button, Floor})
-when is_record(Orderlist, orderlist) andalso Floor >= 1 andalso Floor =< ?NUMBER_OF_FLOORS ->
-    Cab_order = {cab_button, Floor},
-    case lists:member(Cab_order, Orderlist#orderlist.cab_orders) of
-        true ->
-            Orderlist;
-        false ->
-            Orderlist#orderlist{cab_orders = Orderlist#orderlist.cab_orders ++ [Cab_order]}
-    end;
+        %% Removes all occourences of a hall order from 'unassigned' and 'assigned' of Orders
+        {remove_order, {Button_type, Floor}} when is_atom(Button_type) andalso Floor >= 1 andalso Floor =< ?NUMBER_OF_FLOORS ->
+            Updated_unassigned_hall_orders = [X || X <- Orders#orders.unassigned_hall_orders, X /= {Button_type, Floor}],
+            Updated_assigned_hall_orders   = [X || X <- Orders#orders.assigned_hall_orders,   X /= {Button_type, Floor}],
+            Updated_order_list = Orders#orders{unassigned_hall_orders = Updated_unassigned_hall_orders, assigned_hall_orders = Updated_assigned_hall_orders},
+            main_loop(Updated_order_list, Global_states)
 
-create_updated_orderlist(Orderlist, {Button_type, Floor})
-when is_record(Orderlist, orderlist) andalso is_atom(Button_type) andalso Floor >= 1 andalso Floor =< ?NUMBER_OF_FLOORS ->
-    Hall_order = {Button_type, Floor},
-    case lists:member(Hall_order, Orderlist#orderlist.assigned ++ Orderlist#orderlist.unassigned) of
-        true ->
-            Orderlist;
-        false ->
-            Orderlist#orderlist{unassigned = Orderlist#orderlist.unassigned ++ [Hall_order]}
     end.
