@@ -79,9 +79,18 @@ main_loop(Orders, Elevator_states) ->
             main_loop(Orders, Elevator_states);
 
         {distribute_unassigned_order} ->
-            do_them_magic(),
+            do_them_magic(Orders, Elevator_states),
             main_loop(Orders, Elevator_states)
     end.
 
-    do_them_magic() ->
-        io:format("Magic").
+    do_them_magic(Orders, Elevator_states) ->
+        io:format("Magic"),
+        Oldest_unassigned_hall_order = hd(Orders#orders.unassigned_hall_orders),
+        Idle_elevators = get_idle_elevator(Elevator_states).
+        % Stopp ved alle floors der det er en order.
+        % Si i fra om at du ranet en ordre, slik at den som mistet ordren sin må få beskjed om å finne seg en ny ordre.
+        % Hvis brødhuer stiger poå, dvs de trykker på cab order i feil retning, blir det nedprioritert ifht assigned orders og om det er noen ordre av typen unasssigend over seg.
+    
+    get_idle_elevator(Elevator_states) ->
+        Is_idle = fun(_Key, Dictionary_value) -> Dictionary_value#state.is_idle end,
+        dict:filter(Is_idle, Elevator_states).
