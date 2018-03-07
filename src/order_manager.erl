@@ -66,7 +66,7 @@ main_loop(Orders, Elevator_states) ->
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %% Moving up
         {should_elevator_stop, Floor, up_dir, PID}   when Floor >= 1 andalso Floor =< ?NUMBER_OF_FLOORS andalso is_pid(PID) ->
-            lists:member({up_button, Floor},   Orders#orders.unassigned_hall_orders) or lists:member(Floor, Orders#orders.cab_orders),
+            PID ! lists:member({up_button, Floor},   Orders#orders.unassigned_hall_orders) or lists:member(Floor, Orders#orders.cab_orders),
             main_loop(Orders, Elevator_states);
         %% Moving down
         {should_elevator_stop, Floor, down_dir, PID} when Floor >= 1 andalso Floor =< ?NUMBER_OF_FLOORS andalso is_pid(PID) ->
@@ -76,6 +76,12 @@ main_loop(Orders, Elevator_states) ->
         {should_elevator_stop, _Floor, stop_dir, PID} when is_pid(PID) ->
             io:format("Unexpected behaviour in order_manager, asked should_stop when already in state stoped\n"),
             PID ! true,
-            main_loop(Orders, Elevator_states)
+            main_loop(Orders, Elevator_states);
 
+        {distribute_unassigned_order} ->
+            do_them_magic(),
+            main_loop(Orders, Elevator_states)
     end.
+
+    do_them_magic() ->
+        io:format("Magic").
