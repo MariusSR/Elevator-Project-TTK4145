@@ -108,7 +108,7 @@ main_loop(Orders, Elevator_states) ->
         {get_unassigned_order, PID} when is_pid(PID) ->
             Oldest_unassigned_hall_order = hd(Orders#orders.unassigned_hall_orders),
             node_communicator ! {new_order_assigned, Oldest_unassigned_hall_order},
-            PID ! {order_assigned, Oldest_unassigned_hall_order},
+            PID ! Oldest_unassigned_hall_order,
             main_loop(Orders, Elevator_states)
     end.
 
