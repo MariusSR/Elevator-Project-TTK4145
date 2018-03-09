@@ -1,7 +1,7 @@
 
 1) Skal vi ha med missing_orders? I så fall må en del endres i order_manager og node_communication
 2) Må assigning av en order ackes? Altså når den flyttes fra unass til ass.
-
+3) Sjekk om det faktsik går å sende til 
 
 
 Kladd til algoritme:
