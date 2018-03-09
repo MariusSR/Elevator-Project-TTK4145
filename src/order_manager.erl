@@ -17,8 +17,13 @@ main_loop(Orders, Elevator_states) ->
         %% Acknowledge the order and append it to correspoding list of 'Orders' if not already present
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %% Cab orders
-        {add_order, {cab_button, Floor}, PID} when Floor >= 1 andalso Floor =< ?NUMBER_OF_FLOORS andalso is_pid(PID) ->
-            PID ! {ack_order, {cab_button, Floor}},
+        {add_order, {cab_button, Floor}, From_node} when Floor >= 1 andalso Floor =< ?NUMBER_OF_FLOORS andalso is_atom(From_node) ->
+            case From_node == node() of
+                true ->
+                    ok; % Only added locally, no acknowledge needed
+                false ->
+                    node_communicator ! {order_added, {cab_button, Floor}, From_node}
+            end,
             case lists:member(Floor, Orders#orders.cab_orders) of
                 true ->
                     main_loop(Orders, Elevator_states);
@@ -27,9 +32,14 @@ main_loop(Orders, Elevator_states) ->
                     main_loop(Updated_orders, Elevator_states)
             end;
         %% Hall orders
-        {add_order, {Hall_button, Floor}, PID} when is_atom(Hall_button) andalso Floor >= 1 andalso Floor =< ?NUMBER_OF_FLOORS andalso is_pid(PID) ->
+        {add_order, {Hall_button, Floor}, From_node} when is_atom(Hall_button) andalso Floor >= 1 andalso Floor =< ?NUMBER_OF_FLOORS andalso is_atom(From_node) ->
             Hall_order = {Hall_button, Floor},
-            PID ! {ack_order, Hall_order},
+            case From_node == node() of
+                true ->
+                    ok; % Only added locally, no acknowledge needed
+                false ->
+                    node_communicator ! {order_added, Hall_order}
+            end,
             case lists:member(Hall_order, Orders#orders.assigned_hall_orders ++ Orders#orders.unassigned_hall_orders) of
                 true ->
                     main_loop(Orders, Elevator_states);
@@ -97,19 +107,20 @@ main_loop(Orders, Elevator_states) ->
 
         {get_unassigned_order, PID} when is_pid(PID) ->
             Oldest_unassigned_hall_order = hd(Orders#orders.unassigned_hall_orders),
+            node_communicator ! {new_order_assigned, Oldest_unassigned_hall_order},
             PID ! {order_assigned, Oldest_unassigned_hall_order},
             main_loop(Orders, Elevator_states)
     end.
 
-    do_them_magic(Orders, Elevator_states) ->
-        io:format("Magic"),
-        Oldest_unassigned_hall_order = hd(Orders#orders.unassigned_hall_orders),
-        Idle_elevators = get_idle_elevator(Elevator_states).
-        % [X] Stopp ved alle floors der det er en order.
-        % [ ] Ta alltid den eldste ordren når idle.
-        % [ ] Si i fra om at du ranet en ordre, slik at den som mistet ordren sin må få beskjed om å finne seg en ny ordre.
-        % [ ] Hvis brødhuer stiger poå, dvs de trykker på cab order i feil retning, blir det nedprioritert ifht assigned orders og om det er noen ordre av typen unasssigend over seg.
+    % do_them_magic(Orders, Elevator_states) ->
+    %     io:format("Magic"),
+    %     Oldest_unassigned_hall_order = hd(Orders#orders.unassigned_hall_orders),
+    %     Idle_elevators = get_idle_elevator(Elevator_states).
+    %     % [X] Stopp ved alle floors der det er en order.
+    %     % [ ] Ta alltid den eldste ordren når idle.
+    %     % [ ] Si i fra om at du ranet en ordre, slik at den som mistet ordren sin må få beskjed om å finne seg en ny ordre.
+    %     % [ ] Hvis brødhuer stiger poå, dvs de trykker på cab order i feil retning, blir det nedprioritert ifht assigned orders og om det er noen ordre av typen unasssigend over seg.
     
-    get_idle_elevator(Elevator_states) ->
-        Is_idle = fun(_Key, Dictionary_value) -> Dictionary_value#state.movement == idle end,
-        dict:filter(Is_idle, Elevator_states).
+    % get_idle_elevator(Elevator_states) ->
+    %     Is_idle = fun(_Key, Dictionary_value) -> Dictionary_value#state.movement == idle end,
+    %     dict:filter(Is_idle, Elevator_states).
