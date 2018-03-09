@@ -95,8 +95,9 @@ main_loop(Orders, Elevator_states) ->
             PID ! true,
             main_loop(Orders, Elevator_states);
 
-        {distribute_unassigned_order, PID} when is_pid(PID) ->
-            do_them_magic(Orders, Elevator_states),
+        {get_unassigned_order, PID} when is_pid(PID) ->
+            Oldest_unassigned_hall_order = hd(Orders#orders.unassigned_hall_orders),
+            PID ! {order_assigned, Oldest_unassigned_hall_order},
             main_loop(Orders, Elevator_states)
     end.
 
@@ -105,6 +106,7 @@ main_loop(Orders, Elevator_states) ->
         Oldest_unassigned_hall_order = hd(Orders#orders.unassigned_hall_orders),
         Idle_elevators = get_idle_elevator(Elevator_states).
         % [X] Stopp ved alle floors der det er en order.
+        % [ ] Ta alltid den eldste ordren når idle.
         % [ ] Si i fra om at du ranet en ordre, slik at den som mistet ordren sin må få beskjed om å finne seg en ny ordre.
         % [ ] Hvis brødhuer stiger poå, dvs de trykker på cab order i feil retning, blir det nedprioritert ifht assigned orders og om det er noen ordre av typen unasssigend over seg.
     
