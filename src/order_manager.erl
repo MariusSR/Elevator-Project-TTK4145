@@ -3,7 +3,7 @@
 -include("parameters.hrl").
 
 -record(orders, {assigned_hall_orders = [], unassigned_hall_orders = [], cab_orders = []}).
--record(state,  {is_idle, direction, floor}).
+-record(state,  {movement, floor}).
 
 start() ->
     main_loop(#orders{}, dict:new()). % temporary to avoid green comoplains
@@ -27,14 +27,29 @@ main_loop(Orders, Elevator_states) ->
                     main_loop(Updated_orders, Elevator_states)
             end;
         %% Hall orders
-        {add_order, {Button_type, Floor}, PID} when is_atom(Button_type) andalso Floor >= 1 andalso Floor =< ?NUMBER_OF_FLOORS andalso is_pid(PID) ->
-            Hall_order = {Button_type, Floor},
+        {add_order, {Hall_button, Floor}, PID} when is_atom(Hall_button) andalso Floor >= 1 andalso Floor =< ?NUMBER_OF_FLOORS andalso is_pid(PID) ->
+            Hall_order = {Hall_button, Floor},
             PID ! {ack_order, Hall_order},
             case lists:member(Hall_order, Orders#orders.assigned_hall_orders ++ Orders#orders.unassigned_hall_orders) of
                 true ->
                     main_loop(Orders, Elevator_states);
                 false ->
                     Updated_orders = Orders#orders{unassigned_hall_orders = Orders#orders.unassigned_hall_orders ++ [Hall_order]},
+                    main_loop(Updated_orders, Elevator_states)
+            end;
+
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        % Mark 'Hall_order' as assigned, moving it from unassigned to assigned of 'Orders'
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        {mark_order_assigned, Hall_order} ->
+            case lists:member(Hall_order, Orders#orders.assigned_hall_orders) of
+                true ->
+                    main_loop(Orders, Elevator_states);
+                false ->
+                    Updated_assigned_hall_orders   = Orders#orders.assigned_hall_orders ++ [Hall_order],
+                    Updated_unassigned_hall_orders = [X || X <- Orders#orders.unassigned_hall_orders,   X /= Hall_order],
+                    Updated_orders = Orders#orders{unassigned_hall_orders = Updated_unassigned_hall_orders,
+                                                     assigned_hall_orders = Updated_assigned_hall_orders},
                     main_loop(Updated_orders, Elevator_states)
             end;
 
@@ -47,9 +62,9 @@ main_loop(Orders, Elevator_states) ->
             Updated_orders     = Orders#orders{cab_orders = Updated_cab_orders},
             main_loop(Updated_orders, Elevator_states);
         %% Hall orders
-        {remove_order, {Button_type, Floor}} when is_atom(Button_type) andalso Floor >= 1 andalso Floor =< ?NUMBER_OF_FLOORS ->
-            Updated_unassigned_hall_orders = [X || X <- Orders#orders.unassigned_hall_orders, X /= {Button_type, Floor}],
-            Updated_assigned_hall_orders   = [X || X <- Orders#orders.assigned_hall_orders,   X /= {Button_type, Floor}],
+        {remove_order, {Hall_button, Floor}} when is_atom(Hall_button) andalso Floor >= 1 andalso Floor =< ?NUMBER_OF_FLOORS ->
+            Updated_unassigned_hall_orders = [X || X <- Orders#orders.unassigned_hall_orders, X /= {Hall_button, Floor}],
+            Updated_assigned_hall_orders   = [X || X <- Orders#orders.assigned_hall_orders,   X /= {Hall_button, Floor}],
             Updated_orders = Orders#orders{unassigned_hall_orders = Updated_unassigned_hall_orders,
                                              assigned_hall_orders = Updated_assigned_hall_orders},
             main_loop(Updated_orders, Elevator_states);
@@ -65,12 +80,14 @@ main_loop(Orders, Elevator_states) ->
         %% Checks is the elevator should stop at 'Floor' when moving in the specified direction
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %% Moving up
-        {should_elevator_stop, Floor, up_dir, PID}   when Floor >= 1 andalso Floor =< ?NUMBER_OF_FLOORS andalso is_pid(PID) ->
-            PID ! lists:member({up_button, Floor},   Orders#orders.unassigned_hall_orders) or lists:member(Floor, Orders#orders.cab_orders),
+        {should_elevator_stop, Floor, up_dir, PID} when Floor >= 1 andalso Floor =< ?NUMBER_OF_FLOORS andalso is_pid(PID) ->
+            PID ! lists:member(Floor, Orders#orders.cab_orders) or
+                  lists:member({up_button, Floor}, Orders#orders.unassigned_hall_orders ++ Orders#orders.unassigned_hall_orders),
             main_loop(Orders, Elevator_states);
         %% Moving down
         {should_elevator_stop, Floor, down_dir, PID} when Floor >= 1 andalso Floor =< ?NUMBER_OF_FLOORS andalso is_pid(PID) ->
-            PID ! lists:member({down_button, Floor}, Orders#orders.unassigned_hall_orders) or lists:member(Floor, Orders#orders.cab_orders),
+            PID ! lists:member(Floor, Orders#orders.cab_orders) or
+                  lists:member({up_button, Floor}, Orders#orders.unassigned_hall_orders ++ Orders#orders.unassigned_hall_orders),
             main_loop(Orders, Elevator_states);
         %% Already stoped, should never happen
         {should_elevator_stop, _Floor, stop_dir, PID} when is_pid(PID) ->
@@ -78,7 +95,7 @@ main_loop(Orders, Elevator_states) ->
             PID ! true,
             main_loop(Orders, Elevator_states);
 
-        {distribute_unassigned_order} ->
+        {distribute_unassigned_order, PID} when is_pid(PID) ->
             do_them_magic(Orders, Elevator_states),
             main_loop(Orders, Elevator_states)
     end.
@@ -87,10 +104,10 @@ main_loop(Orders, Elevator_states) ->
         io:format("Magic"),
         Oldest_unassigned_hall_order = hd(Orders#orders.unassigned_hall_orders),
         Idle_elevators = get_idle_elevator(Elevator_states).
-        % Stopp ved alle floors der det er en order.
-        % Si i fra om at du ranet en ordre, slik at den som mistet ordren sin må få beskjed om å finne seg en ny ordre.
-        % Hvis brødhuer stiger poå, dvs de trykker på cab order i feil retning, blir det nedprioritert ifht assigned orders og om det er noen ordre av typen unasssigend over seg.
+        % [X] Stopp ved alle floors der det er en order.
+        % [ ] Si i fra om at du ranet en ordre, slik at den som mistet ordren sin må få beskjed om å finne seg en ny ordre.
+        % [ ] Hvis brødhuer stiger poå, dvs de trykker på cab order i feil retning, blir det nedprioritert ifht assigned orders og om det er noen ordre av typen unasssigend over seg.
     
     get_idle_elevator(Elevator_states) ->
-        Is_idle = fun(_Key, Dictionary_value) -> Dictionary_value#state.is_idle end,
+        Is_idle = fun(_Key, Dictionary_value) -> Dictionary_value#state.movement == idle end,
         dict:filter(Is_idle, Elevator_states).
