@@ -16,12 +16,12 @@ start() ->
 % Idle state
 fsm(idle, Latest_floor) ->
     io:format("FSM: Idle~n"),
-    %order_communicator ! {true, stop_dir, Latest_floor},
+    node_communicator ! {reached_new_state, {stop_dir, Latest_floor}},
     fsm(idle_loop, Latest_floor);
 
 fsm(idle_loop, Latest_floor) ->
-    %order_manger ! is_idle, 
-    marius ! is_idle,         %%DEGUB
+    order_manger ! get_unassigned_order, 
+    %marius ! is_idle,         %%DEGUB
     receive 
         {Button_type, Floor} when is_atom(Button_type) andalso Floor =< ?NUMBER_OF_FLOORS andalso Floor >= 1 ->
             Order = {Button_type, Floor},
@@ -48,7 +48,7 @@ fsm(idle_loop, Latest_floor) ->
 % Moving state
 fsm(moving, Latest_floor, Moving_direction, {Button_type, Floor}) ->
     io:format("FSM: moving~n"),
-    %order_communicator ! {false, Moving_direction, Latest_floor},
+    node_communicator ! {reached_new_state, {Moving_direction, Latest_floor}},
     fsm(moving_loop, Latest_floor, Moving_direction, {Button_type, Floor});
 
 fsm(moving_loop, Latest_floor, Moving_direction, {Button_type, Floor}) ->
@@ -110,7 +110,13 @@ fsm(door_open, Latest_floor, {Button_type, Floor}) ->
     
     case Latest_floor == Floor of
         true ->
-            %order_manager ! {remove_order, Order},             %%Må komme inn når ordermanager er ferdig.
+            case Button_type of
+                cab_button ->
+                    node_communicator ! {order_finished, Order};
+                _Button ->
+                    node_communicator ! {order_finished, Order},
+                    node_communicator ! {order_finished, {cab_button, Floor}}
+            end,            
             fsm(idle, Latest_floor);
         false ->
             Moving_direction = choose_direction(Order, Latest_floor),
