@@ -42,7 +42,7 @@ fsm(idle_loop, Latest_floor) ->
             fsm(idle, Latest_floor)
     after
         2000 ->
-        fsm(idle_loop, Latest_floor)
+            fsm(idle_loop, Latest_floor)
     end.
 
 % Moving state
@@ -145,7 +145,7 @@ choose_direction({up_button, ?NUMBER_OF_FLOORS}, _Latest_floor) ->
     io:format("Error in choose dir! Called with up_button of top floor~n"),
     stop_dir;
 choose_direction({down_button, 1}, _Latest_Floor) ->
-    io:format("Error in choose dir! Called with down_button of top floor~n"),
+    io:format("Error in choose dir! Called with down_button of bottom floor~n"),
     stop_dir;
 choose_direction({_Button_type, Floor}, Latest_floor) when Floor == Latest_floor ->
     stop_dir;
