@@ -8,8 +8,6 @@
 start() ->
     main_loop(#orders{}, dict:new()). % temporary to avoid green comoplains
 
-
-
 main_loop(Orders, Elevator_states) ->
     io:format("Main loop of order_manager/scheduler started\n"),
     receive

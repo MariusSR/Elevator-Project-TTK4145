@@ -17,7 +17,6 @@
 % TODO: remove unnecessary comments
 
 node_communicator() ->
-    driver ! turn_off_all_leds, % should perhaps not be done here?
     main_loop().
 
 main_loop() ->
