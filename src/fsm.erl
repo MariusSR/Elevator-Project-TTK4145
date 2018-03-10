@@ -20,7 +20,7 @@ fsm(idle, Latest_floor) ->
     fsm(idle_loop, Latest_floor);
 
 fsm(idle_loop, Latest_floor) ->
-    order_manger ! get_unassigned_order, 
+    order_manager ! get_unassigned_order, 
     %marius ! is_idle,         %%DEGUB
     receive 
         {Button_type, Floor} when is_atom(Button_type) andalso Floor =< ?NUMBER_OF_FLOORS andalso Floor >= 1 ->
@@ -66,7 +66,7 @@ fsm(moving_loop, Latest_floor, Moving_direction, {Button_type, Floor}) ->
                     driver ! {set_motor_dir, stop_dir},
                     fsm(stopped, New_floor, Order);
                 _Floor ->
-                    marius ! {should_elevator_stop, New_floor, Moving_direction, self()},                                       %%DEBUG
+                    order_manger ! {should_elevator_stop, New_floor, Moving_direction, self()},                                       %%DEBUG
                     receive 
                         true ->
                             driver ! {set_motor_dir, stop_dir},

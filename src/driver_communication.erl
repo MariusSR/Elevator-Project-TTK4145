@@ -12,12 +12,12 @@
 -define(MSG_LENGTH, 4).
 
 start() ->
-	turn_off_leds_at_floor(1);
+	turn_off_leds_at_floor(1),
 	{ok, Socket} = gen_tcp:connect(localhost, 15657, [list, {active, false}]),
 	main_loop(Socket).
 
 start(Port) ->
-	turn_off_leds_at_floor(1);
+	turn_off_leds_at_floor(1),
 	{ok, Socket} = gen_tcp:connect(localhost, Port, [list, {active, false}]),
 	main_loop(Socket).
 
