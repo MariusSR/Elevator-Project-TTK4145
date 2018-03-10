@@ -13,8 +13,8 @@ start() ->
     register(fsm, spawn(fun()-> fsm:start() end)),
     io:format("FSM PID: ~p\n", [whereis(fsm)]),
 
-    register(fsm, spawn(fun()-> node_communicator:start() end)),
-    io:format("FSM PID: ~p\n", [whereis(fsm)]),
+    register(node_communicator, spawn(fun()-> node_communicator:node_communicator() end)),
+    io:format("Node_cimmunicator PID: ~p\n", [whereis(node_communicator)]),
 
     A = spawn(fun()-> button_reader:read_button_loop(1) end),
     io:format("button_reader PID: ~p\n", [A]),
