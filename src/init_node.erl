@@ -7,10 +7,13 @@ start() ->
     register(driver, spawn(fun()-> driver_communication:start() end)),
     io:format("driver PID: ~p\n", [whereis(driver)]),
 
-    register(order_manager, spawn(fun()-> order_manager:node_communication() end)),
+    register(order_manager, spawn(fun()-> order_manager:node_communicator() end)),
     io:format("ordermanager PID: ~p\n", [whereis(order_manager)]),
 
     register(fsm, spawn(fun()-> fsm:start() end)),
+    io:format("FSM PID: ~p\n", [whereis(fsm)]),
+
+    register(fsm, spawn(fun()-> node_communicator:start() end)),
     io:format("FSM PID: ~p\n", [whereis(fsm)]),
 
     A = spawn(fun()-> button_reader:read_button_loop(1) end),
