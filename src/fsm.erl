@@ -5,6 +5,8 @@
 -define(DOOR_OPEN_TIME, 2000).
 -define(FLOOR_SENSOR_SLEEP_BETWEEN_FLOORS, 100).
 
+-record(state, {movement, floor}).
+
 % TODO: fix state communication to order_communicator (uncomment and test).
 % TODO: Ask scheduler for new order when idle (uncomment and test).
 % TODO: Send remove_order to node_communicator when order finished in open_door(uncomment and test).
@@ -16,12 +18,13 @@ start() ->
 % Idle state
 fsm(idle, Latest_floor) ->
     io:format("FSM: Idle~n"),
-    node_communicator ! {reached_new_state, {stop_dir, Latest_floor}},
+    node_communicator ! {reached_new_state, #state{movement = stop_dir, floor = Latest_floor}},
     fsm(idle_loop, Latest_floor);
 
 fsm(idle_loop, Latest_floor) ->
     order_manager ! get_unassigned_order, 
     %marius ! is_idle,         %%DEGUB
+    io:format("ER I IDLE OG VENTER PÅ ORDRE!\n"),
     receive 
         {Button_type, Floor} when is_atom(Button_type) andalso Floor =< ?NUMBER_OF_FLOORS andalso Floor >= 1 ->
             Order = {Button_type, Floor},
@@ -37,6 +40,8 @@ fsm(idle_loop, Latest_floor) ->
                     driver ! {set_motor_dir, Moving_direction},
                     fsm(moving, Latest_floor, Moving_direction, Order)
                 end;
+        no_orders_available ->
+            fsm(idle_loop, Latest_floor);
         Unexpected ->
             io:format("Unexpected error in fsm(idle_loop) recv: recieved illegal order from scheduler: ~p~n", [Unexpected]),
             fsm(idle, Latest_floor)
@@ -48,7 +53,7 @@ fsm(idle_loop, Latest_floor) ->
 % Moving state
 fsm(moving, Latest_floor, Moving_direction, {Button_type, Floor}) ->
     io:format("FSM: moving~n"),
-    node_communicator ! {reached_new_state, {Moving_direction, Latest_floor}},
+    node_communicator ! {reached_new_state, #state{movement = Moving_direction, floor = Latest_floor}},
     fsm(moving_loop, Latest_floor, Moving_direction, {Button_type, Floor});
 
 fsm(moving_loop, Latest_floor, Moving_direction, {Button_type, Floor}) ->

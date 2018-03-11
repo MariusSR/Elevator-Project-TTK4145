@@ -36,7 +36,7 @@ main_loop(Orders, Elevator_states) ->
                 true ->
                     ok; % Only added locally, no acknowledge needed
                 false ->
-                    node_communicator ! {order_added, Hall_order}
+                    node_communicator ! {order_added, Hall_order, From_node}
             end,
             case lists:member(Hall_order, Orders#orders.assigned_hall_orders ++ Orders#orders.unassigned_hall_orders) of
                 true ->
@@ -104,9 +104,13 @@ main_loop(Orders, Elevator_states) ->
             main_loop(Orders, Elevator_states);
 
         {get_unassigned_order, PID} when is_pid(PID) ->
-            Oldest_unassigned_hall_order = hd(Orders#orders.unassigned_hall_orders),
-            node_communicator ! {new_order_assigned, Oldest_unassigned_hall_order},
-            PID ! Oldest_unassigned_hall_order,
+            case Orders#orders.unassigned_hall_orders of
+                [] ->
+                    PID ! no_orders_available;
+                [Oldest_unassigned_hall_order|_Tail] ->
+                    node_communicator ! {new_order_assigned, Oldest_unassigned_hall_order},
+                    PID ! Oldest_unassigned_hall_order
+            end,
             main_loop(Orders, Elevator_states)
     end.
 

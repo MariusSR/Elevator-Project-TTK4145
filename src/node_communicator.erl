@@ -9,14 +9,14 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 -module(node_communicator).
--export([node_communicator/0]).
+-export([start/0]).
 -include("parameters.hrl").
 -record(state,  {movement, floor}).
 
 % TODO: spawn from gloabl spawner, remember there is only coments for LED now
 % TODO: remove unnecessary comments
 
-node_communicator() ->
+start() ->
     main_loop().
 
 main_loop() ->
@@ -41,7 +41,7 @@ main_loop() ->
         {ack_order, Order} when is_tuple(Order) ->
             io:format("Received: ack_order\n"),
             order_manager ! {add_order, Order, node()},
-            lists:foreach(fun(Node) -> {node_communicator, Node} ! {set_order_button_LED, on, Order, node()} end, [nodes()|nodes()]),
+            lists:foreach(fun(Node) -> {node_communicator, Node} ! {set_order_button_LED, on, Order} end, [node()|nodes()]),
             main_loop();
         
         {new_order_assigned, Order} when is_tuple(Order) ->
@@ -54,12 +54,12 @@ main_loop() ->
             order_manager ! {mark_order_assigned, Order},
             main_loop();
         
-        {led_on, {Button_type, Floor}} when is_atom(Button_type) andalso Floor >= 1 andalso Floor =< ?NUMBER_OF_FLOORS ->
-            io:format("Received: order_on\n"),
+        {set_order_button_LED, on, {Button_type, Floor}} when is_atom(Button_type) andalso Floor >= 1 andalso Floor =< ?NUMBER_OF_FLOORS ->
+            io:format("Received: LED_on\n"),
             driver ! {set_order_button_LED, Button_type, Floor, on},
             main_loop();
-        {led_off, {Button_type, Floor}} when is_atom(Button_type) andalso Floor >= 1 andalso Floor =< ?NUMBER_OF_FLOORS ->
-            io:format("Received: order_off\n"),
+        {set_order_button_LED, off, {Button_type, Floor}} when is_atom(Button_type) andalso Floor >= 1 andalso Floor =< ?NUMBER_OF_FLOORS ->
+            io:format("Received: LED_off\n"),
             driver ! {set_order_button_LED, Button_type, Floor, off},
             main_loop();
         
