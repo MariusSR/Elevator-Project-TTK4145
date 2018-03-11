@@ -1,11 +1,5 @@
 
 1) Skal vi ha med missing_orders? I så fall må en del endres i order_manager og node_communication
 2) Må assigning av en order ackes? Altså når den flyttes fra unass til ass.
-3) Sjekk om det faktsik går å sende til 
-
-
-Kladd til algoritme:
-
-Når heis A er idle:
-    si fra til order_manager
-    order_manager
+3) Sjekk om det faktsik går å sende til
+4) Cab orders må ikke måtte kreve ack for å utføre dem! Skal lamper også dennes? Vil anta det.
