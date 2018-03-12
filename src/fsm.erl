@@ -39,6 +39,7 @@ fsm(idle_loop, Latest_floor) ->
                     fsm(moving, Latest_floor, Moving_direction, Order)
                 end;
         no_orders_available ->
+            timer:sleep(500),
             fsm(idle_loop, Latest_floor);
         Unexpected ->
             io:format("Unexpected error in fsm(idle_loop) recv: recieved illegal order from scheduler: ~p~n", [Unexpected]),
@@ -50,7 +51,7 @@ fsm(idle_loop, Latest_floor) ->
 
 % Moving state
 fsm(moving, Latest_floor, Moving_direction, {Button_type, Floor}) ->
-    io:format("FSM: moving~n"),
+    io:format("FSM: moving with order: ~p~n", [{Button_type, Floor}]),
     node_communicator ! {reached_new_state, #state{movement = Moving_direction, floor = Latest_floor}},
     fsm(moving_loop, Latest_floor, Moving_direction, {Button_type, Floor});
 
@@ -63,13 +64,15 @@ fsm(moving_loop, Latest_floor, Moving_direction, {Button_type, Floor}) ->
             fsm(moving_loop, Latest_floor, Moving_direction, Order);
         {floor, New_floor} ->
             io:format("on_floor, ~p~n", [New_floor]),
+            node_communicator ! {reached_new_state, #state{movement = Moving_direction, floor = Latest_floor}},
             case New_floor of
                 _Floor when New_floor == Floor orelse (New_floor == ?NUMBER_OF_FLOORS andalso Moving_direction == up_dir) orelse 
                            (New_floor == 1 andalso Moving_direction == down_button) -> 
                     driver ! {set_motor_dir, stop_dir},
                     fsm(stopped, New_floor, Order);
                 _Floor ->
-                    order_manger ! {should_elevator_stop, New_floor, Moving_direction, self()},                                       %%DEBUG
+                    io:format("DEBUG order_man ! ~p, ~p, ~p, ~p\n", [should_elevator_stop, New_floor, Moving_direction, self()]),
+                    order_manager ! {should_elevator_stop, New_floor, Moving_direction, self()},
                     receive 
                         true ->
                             driver ! {set_motor_dir, stop_dir},

@@ -3,3 +3,4 @@
 2) Må assigning av en order ackes? Altså når den flyttes fra unass til ass.
 3) Sjekk om det faktsik går å sende til
 4) Cab orders må ikke måtte kreve ack for å utføre dem! Skal lamper også dennes? Vil anta det.
+5) Husk å lagre hvilken heis som har assignet en ordre, typ bruk den 'Node'-parameteren vi sender til noe fornuftig 

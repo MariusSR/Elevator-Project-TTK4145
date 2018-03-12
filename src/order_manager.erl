@@ -109,7 +109,7 @@ main_loop(Orders, Elevator_states) ->
             main_loop(Orders, Elevator_states);
 
         {get_unassigned_order, PID} when is_pid(PID) ->
-            io:format("Got: Get unassigned order in Order Manager\n"),
+            %io:format("Got: Get unassigned order in Order Manager\n"),
             case Orders#orders.unassigned_hall_orders of
                 [] ->
                     PID ! no_orders_available;
