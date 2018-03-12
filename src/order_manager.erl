@@ -85,7 +85,7 @@ main_loop(Orders, Elevator_states) ->
         %% Update state of 'Node' in 'Elevator_states', adding it if not present
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         {update_state, Node, New_state} when is_atom(Node) andalso is_record(New_state, state) ->
-            io:format("Received update state in Order Manager, NODE: ~p, STATE: ~p\n", [Node, New_state]),
+            io:format("Received update state in Order Manager, NODE: ~p, STATE: ~w\n", [Node, New_state]),
             Updated_states = dict:store(Node, New_state, Elevator_states),
             main_loop(Orders, Updated_states);
 
