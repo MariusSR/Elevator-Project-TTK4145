@@ -62,9 +62,11 @@ fsm(moving_loop, Latest_floor, Moving_direction, {Button_type, Floor}) ->
         between_floors ->
             timer:sleep(?FLOOR_SENSOR_SLEEP_BETWEEN_FLOORS),
             fsm(moving_loop, Latest_floor, Moving_direction, Order);
-        {floor, New_floor} ->
+        {floor, New_floor} when New_floor == Latest_floor ->
+            ok;        
+        {floor, New_floor} when New_floor /= Latest_floor ->
             io:format("on_floor, ~p~n", [New_floor]),
-            node_communicator ! {reached_new_state, #state{movement = Moving_direction, floor = Latest_floor}},
+            node_communicator ! {reached_new_state, #state{movement = Moving_direction, floor = New_floor}},
             case New_floor of
                 _Floor when New_floor == Floor orelse (New_floor == ?NUMBER_OF_FLOORS andalso Moving_direction == up_dir) orelse 
                            (New_floor == 1 andalso Moving_direction == down_button) -> 
@@ -82,7 +84,8 @@ fsm(moving_loop, Latest_floor, Moving_direction, {Button_type, Floor}) ->
                     after
                         1000 ->
                             io:format("Timeout in fsm(moving) on should_elevator_stop~n")
-                    end
+                    end,
+                    fsm(moving_loop, New_floor, Moving_direction, {Button_type, Floor}) 
             end;
             
         {error, Reason} ->
