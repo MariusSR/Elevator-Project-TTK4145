@@ -24,8 +24,8 @@ main_loop() ->
     
     receive
         {new_order, {cab_button, Floor}} ->
-            io:format("Received: new_cab_order~p\n", [Order]),
-            node_communicator ! {add_order, {cab_button, Floor}, node()}
+            io:format("Received: new_cab_order~p\n", [{cab_button, Floor}]),
+            node_communicator ! {add_order, {cab_button, Floor}, node()};
 
         {new_order, Order} when is_tuple(Order) ->
             io:format("Received: new_hall_order~p\n", [Order]),
