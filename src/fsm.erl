@@ -66,6 +66,7 @@ fsm(moving_loop, Latest_floor, Moving_direction, {Button_type, Floor}) ->
             ok;        
         {floor, New_floor} when New_floor /= Latest_floor ->
             io:format("on_floor, ~p~n", [New_floor]),
+            driver ! {set_floor_led, New_floor},
             node_communicator ! {reached_new_state, #state{movement = Moving_direction, floor = New_floor}},
             case New_floor of
                 _Floor when New_floor == Floor orelse (New_floor == ?NUMBER_OF_FLOORS andalso Moving_direction == up_dir) orelse 
@@ -158,6 +159,7 @@ init_elevator_loop() ->
             init_elevator_loop();
         {floor, Latest_floor} ->
             driver ! {set_motor_dir, stop_dir},
+            driver ! {set_floor_LED, Latest_floor},
             Latest_floor;
         Unexpected ->
             io:format("Unexpected msg received in fsm.erl:~p\n", [Unexpected])
