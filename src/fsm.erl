@@ -22,9 +22,9 @@ fsm(idle, Latest_floor) ->
     fsm(idle_loop, Latest_floor);
 
 fsm(idle_loop, Latest_floor) ->
-    order_manager ! get_unassigned_order, 
+    order_manager ! {get_unassigned_order, self()}, 
     %marius ! is_idle,         %%DEGUB
-    io:format("ER I IDLE OG VENTER PÅ ORDRE!\n"),
+    %io:format("ER I IDLE OG VENTER PÅ ORDRE!\n"),
     receive 
         {Button_type, Floor} when is_atom(Button_type) andalso Floor =< ?NUMBER_OF_FLOORS andalso Floor >= 1 ->
             Order = {Button_type, Floor},
