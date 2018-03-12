@@ -98,13 +98,13 @@ fsm(moving_loop, Latest_floor, Moving_direction, {Button_type, Floor}) ->
 % Stopped state
 fsm(stopped, Latest_floor, {Button_type, Floor}) ->
     io:format("FSM: Stopped~n"),
-    case Latest_floor of 
-        Floor ->
+    %case Latest_floor of 
+    %    Floor ->
             driver ! {set_door_open_LED, on},
             fsm(door_open, Latest_floor, {Button_type, Floor});
-        _Floor ->
-            fsm(idle, Latest_floor)
-    end;
+    %    _Floor ->
+    %        fsm(idle, Latest_floor)
+    %end;
 
 % Door open state
 fsm(door_open, Latest_floor, {Button_type, Floor}) ->
@@ -113,16 +113,24 @@ fsm(door_open, Latest_floor, {Button_type, Floor}) ->
     timer:sleep(?DOOR_OPEN_TIME),
     driver ! {set_door_open_LED, off},
     io:format("FSM: Closed door~n"),
+
+    case Button_type of
+        cab_button ->
+            node_communicator ! {order_finished, {Button_type, Latest_floor}};
+        _Button ->
+            node_communicator ! {order_finished, {Button_type, Latest_floor}},
+            node_communicator ! {order_finished, {cab_button, Latest_floor}}
+    end,
     
     case Latest_floor == Floor of
         true ->
-            case Button_type of
-                cab_button ->
-                    node_communicator ! {order_finished, Order};
-                _Button ->
-                    node_communicator ! {order_finished, Order},
-                    node_communicator ! {order_finished, {cab_button, Floor}}
-            end,            
+            % case Button_type of
+            %     cab_button ->
+            %         node_communicator ! {order_finished, Order};
+            %     _Button ->
+            %         node_communicator ! {order_finished, Order},
+            %         node_communicator ! {order_finished, {cab_button, Floor}}
+            % end,            
             fsm(idle, Latest_floor);
         false ->
             Moving_direction = choose_direction(Order, Latest_floor),
