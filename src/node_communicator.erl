@@ -23,8 +23,12 @@ start() ->
 main_loop() ->
     
     receive
+        {new_order, {cab_button, Floor}} ->
+            io:format("Received: new_cab_order~p\n", [Order]),
+            node_communicator ! {add_order, {cab_button, Floor}, node()}
+
         {new_order, Order} when is_tuple(Order) ->
-            io:format("Received: new_order~p\n", [Order]),
+            io:format("Received: new_hall_order~p\n", [Order]),
             lists:foreach(fun(Node) -> {node_communicator, Node} ! {add_order, Order, node()} end, nodes());
 
         {add_order, Order, From_node} when is_tuple(Order) andalso is_atom(From_node) ->
@@ -35,8 +39,13 @@ main_loop() ->
             io:format("Received: order_added\n"),
             {node_communicator, From_node} ! {ack_order, Order};
         
+        {ack_order, {cab_button, Floor}} ->
+            io:format("Received: ack_cab_order\n"),
+            order_manager ! {add_order, {cab_button, Floor}, node()},
+            node_communicator ! {set_order_button_LED, on, {cab_button, Floor}};
+
         {ack_order, Order} when is_tuple(Order) ->
-            io:format("Received: ack_order\n"),
+            io:format("Received: ack_hall_order\n"),
             order_manager ! {add_order, Order, node()},
             lists:foreach(fun(Node) -> {node_communicator, Node} ! {set_order_button_LED, on, Order} end, [node()|nodes()]);
         
