@@ -10,23 +10,18 @@ start() ->
 
 main_loop(Orders, Elevator_states) ->
     receive
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        %---------------------------------------------------------------------------------------------
         %% Acknowledge the order and append it to correspoding list of 'Orders' if not already present
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %% Cab orders
         {add_order, {cab_button, Floor}, From_node} when Floor >= 1 andalso Floor =< ?NUMBER_OF_FLOORS andalso is_atom(From_node) ->
             io:format("Received add order in Order Manager:~p\n", [{cab_button, Floor}]),
-            case From_node == node() of
-                true ->
-                    ok; % Only added locally, no acknowledge needed
-                false ->
-                    node_communicator ! {order_added, {cab_button, Floor}, From_node}
-            end,
-            case lists:member(Floor, Orders#orders.cab_orders) of
+            case lists:member({cab_button, Floor}, Orders#orders.cab_orders) of
                 true ->
                     main_loop(Orders, Elevator_states);
                 false ->
-                    Updated_orders = Orders#orders{cab_orders = Orders#orders.cab_orders ++ [Floor]},
+                    Updated_orders = Orders#orders{cab_orders = Orders#orders.cab_orders ++ [{cab_button, Floor}]},
+                    node_communicator ! {set_order_button_LED, on, {cab_button, Floor}},
                     main_loop(Updated_orders, Elevator_states)
             end;
         %% Hall orders
@@ -35,7 +30,7 @@ main_loop(Orders, Elevator_states) ->
             Hall_order = {Hall_button, Floor},
             case From_node == node() of
                 true ->
-                    ok; % Only added locally, no acknowledge needed
+                    ok; % Should not send acknowledge as it is to be added locally only
                 false ->
                     node_communicator ! {order_added, Hall_order, From_node}
             end,
@@ -109,13 +104,13 @@ main_loop(Orders, Elevator_states) ->
             main_loop(Orders, Elevator_states);
 
         {get_unassigned_order, PID} when is_pid(PID) ->
-            %io:format("Got: Get unassigned order in Order Manager\n"),
-            case Orders#orders.unassigned_hall_orders of
+            %io:format("Got: Get unassigned order in Order Manager\n")
+            case Orders#orders.unassigned_hall_orders ++ Orders#orders.cab_orders of
                 [] ->
                     PID ! no_orders_available;
-                [Oldest_unassigned_hall_order|_Tail] ->
-                    node_communicator ! {new_order_assigned, Oldest_unassigned_hall_order},
-                    PID ! Oldest_unassigned_hall_order
+                [Next_order|_Tail] ->
+                    node_communicator ! {new_order_assigned, Next_order},
+                    PID ! Next_order
             end,
             main_loop(Orders, Elevator_states)
     end.
@@ -132,3 +127,4 @@ main_loop(Orders, Elevator_states) ->
     % get_idle_elevator(Elevator_states) ->
     %     Is_idle = fun(_Key, Dictionary_value) -> Dictionary_value#state.movement == idle end,
     %     dict:filter(Is_idle, Elevator_states).
+    %     Is_local = fun({Node, _Floor}) -> Node == node() end,
