@@ -49,9 +49,9 @@ main_loop() ->
             lists:foreach(fun(Node) -> {node_communicator, Node} ! {mark_order_assigned, Order, node()} end, [node()|nodes()]),
             main_loop();
 
-        {mark_order_assigned, Order} when is_tuple(Order) ->
+        {mark_order_assigned, Order, Node} when is_tuple(Order) ->
             io:format("Received: mark_order_assigned\n"),
-            order_manager ! {mark_order_assigned, Order},
+            order_manager ! {mark_order_assigned, Order, Node},
             main_loop();
         
         {set_order_button_LED, on, {Button_type, Floor}} when is_atom(Button_type) andalso Floor >= 1 andalso Floor =< ?NUMBER_OF_FLOORS ->
