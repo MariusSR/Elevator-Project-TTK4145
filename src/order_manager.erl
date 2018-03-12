@@ -9,13 +9,13 @@ start() ->
     main_loop(#orders{}, dict:new()). % temporary to avoid green comoplains
 
 main_loop(Orders, Elevator_states) ->
-    io:format("Main loop of order_manager/scheduler started\n"),
     receive
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %% Acknowledge the order and append it to correspoding list of 'Orders' if not already present
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %% Cab orders
         {add_order, {cab_button, Floor}, From_node} when Floor >= 1 andalso Floor =< ?NUMBER_OF_FLOORS andalso is_atom(From_node) ->
+            io:format("Received add order in Order Manager:~p\n", [{cab_button, Floor}]),
             case From_node == node() of
                 true ->
                     ok; % Only added locally, no acknowledge needed
@@ -31,6 +31,7 @@ main_loop(Orders, Elevator_states) ->
             end;
         %% Hall orders
         {add_order, {Hall_button, Floor}, From_node} when is_atom(Hall_button) andalso Floor >= 1 andalso Floor =< ?NUMBER_OF_FLOORS andalso is_atom(From_node) ->
+            io:format("Received add order in Order Manager:~p\n", [{Hall_button, Floor}]),
             Hall_order = {Hall_button, Floor},
             case From_node == node() of
                 true ->
@@ -50,6 +51,7 @@ main_loop(Orders, Elevator_states) ->
         % Mark 'Hall_order' as assigned, moving it from unassigned to assigned of 'Orders'
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         {mark_order_assigned, Hall_order} ->
+            io:format("Received mark order assigned in Order Manager:~p\n", [Hall_order]),
             case lists:member(Hall_order, Orders#orders.assigned_hall_orders) of
                 true ->
                     main_loop(Orders, Elevator_states);
@@ -66,11 +68,13 @@ main_loop(Orders, Elevator_states) ->
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %% Cab orders
         {remove_order, {cab_button, Floor}} when Floor >= 1 andalso Floor =< ?NUMBER_OF_FLOORS ->
+            io:format("Received remove order in Order Manager:~p\n", [{cab_button, Floor}]),
             Updated_cab_orders = [X || X <- Orders#orders.cab_orders, X /= Floor],
             Updated_orders     = Orders#orders{cab_orders = Updated_cab_orders},
             main_loop(Updated_orders, Elevator_states);
         %% Hall orders
         {remove_order, {Hall_button, Floor}} when is_atom(Hall_button) andalso Floor >= 1 andalso Floor =< ?NUMBER_OF_FLOORS ->
+            io:format("Received remove order in Order Manager:~p\n", [{Hall_button, Floor}]),
             Updated_unassigned_hall_orders = [X || X <- Orders#orders.unassigned_hall_orders, X /= {Hall_button, Floor}],
             Updated_assigned_hall_orders   = [X || X <- Orders#orders.assigned_hall_orders,   X /= {Hall_button, Floor}],
             Updated_orders = Orders#orders{unassigned_hall_orders = Updated_unassigned_hall_orders,
@@ -81,6 +85,7 @@ main_loop(Orders, Elevator_states) ->
         %% Update state of 'Node' in 'Elevator_states', adding it if not present
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         {update_state, Node, New_state} when is_atom(Node) andalso is_record(New_state, state) ->
+            io:format("Received update state in Order Manager, NODE: ~p, STATE: ~p\n", [Node, New_state]),
             Updated_states = dict:store(Node, New_state, Elevator_states),
             main_loop(Orders, Updated_states);
 
@@ -104,6 +109,7 @@ main_loop(Orders, Elevator_states) ->
             main_loop(Orders, Elevator_states);
 
         {get_unassigned_order, PID} when is_pid(PID) ->
+            io:format("Got: Get unassigned order in Order Manager\n"),
             case Orders#orders.unassigned_hall_orders of
                 [] ->
                     PID ! no_orders_available;
