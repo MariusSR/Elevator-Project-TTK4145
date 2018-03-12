@@ -53,6 +53,9 @@ main_loop(Socket) ->
 		{set_stop_button_LED, off} ->
 			gen_tcp:send(Socket, [5, 0, 0, 0]);
 
+		{set_floor_LED, Floor} ->
+			gen_tcp:send(Socket, [3, Floor - 1, 0, 0]);
+
 		{get_order_button_status, up_button, Floor, PID}   when is_integer(Floor) andalso Floor >= 1 andalso Floor =< ?NUMBER_OF_FLOORS andalso is_pid(PID) ->
 			return_order_button_status(Socket, PID, 0, Floor - 1);
 		{get_order_button_status, down_button, Floor, PID} when is_integer(Floor) andalso Floor >= 1 andalso Floor =< ?NUMBER_OF_FLOORS andalso is_pid(PID) ->
