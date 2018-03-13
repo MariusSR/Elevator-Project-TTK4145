@@ -92,12 +92,12 @@ main_loop(Orders, Elevator_states) ->
         % Moving up
         {should_elevator_stop, Floor, up_dir, PID} when Floor >= 1 andalso Floor =< ?NUMBER_OF_FLOORS andalso is_pid(PID) ->
             PID ! lists:member({cab_button, Floor}, Orders#orders.cab_orders) or
-                  lists:member({up_button, Floor}, Orders#orders.unassigned_hall_orders ++ Orders#orders.unassigned_hall_orders),
+                  lists:member({up_button, Floor}, Orders#orders.unassigned_hall_orders ++ Orders#orders.assigned_hall_orders),
             main_loop(Orders, Elevator_states);
         % Moving down
         {should_elevator_stop, Floor, down_dir, PID} when Floor >= 1 andalso Floor =< ?NUMBER_OF_FLOORS andalso is_pid(PID) ->
             PID ! lists:member({cab_button, Floor}, Orders#orders.cab_orders) or
-                  lists:member({down_button, Floor}, Orders#orders.unassigned_hall_orders ++ Orders#orders.unassigned_hall_orders),
+                  lists:member({down_button, Floor}, Orders#orders.unassigned_hall_orders ++ Orders#orders.assigned_hall_orders),
             main_loop(Orders, Elevator_states);
         % Idle elevator
         {should_elevator_stop, Floor, stop_dir, PID} when is_pid(PID) ->
