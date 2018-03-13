@@ -50,13 +50,16 @@ calculate_FS({Button_type, Floor}, State_of_elevator) -> %when is_integer(Floor)
         true ->
             case is_order_in_same_direction_as_elevator_is_moving(Button_type, State_of_elevator) of
                 true ->
-                    _FS = ?NUMBER_OF_FLOORS + 1 - Distance;
+                    FS = ?NUMBER_OF_FLOORS + 1 - Distance,
+                    io:format("FSa: ~p\n", [FS]);
                 false ->
-                    _FS = ?NUMBER_OF_FLOORS - Distance
+                    FS = ?NUMBER_OF_FLOORS - Distance,
+                    io:format("FSb: ~p\n", [FS])
             end;
         false ->
-            _FS = 1
-    end.
+            FS = 1,
+            io:format("FSc: ~p\n", [FS]);
+    end,
 
 %-------------------------------------------------------------------------------------------------
 % Boolean help function. Returns true if the elevator is moving towards the order or is idle.
