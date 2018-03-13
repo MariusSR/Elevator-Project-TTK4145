@@ -7,10 +7,6 @@
 
 -record(state, {movement, floor}).
 
-% TODO: fix state communication to order_communicator (uncomment and test).
-% TODO: Ask scheduler for new order when idle (uncomment and test).
-% TODO: Send remove_order to node_communicator when order finished in open_door(uncomment and test).
-
 start() ->
     Floor = init_elevator(),
     fsm(idle, Floor).
@@ -66,7 +62,7 @@ fsm(moving_loop, Latest_floor, Moving_direction, {Button_type, Floor}) ->
             ok;        
 
         {floor, New_floor} when New_floor /= Latest_floor ->
-            io:format("on_floor, ~p~n", [New_floor]),
+            io:format("FSM: on_floor, ~p~n", [New_floor]),
             driver ! {set_floor_LED, New_floor},
             node_communicator ! {reached_new_state, #state{movement = Moving_direction, floor = New_floor}},
             case New_floor of
@@ -75,13 +71,12 @@ fsm(moving_loop, Latest_floor, Moving_direction, {Button_type, Floor}) ->
                     driver ! {set_motor_dir, stop_dir},
                     fsm(stopped, New_floor, Order);
                 _Floor ->
-                    io:format("DEBUG order_man ! ~p, ~p, ~p, ~p\n", [should_elevator_stop, New_floor, Moving_direction, self()]),
                     order_manager ! {should_elevator_stop, New_floor, Moving_direction, self()},
                     receive 
                         true ->
                             driver ! {set_motor_dir, stop_dir},
                             fsm(stopped, New_floor, Order);
-                        false ->
+                        false -> 
                             ok
                     after
                         1000 ->
@@ -89,9 +84,6 @@ fsm(moving_loop, Latest_floor, Moving_direction, {Button_type, Floor}) ->
                     end,
                     fsm(moving_loop, New_floor, Moving_direction, {Button_type, Floor}) 
             end;
-            
-        {error, Reason} ->
-            io:format("Error in fsm, fsm(moving) with reason: ~p~n", [Reason]);
         Unexpected ->
             io:format("Unexpected error in fsm, fsm(moving) with reason: ~p~n", [Unexpected])
     after 
@@ -103,13 +95,9 @@ fsm(moving_loop, Latest_floor, Moving_direction, {Button_type, Floor}) ->
 % Stopped state
 fsm(stopped, Latest_floor, {Button_type, Floor}) ->
     io:format("FSM: Stopped~n"),
-    %case Latest_floor of 
-    %    Floor ->
-            driver ! {set_door_open_LED, on},
-            fsm(door_open, Latest_floor, {Button_type, Floor});
-    %    _Floor ->
-    %        fsm(idle, Latest_floor)
-    %end;
+    driver ! {set_door_open_LED, on},
+    fsm(door_open, Latest_floor, {Button_type, Floor});
+
 
 % Door open state
 fsm(door_open, Latest_floor, {Button_type, Floor}) ->
@@ -122,7 +110,7 @@ fsm(door_open, Latest_floor, {Button_type, Floor}) ->
             node_communicator ! {order_finished, {Button_type, Latest_floor}},
             node_communicator ! {order_finished, {cab_button, Latest_floor}}
     end,
-    
+
     %sleep_func(Latest_floor),
     timer:sleep(?DOOR_OPEN_TIME),
     order_manager ! {should_elevator_stop, Latest_floor, stop_dir, self()},
