@@ -29,6 +29,7 @@ struct SimConfig {
     Duration    travelTimeBetweenFloors = 2.seconds;
     Duration    travelTimePassingFloor  = 500.msecs;
     Duration    btnDepressedTime        = 200.msecs;
+    bool        stopMotorOnDisconnect   = true;
 
     char        light_off               = '-';
     char        light_on                = '*';    
@@ -38,6 +39,7 @@ struct SimConfig {
     char        key_moveUp              = '9';
     char        key_moveStop            = '8';
     char        key_moveDown            = '7';
+    char        key_moveInbounds        = '0';
     string[]    key_orderButtons       = [
                                             "qwertyui?",
                                             "?sdfghjkl",
@@ -53,6 +55,7 @@ SimConfig parseConfig(string[] contents, SimConfig old = SimConfig.init){
     int travelTimeBetweenFloors_ms;
     int travelTimePassingFloor_ms;
     int btnDepressedTime_ms;
+    string stopMotorOnDisconnect_str;
     string key_ordersUp;
     string key_ordersDown;
     string key_ordersCab;
@@ -66,6 +69,7 @@ SimConfig parseConfig(string[] contents, SimConfig old = SimConfig.init){
         "travelTimeBetweenFloors_ms",   &travelTimeBetweenFloors_ms,
         "travelTimePassingFloor_ms",    &travelTimePassingFloor_ms,
         "btnDepressedTime_ms",          &btnDepressedTime_ms,
+        "stopMotorOnDisconnect",        &stopMotorOnDisconnect_str,
         "light_off",                    &cfg.light_off,
         "light_on",                     &cfg.light_on,
         "key_ordersUp",                 &key_ordersUp,
@@ -76,11 +80,13 @@ SimConfig parseConfig(string[] contents, SimConfig old = SimConfig.init){
         "key_moveUp",                   &cfg.key_moveUp,
         "key_moveStop",                 &cfg.key_moveStop,
         "key_moveDown",                 &cfg.key_moveDown,
+        "key_moveInbounds",             &cfg.key_moveInbounds,
     );
 
     if(travelTimeBetweenFloors_ms   != 0){  cfg.travelTimeBetweenFloors = travelTimeBetweenFloors_ms.msecs; }
     if(travelTimePassingFloor_ms    != 0){  cfg.travelTimePassingFloor  = travelTimePassingFloor_ms.msecs;  }
     if(btnDepressedTime_ms          != 0){  cfg.btnDepressedTime        = btnDepressedTime_ms.msecs;        }
+    if(stopMotorOnDisconnect_str    != ""){ cfg.stopMotorOnDisconnect   = stopMotorOnDisconnect_str.to!bool;}
     if(key_ordersUp                 != ""){ cfg.key_orderButtons[0]     = key_ordersUp ~ "?";               }
     if(key_ordersDown               != ""){ cfg.key_orderButtons[1]     = "?" ~ key_ordersDown;             }
     if(key_ordersCab                != ""){ cfg.key_orderButtons[2]     = key_ordersCab;                    }
@@ -92,7 +98,7 @@ SimConfig loadConfig(string[] cmdLineArgs, string configFileName, SimConfig old 
     try {
         old = configFileName.readText.split.parseConfig(old);
     } catch(Exception e){
-        writeln(configFileName ~ "not found, using defaults...");
+        writeln("Encountered a problem when loading ", configFileName, ": ", e.msg, "\nUsing default settings...");
         
     }
     
@@ -197,6 +203,7 @@ struct FloorDeparture {
     alias floor this;
 }
 
+struct ManualMoveWithinBounds {}
 
 /// --- LOG --- ///
 
@@ -270,6 +277,9 @@ final class SimulationState {
     int         currFloor;      // 0..numFloors, or -1 when between floors
     Dirn        departDirn;     // Only Dirn.Up or Dirn.Down
     int         prevFloor;      // 0..numFloors, never -1
+    bool        isOutOfBounds(){ return (currFloor == -1  &&  departDirn == Dirn.Down  &&  prevFloor == 0) || 
+                                        (currFloor == -1  &&  departDirn == Dirn.Up    &&  prevFloor == numFloors-1); }
+    
 
     char[][]    bg;
     bool        clientConnected;
@@ -282,10 +292,6 @@ final class SimulationState {
             "prevFloor is not between 0..numFloors");
         assert(departDirn != Dirn.Stop,
             "departDirn is Dirn.Stop");
-        assert(!(currFloor == -1  &&  departDirn == Dirn.Down  &&  prevFloor == 0),
-            "Elevator is below the bottom floor");
-        assert(!(currFloor == -1  &&  departDirn == Dirn.Up  &&  prevFloor == numFloors-1),
-            "Elevator is above the top floor");
     }
 
     void resetState(){
@@ -393,6 +399,16 @@ version(Windows){
         GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &info);
         return ConsolePoint(info.dwCursorPosition.X, info.dwCursorPosition.Y);
     }
+    
+    void clearConsoleLine(){
+        CONSOLE_SCREEN_BUFFER_INFO info;
+        GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &info);
+        
+        auto y = cursorPos().y;
+        setCursorPos(ConsolePoint(0, y));
+        writeln(' '.repeat(info.dwSize.X)); 
+        setCursorPos(ConsolePoint(0, y));
+    }
 }
 
 version(Posix){
@@ -422,6 +438,10 @@ version(Posix){
 
         return ConsolePoint(to!int(tmp[1]) - 1, to!int(tmp[0]) - 1);
     }
+    
+    void clearConsoleLine(){
+        writef("\033[K");
+    }
 }
 
 
@@ -431,13 +451,12 @@ void main(string[] args){
     try {
 
     cfg = loadConfig(args, "simulator.con");
-    
-
-    ConsolePoint cp = cursorPos;
-    cp.writeln;
-    
 
     auto state = new SimulationState(Yes.randomStart, cfg.numFloors);
+    writeln('\n'.repeat(state.bg.length.to!int+1));
+    ConsolePoint cp = cursorPos;
+    cp.y = max(0, cp.y-(state.bg.length.to!int+1));
+    
     void printState(){
         setCursorPos(cp);
         state.writeln;
@@ -477,7 +496,7 @@ void main(string[] args){
             (MotorDirection md){
                 assert(Dirn.min <= md &&  md <= Dirn.max,
                     "Tried to set motor direction to invalid direction " ~ md.to!int.to!string);
-                if(state.currDirn != md){
+                if(state.currDirn != md  &&  !state.isOutOfBounds){
                     state.currDirn = md;
 
                     if(state.currFloor == -1){
@@ -611,23 +630,33 @@ void main(string[] args){
                 addEvent(thisTid, cfg.travelTimePassingFloor, FloorDeparture(state.currFloor));
             },
             (FloorDeparture f){
-                if(state.currDirn == Dirn.Down){
-                    assert(0 < f,
-                        "Elevator departed the bottom floor going downward\n");
+                if(state.currDirn == Dirn.Down && f <= 0){
+                    writeln("Elevator departed the bottom floor going downward! ",
+                            "Press [", cfg.key_moveInbounds, "] to move the elevator within bounds...\n");
+                } else if(state.currDirn == Dirn.Up && f >= state.numFloors-1){
+                    writeln("Elevator departed the top floor going upward! ",
+                            "Press [", cfg.key_moveInbounds, "] to move the elevator within bounds...\n");
+                } else {
+                    addEvent(thisTid, cfg.travelTimeBetweenFloors, FloorArrival(state.prevFloor + state.currDirn));
                 }
-                if(state.currDirn == Dirn.Up){
-                    assert(f < state.numFloors-1,
-                        "Elevator departed the top floor going upward\n");
-                }
-
-                state.departDirn = state.currDirn;
                 state.currFloor = -1;
-                addEvent(thisTid, cfg.travelTimeBetweenFloors, FloorArrival(state.prevFloor + state.currDirn));
+                state.departDirn = state.currDirn;
+            },
+            (ManualMoveWithinBounds m){
+                if(state.isOutOfBounds){
+                    state.currFloor = state.prevFloor;
+                    state.currDirn = Dirn.Stop;
+                    state.resetBg;
+                    clearConsoleLine;
+                }
             },
 
             /// --- LOG --- ///
             (ClientConnected cc){
                 state.clientConnected = cc;
+                if(cfg.stopMotorOnDisconnect && !cc){
+                    thisTid.send(MotorDirection(Dirn.Stop));
+                }
             },
             
 
@@ -728,6 +757,9 @@ void stdinParseProc(Tid receiver){
                 }
                 if(c == cfg.key_moveDown){
                     receiver.send(MotorDirection(Dirn.Down));
+                }
+                if(c == cfg.key_moveInbounds){
+                    receiver.send(ManualMoveWithinBounds());
                 }
             }
         );
