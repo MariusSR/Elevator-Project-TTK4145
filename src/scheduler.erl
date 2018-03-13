@@ -12,9 +12,8 @@ get_most_efficient_order([], _Elevator_states) ->
     no_orders_available;
 get_most_efficient_order([Order|Remaining_orders_to_evaluate], Elevator_states) ->
     %This_node = node(),
-    case get_optmial_elevator_for_order([node()|nodes()], Order, Elevator_states, {node(), -1}) == node() of
+    case node() == get_optmial_elevator_for_order([node()|nodes()], Order, Elevator_states, {node(), -1}) of
         true ->
-            io:format("JEG KOM HIT I HVERT FALL\n"),
             Order;
         false ->
             get_most_efficient_order(Remaining_orders_to_evaluate, Elevator_states)
@@ -27,12 +26,17 @@ get_most_efficient_order([Order|Remaining_orders_to_evaluate], Elevator_states) 
 get_optmial_elevator_for_order([], _Order, _Elevator_states, {Node, _FS}) ->
     Node;
 get_optmial_elevator_for_order([Node|Remaining_nodes_to_evaluate], Order, Elevator_states, Best) ->
-    FS_for_this_node = calculate_FS(Order, dict:find(Node, Elevator_states)),
-    case FS_for_this_node > element(2, Best) of
-        true ->
-            get_optmial_elevator_for_order(Remaining_nodes_to_evaluate, Order, Elevator_states, {Node, FS_for_this_node});
-        false ->
-            get_optmial_elevator_for_order(Remaining_nodes_to_evaluate, Order, Elevator_states, Best)
+    case dict:find(Node, Elevator_states) of
+        error ->
+            ok;
+        {ok, State_of_elevator} ->
+            FS_for_this_node = calculate_FS(Order, State_of_elevator),
+            case FS_for_this_node > element(2, Best) of
+                true ->
+                    get_optmial_elevator_for_order(Remaining_nodes_to_evaluate, Order, Elevator_states, {Node, FS_for_this_node});
+                false ->
+                    get_optmial_elevator_for_order(Remaining_nodes_to_evaluate, Order, Elevator_states, Best)
+            end
     end.
 
 %-------------------------------------------------------------------------------------------------
@@ -40,11 +44,14 @@ get_optmial_elevator_for_order([Node|Remaining_nodes_to_evaluate], Order, Elevat
 % FS = number of floors + X - distance to order, where X = 1 if order is in the same direction as
 % the elevator is moving and X = 0 if the order is in the oposite direcation as the elevator.
 %-------------------------------------------------------------------------------------------------
-calculate_FS({Button_type, Floor}, State_of_Elevator) ->
-    Distance = abs(Floor - State_of_Elevator#state.floor),
-    case is_elevator_moving_towards_order(Floor, State_of_Elevator) of
+calculate_FS({Button_type, Floor}, State_of_elevator) -> %when is_integer(Floor) andalso is_record(State_of_elevator, state) ->
+    io:format("WALLALLALALALAA,"),
+    Distance = abs(Floor - State_of_elevator#state.floor),
+    io:format("ABSABSABSABS\n"),
+    case is_elevator_moving_towards_order(Floor, State_of_elevator) of
         true ->
-            case is_order_in_same_direction_as_elevator_is_moving(Button_type, State_of_Elevator) of
+            io:format("TRUUUUUUUUETEMUND\n"),
+            case is_order_in_same_direction_as_elevator_is_moving(Button_type, State_of_elevator) of
                 true ->
                     _FS = ?NUMBER_OF_FLOORS + 1 - Distance;
                 false ->
@@ -57,15 +64,15 @@ calculate_FS({Button_type, Floor}, State_of_Elevator) ->
 %-------------------------------------------------------------------------------------------------
 % Boolean help function. Returns true if the elevator is moving towards the order or is idle.
 %-------------------------------------------------------------------------------------------------
-is_elevator_moving_towards_order(Order_floor, State_of_Elevator) ->
-    (State_of_Elevator#state.movement == up_dir)   and (Order_floor >= State_of_Elevator#state.floor) or
-    (State_of_Elevator#state.movement == down_dir) and (Order_floor =< State_of_Elevator#state.floor) or
-    (State_of_Elevator#state.movement == stop_dir).
+is_elevator_moving_towards_order(Order_floor, State_of_elevator) ->
+    (State_of_elevator#state.movement == up_dir)   and (Order_floor >= State_of_elevator#state.floor) or
+    (State_of_elevator#state.movement == down_dir) and (Order_floor =< State_of_elevator#state.floor) or
+    (State_of_elevator#state.movement == stop_dir).
 
 %-------------------------------------------------------------------------------------------------
 % Boolean help function. Returns true if the order and elevator is in the same direction.
 %-------------------------------------------------------------------------------------------------
-is_order_in_same_direction_as_elevator_is_moving(up_button, State_of_Elevator) ->
-    State_of_Elevator#state.movement == up_dir;
-is_order_in_same_direction_as_elevator_is_moving(down_button, State_of_Elevator) ->
-    State_of_Elevator#state.movement == down_dir.
+is_order_in_same_direction_as_elevator_is_moving(up_button, State_of_elevator) ->
+    State_of_elevator#state.movement == up_dir;
+is_order_in_same_direction_as_elevator_is_moving(down_button, State_of_elevator) ->
+    State_of_elevator#state.movement == down_dir.

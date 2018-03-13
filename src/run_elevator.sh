@@ -1,3 +1,5 @@
+clear
+
 # Start ElevatorServer
 pkill ElevatorServer
 ~/.cargo/bin/ElevatorServer & disown
