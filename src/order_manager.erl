@@ -116,6 +116,7 @@ main_loop(Orders, Elevator_states) ->
                         no_orders_available ->
                             PID ! no_orders_available;
                         Order ->
+                            node_communicator ! {new_order_assignend, Order},
                             PID ! Order
                     end
             end,
