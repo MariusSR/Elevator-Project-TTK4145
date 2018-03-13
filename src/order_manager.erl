@@ -10,7 +10,7 @@ start() ->
 
 main_loop(Orders, Elevator_states) ->
     io:format("Orders: ~p         ~p         ~p~n", [Orders#orders.assigned_hall_orders, Orders#orders.unassigned_hall_orders, Orders#orders.cab_orders]),
-    io:format("States: ~p\n", [Elevator_states]),
+    %io:format("States: ~p\n", [Elevator_states]),
     receive
         %----------------------------------------------------------------------------------------------
         % Acknowledge the order and append it to correspoding list of 'Orders' if not already present
@@ -110,15 +110,12 @@ main_loop(Orders, Elevator_states) ->
         {get_unassigned_order, PID} when is_pid(PID) ->            
             case Orders#orders.cab_orders of
                 [Order|_Remaining_orders] ->
-                    io:format("TILDELTE CAB\n"),
                     PID ! Order;
                 [] ->
                     case scheduler:get_most_efficient_order(Orders#orders.unassigned_hall_orders, Elevator_states) of
                         no_orders_available ->
-                            io:format("JEG HADDE IKKE NOE\n"),
                             PID ! no_orders_available;
                         Order ->
-                            io:format("TILDELTE HALL ORDER\n"),
                             PID ! Order
                     end
             end,
