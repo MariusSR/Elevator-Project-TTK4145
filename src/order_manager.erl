@@ -9,7 +9,8 @@ start() ->
     main_loop(#orders{}, dict:new()). % temporary to avoid green comoplains
 
 main_loop(Orders, Elevator_states) ->
-    io:format("Orders: ~p         ~p         ~p~n", [Orders#orders.assigned_hall_orders, Orders#orders.unassigned_hall_orders, Orders#orders.cab_orders]),
+    %io:format("Orders: ~p         ~p         ~p~n", [Orders#orders.assigned_hall_orders, Orders#orders.unassigned_hall_orders, Orders#orders.cab_orders]),
+    io:format("States: ~p\n", [Elevator_states]),
     receive
         %---------------------------------------------------------------------------------------------
         %% Acknowledge the order and append it to correspoding list of 'Orders' if not already present
