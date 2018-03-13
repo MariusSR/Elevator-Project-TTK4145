@@ -21,7 +21,6 @@ start() ->
     main_loop().
 
 main_loop() ->
-    
     receive
         {new_order, {cab_button, Floor}} ->
             %io:format("Received: new_cab_order~p\n", [{cab_button, Floor}]),
