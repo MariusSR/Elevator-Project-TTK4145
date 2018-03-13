@@ -115,7 +115,7 @@ main_loop(Orders, Elevator_states) ->
                 [] ->
                     case scheduler:get_most_efficient_order(Orders#orders.unassigned_hall_orders, Elevator_states) of
                         no_orders_available ->
-                        io:format("JEG HADDE IKKE NOE\n"),
+                            io:format("JEG HADDE IKKE NOE\n"),
                             PID ! no_orders_available;
                         Order ->
                             io:format("TILDELTE HALL ORDER\n"),
