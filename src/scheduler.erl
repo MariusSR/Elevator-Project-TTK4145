@@ -51,14 +51,14 @@ calculate_FS({Button_type, Floor}, State_of_elevator) -> %when is_integer(Floor)
             case is_order_in_same_direction_as_elevator_is_moving(Button_type, State_of_elevator) of
                 true ->
                     FS = ?NUMBER_OF_FLOORS + 1 - Distance,
-                    io:format("FSa: ~p\n", [FS]);
+                    io:format("        FSa: ~p ~p ~p\n", [FS, Button_type, Floor]);
                 false ->
                     FS = ?NUMBER_OF_FLOORS - Distance,
-                    io:format("FSb: ~p\n", [FS])
+                    io:format("        FSb: ~p ~p ~p\n", [FS, Button_type, Floor])
             end;
         false ->
             FS = 1,
-            io:format("FSc: ~p\n", [FS])
+            io:format("        FSc: ~p ~p ~p\n", [FS, Button_type, Floor])
     end.
 
 %-------------------------------------------------------------------------------------------------
