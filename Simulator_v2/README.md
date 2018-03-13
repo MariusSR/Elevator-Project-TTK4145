@@ -31,7 +31,7 @@ The simulator has several configuration options, which you can find [listed here
  You can start multiple simulators with different port numbers to run multiple elevators on a single machine.
  - `--numfloors`: The number of floors 2 to 9), which defaults to 4.
  
-Options passed on the command line (eg. `./sim_server --port 12345`) override the options in the the `simulator.con` config file, which in turn override the defaults baked in to the program. `simulator.con` must exist in the same folder as the executable in order to be loaded.
+Options passed on the command line (eg. `./SimElevatorServer --port 12345`) override the options in the the `simulator.con` config file, which in turn override the defaults baked in to the program. `simulator.con` must exist in the same folder as the executable in order to be loaded.
 
 Options are not case sensitive.
  
@@ -45,6 +45,7 @@ Default keyboard controls
  - Stop: `p`
  - Obstruction: `-`
  - Motor manual override: Down: `7`, Stop: `8`, Up: `9`
+ - Move elevator back in bounds (away from the end stop switches): `0`
 
 Up, down, cab and stop buttons can be toggled (and thereby held down) by using uppercase letters.
 
@@ -198,6 +199,7 @@ Protocol
     </tbody>
 </table>
 
+Button types (for reading the button and setting the button light) are in the order `0: Hall Up`, `1: Hall Down`, `2: Cab`.
 
 Since interfacing is done over TCP, you can also use command-line utilities to interface with the simulator server. For example, to read the current floor:
 ```bash
