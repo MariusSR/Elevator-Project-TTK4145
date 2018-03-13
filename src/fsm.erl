@@ -78,13 +78,13 @@ fsm(moving_loop, Latest_floor, Moving_direction, {Button_type, Floor}) ->
                             driver ! {set_door_open_LED, on},
                             case Moving_direction of 
                                 up_dir ->
-                                    node_communicator ! {order_finished, {up_button, Latest_floor}};
+                                    node_communicator ! {order_finished, {up_button, New_floor}};
                                 down_dir ->
-                                    node_communicator ! {order_finished, {down_button, Latest_floor}};
+                                    node_communicator ! {order_finished, {down_button, New_floor}};
                                 Unexpected ->
                                     io:format("Unexpected error in fsm, fsm(moving) with reason: ~p~n", [Unexpected])
                                 end,
-                                node_communicator ! {order_finished, {cab_button, Latest_floor}},
+                                node_communicator ! {order_finished, {cab_button, New_floor}},
                             fsm(stopped, New_floor, Order);
                         false -> 
                             ok
