@@ -1,22 +1,22 @@
 -module(scheduler).
 -export([get_most_efficient_order/2]).
--include(parameters.hrl)
+-include("parameters.hrl").
 
--record(orders, {assigned_hall_orders = [], unassigned_hall_orders = [], cab_orders = []}).
 -record(state,  {movement, floor}).
 
 %-------------------------------------------------------------------------------------------------
 % Searches for an order that is best served by this local node. Returns this order if found, else
 % returns 'no_order_available'. This is done by recursively iterating over all unassgned orders.
 %-------------------------------------------------------------------------------------------------
-get_most_efficient_order([], Elevator_states) ->
-    no_order_avilable.
+get_most_efficient_order([], _Elevator_states) ->
+    no_orders_available;
 get_most_efficient_order([Order|Remaining_orders_to_evaluate], Elevator_states) ->
+    This_node = node(),
     case get_optmial_elevator_for_order([node()|nodes()], Order, Elevator_states, {node(), -1}) of
-        node() ->
+        This_node ->
             Order;
-        Else ->
-            get_optmial_elevator_for_order(Remaining_orders_to_evaluate, Elevator_states)
+        _Else ->
+            get_most_efficient_order(Remaining_orders_to_evaluate, Elevator_states)
     end.
 
 %-------------------------------------------------------------------------------------------------
@@ -24,14 +24,14 @@ get_most_efficient_order([Order|Remaining_orders_to_evaluate], Elevator_states) 
 % whos FS value is the gratest. This is done by recurcively iterating over all elevators.
 %-------------------------------------------------------------------------------------------------
 get_optmial_elevator_for_order([], _Order, _Elevator_states, {Node, _FS}) ->
-    Node.
+    Node;
 get_optmial_elevator_for_order([Node|Remaining_nodes_to_evaluate], Order, Elevator_states, Best) ->
     FS_for_this_node = calculate_FS(Order, dict:find(Node, Elevator_states)),
     case FS_for_this_node > element(2, Best) of
         true ->
-            get_optmial_elevator_for_order(Remaining_nodes_to_evaluate, Order, {Node, FS_for_this_node});
+            get_optmial_elevator_for_order(Remaining_nodes_to_evaluate, Order, Elevator_states, {Node, FS_for_this_node});
         false ->
-            get_optmial_elevator_for_order(Remaining_nodes_to_evaluate, Order, Best)
+            get_optmial_elevator_for_order(Remaining_nodes_to_evaluate, Order, Elevator_states, Best)
     end.
 
 %-------------------------------------------------------------------------------------------------
@@ -39,7 +39,7 @@ get_optmial_elevator_for_order([Node|Remaining_nodes_to_evaluate], Order, Elevat
 % FS = number of floors + X - distance to order, where X = 1 if order is in the same direction as
 % the elevator is moving and X = 0 if the order is in the oposite direcation as the elevator.
 %-------------------------------------------------------------------------------------------------
-calculate_FS({Button_type, Floor}}, State_of_Elevator) ->
+calculate_FS({Button_type, Floor}, State_of_Elevator) ->
     Distance = abs(Floor - State_of_Elevator#state.floor),
     case is_elevator_moving_towards_order(Floor, State_of_Elevator) of
         true ->
