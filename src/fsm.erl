@@ -77,7 +77,7 @@ fsm(moving_loop, Latest_floor, Moving_direction, {Button_type, Floor}) ->
                             node_communicator ! {order_finished, {Button_type, Floor}},
                             node_communicator ! {order_finished, {cab_button, Floor}}
                     end,
-                    fsm(door_open, Latest_floor, {Button_type, Floor});
+                    fsm(door_open, New_floor, {Button_type, Floor});
                 _Floor ->
                     order_manager ! {should_elevator_stop, New_floor, Moving_direction, self()},
                     receive 
