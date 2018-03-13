@@ -18,6 +18,7 @@ fsm(idle, Latest_floor) ->
     fsm(idle_loop, Latest_floor);
 
 fsm(idle_loop, Latest_floor) ->
+    io:format("FSM: Idle_loop~n"),
     order_manager ! {get_unassigned_order, self()},
     receive 
         {Button_type, Floor} when is_atom(Button_type) andalso Floor =< ?NUMBER_OF_FLOORS andalso Floor >= 1 ->
@@ -36,12 +37,14 @@ fsm(idle_loop, Latest_floor) ->
                 end;
         no_orders_available ->
             timer:sleep(500),
+             io:format("bbbbb\n"),
             fsm(idle_loop, Latest_floor);
         Unexpected ->
             io:format("Unexpected error in fsm(idle_loop) recv: recieved illegal order from scheduler: ~p~n", [Unexpected]),
             fsm(idle, Latest_floor)
     after
         2000 ->
+            io:format("aaaaa\n"),
             fsm(idle_loop, Latest_floor)
     end.
 
@@ -52,6 +55,7 @@ fsm(moving, Latest_floor, Moving_direction, {Button_type, Floor}) ->
     fsm(moving_loop, Latest_floor, Moving_direction, {Button_type, Floor});
 
 fsm(moving_loop, Latest_floor, Moving_direction, {Button_type, Floor}) ->
+    io:format("FSM: moving_loop ~p~n", [{Button_type, Floor}]),
     Order = {Button_type, Floor},
     driver ! {get_floor, self()},
     receive 
@@ -62,7 +66,6 @@ fsm(moving_loop, Latest_floor, Moving_direction, {Button_type, Floor}) ->
             ok;        
 
         {floor, New_floor} when New_floor /= Latest_floor ->
-            %io:format("FSM: onfloor, ~p~n", [New_floor]),
             driver ! {set_floor_LED, New_floor},
             node_communicator ! {reached_new_state, #state{movement = Moving_direction, floor = New_floor}},
             case New_floor of
