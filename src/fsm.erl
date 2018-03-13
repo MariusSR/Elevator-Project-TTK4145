@@ -69,7 +69,15 @@ fsm(moving_loop, Latest_floor, Moving_direction, {Button_type, Floor}) ->
                 _Floor when New_floor == Floor orelse (New_floor == ?NUMBER_OF_FLOORS andalso Moving_direction == up_dir) orelse 
                            (New_floor == 1 andalso Moving_direction == down_button) -> 
                     driver ! {set_motor_dir, stop_dir},
-                    fsm(stopped, New_floor, Order);
+                    driver ! {set_door_open_LED, on},
+                    case Button_type of
+                        cab_button ->
+                            node_communicator ! {order_finished, {Button_type, Latest_floor}};
+                        _Button ->
+                            node_communicator ! {order_finished, {Button_type, Latest_floor}},
+                            node_communicator ! {order_finished, {cab_button, Latest_floor}}
+                    end,
+                    fsm(door_open, Latest_floor, {Button_type, Floor});
                 _Floor ->
                     order_manager ! {should_elevator_stop, New_floor, Moving_direction, self()},
                     receive 
@@ -85,7 +93,7 @@ fsm(moving_loop, Latest_floor, Moving_direction, {Button_type, Floor}) ->
                                     io:format("Unexpected error in fsm, fsm(moving) with reason: ~p~n", [Unexpected])
                                 end,
                                 node_communicator ! {order_finished, {cab_button, New_floor}},
-                            fsm(stopped, New_floor, Order);
+                            fsm(door_open, Latest_floor, {Button_type, Floor});
                         false -> 
                             ok
                     after
@@ -102,24 +110,10 @@ fsm(moving_loop, Latest_floor, Moving_direction, {Button_type, Floor}) ->
     end,
     fsm(moving_loop, Latest_floor, Moving_direction, {Button_type, Floor}). 
 
-% Stopped state
-fsm(stopped, Latest_floor, {Button_type, Floor}) ->
-    io:format("FSM: Stopped~n"),
-    driver ! {set_door_open_LED, on},
-    fsm(door_open, Latest_floor, {Button_type, Floor});
-
-
 % Door open state
 fsm(door_open, Latest_floor, {Button_type, Floor}) ->
     Order = {Button_type, Floor},
     io:format("FSM: Door open~n"),
-    case Button_type of
-        cab_button ->
-            node_communicator ! {order_finished, {Button_type, Latest_floor}};
-        _Button ->
-            node_communicator ! {order_finished, {Button_type, Latest_floor}},
-            node_communicator ! {order_finished, {cab_button, Latest_floor}}
-    end,
 
     %sleep_func(Latest_floor),
     timer:sleep(?DOOR_OPEN_TIME),
