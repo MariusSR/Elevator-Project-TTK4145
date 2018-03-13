@@ -12,13 +12,13 @@
 -define(MSG_LENGTH, 4).
 
 start() ->
-	turn_off_leds_at_floor(1),
 	{ok, Socket} = gen_tcp:connect(localhost, 15657, [list, {active, false}]),
+	initialize_LED(Socket),
 	main_loop(Socket).
 
 start(Port) ->
-	turn_off_leds_at_floor(1),
 	{ok, Socket} = gen_tcp:connect(localhost, Port, [list, {active, false}]),
+	initialize_LED(Socket),
 	main_loop(Socket).
 
 main_loop(Socket) ->
@@ -128,3 +128,8 @@ turn_off_leds_at_floor(?NUMBER_OF_FLOORS) ->
 turn_off_leds_at_floor(Floor) when is_integer(Floor) andalso Floor > 1 andalso Floor < ?NUMBER_OF_FLOORS ->
     lists:foreach(fun(Button_type) -> driver ! {set_order_button_LED, Button_type, Floor, off} end, [up_button, down_button, cab_button]),
     turn_off_leds_at_floor(Floor + 1).
+
+initialize_LED(Socket) ->
+	gen_tcp:send(Socket, [4, 0, 0, 0]),		% turn off door open LED
+	gen_tcp:send(Socket, [5, 0, 0, 0]),		% turn off stop button LED
+	turn_off_leds_at_floor(1).
