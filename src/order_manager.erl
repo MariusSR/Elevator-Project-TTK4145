@@ -45,12 +45,13 @@ main_loop(Orders, Elevator_states) ->
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         % Mark 'Hall_order' as assigned, moving it from unassigned to assigned of 'Orders'
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        {mark_order_assigned, Hall_order} ->
+        {mark_order_assigned, Hall_order, _Node} ->
             io:format("Received mark order assigned in Order Manager:~p\n", [Hall_order]),
             case lists:member(Hall_order, Orders#orders.assigned_hall_orders) of
                 true ->
                     main_loop(Orders, Elevator_states);
                 false ->
+                io:format("DEBUG: HEI JEG ER FALSE I Ordermanager: mark_order_assigned~n"),
                     Updated_assigned_hall_orders   = Orders#orders.assigned_hall_orders ++ [Hall_order],
                     Updated_unassigned_hall_orders = [X || X <- Orders#orders.unassigned_hall_orders,   X /= Hall_order],
                     Updated_orders = Orders#orders{unassigned_hall_orders = Updated_unassigned_hall_orders,
@@ -64,7 +65,7 @@ main_loop(Orders, Elevator_states) ->
         %% Cab orders
         {remove_order, {cab_button, Floor}} when Floor >= 1 andalso Floor =< ?NUMBER_OF_FLOORS ->
             io:format("Received remove order in Order Manager:~p\n", [{cab_button, Floor}]),
-            Updated_cab_orders = [X || X <- Orders#orders.cab_orders, X /= Floor],
+            Updated_cab_orders = [X || X <- Orders#orders.cab_orders, X /= {cab_button, Floor}],
             Updated_orders     = Orders#orders{cab_orders = Updated_cab_orders},
             main_loop(Updated_orders, Elevator_states);
         %% Hall orders
@@ -89,30 +90,40 @@ main_loop(Orders, Elevator_states) ->
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %% Moving up
         {should_elevator_stop, Floor, up_dir, PID} when Floor >= 1 andalso Floor =< ?NUMBER_OF_FLOORS andalso is_pid(PID) ->
-            PID ! lists:member(Floor, Orders#orders.cab_orders) or
+            PID ! lists:member({cab_button, Floor}, Orders#orders.cab_orders) or
                   lists:member({up_button, Floor}, Orders#orders.unassigned_hall_orders ++ Orders#orders.unassigned_hall_orders),
             main_loop(Orders, Elevator_states);
         %% Moving down
         {should_elevator_stop, Floor, down_dir, PID} when Floor >= 1 andalso Floor =< ?NUMBER_OF_FLOORS andalso is_pid(PID) ->
-            PID ! lists:member(Floor, Orders#orders.cab_orders) or
-                  lists:member({up_button, Floor}, Orders#orders.unassigned_hall_orders ++ Orders#orders.unassigned_hall_orders),
+            PID ! lists:member({cab_button, Floor}, Orders#orders.cab_orders) or
+                  lists:member({down_button, Floor}, Orders#orders.unassigned_hall_orders ++ Orders#orders.unassigned_hall_orders),
             main_loop(Orders, Elevator_states);
         %% Already stoped, should never happen
-        {should_elevator_stop, _Floor, stop_dir, PID} when is_pid(PID) ->
-            io:format("Unexpected behaviour in order_manager, asked should_stop when already in state stoped\n"),
-            PID ! true,
+        {should_elevator_stop, Floor, stop_dir, PID} when is_pid(PID) ->
+            PID ! lists:member({cab_button, Floor}, Orders#orders.cab_orders),
+            % io:format("Unexpected behaviour in order_manager, asked should_stop when already in state stoped\n"),
+            % PID ! true,
             main_loop(Orders, Elevator_states);
 
         {get_unassigned_order, PID} when is_pid(PID) ->
             %io:format("Got: Get unassigned order in Order Manager\n")
-            case Orders#orders.unassigned_hall_orders ++ Orders#orders.cab_orders of
+            case  Orders#orders.cab_orders ++ Orders#orders.unassigned_hall_orders of
                 [] ->
                     PID ! no_orders_available;
+                [{cab_button, Floor}|_Tail] ->
+                    PID ! {cab_button, Floor};
                 [Next_order|_Tail] ->
                     node_communicator ! {new_order_assigned, Next_order},
                     PID ! Next_order
             end,
-            main_loop(Orders, Elevator_states)
+            main_loop(Orders, Elevator_states);
+
+        print_order_lists ->
+            io:format("Orders: ~p~n", [Orders]),
+            main_loop(Orders, Elevator_states);
+
+        Unexpected ->
+            io:format("Unexpected message in order_manager: ~p~n", [Unexpected])
     end.
 
     % do_them_magic(Orders, Elevator_states) ->
