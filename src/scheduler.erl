@@ -58,8 +58,8 @@ calculate_FS({Button_type, Floor}, State_of_elevator) -> %when is_integer(Floor)
             end;
         false ->
             FS = 1,
-            io:format("FSc: ~p\n", [FS]);
-    end,
+            io:format("FSc: ~p\n", [FS])
+    end.
 
 %-------------------------------------------------------------------------------------------------
 % Boolean help function. Returns true if the elevator is moving towards the order or is idle.
