@@ -26,6 +26,13 @@ fsm(idle_loop, Latest_floor) ->
             case choose_direction(Order, Latest_floor) of 
                 stop_dir when Latest_floor == Floor ->
                     driver ! {set_door_open_LED, on},
+                    case Button_type of
+                        cab_button ->
+                            node_communicator ! {order_finished, {cab_button, Floor}};
+                        _Button ->
+                            node_communicator ! {order_finished, {Button_type, Floor}},
+                            node_communicator ! {order_finished, {cab_button, Floor}}
+                    end,
                     fsm(door_open, Latest_floor, Order);
                 stop_dir ->
                     io:format("Error: recieved illegal order from scheduler: ~p~n", [Order]),
