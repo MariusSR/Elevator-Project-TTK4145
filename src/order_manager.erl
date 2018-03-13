@@ -110,7 +110,7 @@ main_loop(Orders, Elevator_states) ->
         {get_unassigned_order, PID} when is_pid(PID) ->            
             case Orders#orders.cab_orders of
                 [Order|_Remaining_orders] ->
-                io:format("TILDELTE CAB\n"),
+                    io:format("TILDELTE CAB\n"),
                     PID ! Order;
                 [] ->
                     case scheduler:get_most_efficient_order(Orders#orders.unassigned_hall_orders, Elevator_states) of
