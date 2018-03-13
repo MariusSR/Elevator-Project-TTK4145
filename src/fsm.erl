@@ -72,7 +72,7 @@ fsm(moving_loop, Latest_floor, Moving_direction, {Button_type, Floor}) ->
                     driver ! {set_door_open_LED, on},
                     case Button_type of
                         cab_button ->
-                            node_communicator ! {order_finished, {Button_type, Floor}};
+                            node_communicator ! {order_finished, {cab_button, Floor}};
                         _Button ->
                             node_communicator ! {order_finished, {Button_type, Floor}},
                             node_communicator ! {order_finished, {cab_button, Floor}}
