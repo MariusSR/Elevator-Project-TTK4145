@@ -1,6 +1,6 @@
 # Start ElevatorServer
 pkill ElevatorServer
-/home/student/.cargo/bin/ElevatorServer & disown
+~/.cargo/bin/ElevatorServer & disown
 
 # Compile and move *.beam files to ebin
 cd ~/Desktop/project-ssm/src
@@ -14,4 +14,3 @@ erl -s init_node start
 
 # Make shure to kill ElevatorServer
 pkill ElevatorServer
-
