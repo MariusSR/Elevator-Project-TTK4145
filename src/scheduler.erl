@@ -31,6 +31,7 @@ get_optmial_elevator_for_order([Node|Remaining_nodes_to_evaluate], Order, Elevat
         error ->
             ok;
         {ok, State_of_elevator} ->
+        io:format("NODEN SOM BEREGNES PAA ER: ~p\n", [Node]),
             FS_for_this_node = calculate_FS(Order, State_of_elevator),
             case FS_for_this_node > element(2, Best) of
                 true ->
