@@ -62,7 +62,7 @@ fsm(moving_loop, Latest_floor, Moving_direction, {Button_type, Floor}) ->
             ok;        
 
         {floor, New_floor} when New_floor /= Latest_floor ->
-            io:format("FSM: on_floor, ~p~n", [New_floor]),
+            %io:format("FSM: onfloor, ~p~n", [New_floor]),
             driver ! {set_floor_LED, New_floor},
             node_communicator ! {reached_new_state, #state{movement = Moving_direction, floor = New_floor}},
             case New_floor of
@@ -125,7 +125,7 @@ fsm(door_open, Latest_floor, {Button_type, Floor}) ->
     end,
 
     driver ! {set_door_open_LED, off},
-    io:format("FSM: Closed door~n~n"),
+    io:format("FSM: Closed door~n"),
     timer:sleep(1),
     case Latest_floor == Floor of
         true ->         
