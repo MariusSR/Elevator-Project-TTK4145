@@ -11,11 +11,12 @@
 get_most_efficient_order([], _Elevator_states) ->
     no_orders_available;
 get_most_efficient_order([Order|Remaining_orders_to_evaluate], Elevator_states) ->
-    This_node = node(),
-    case get_optmial_elevator_for_order([node()|nodes()], Order, Elevator_states, {node(), -1}) of
-        This_node ->
+    %This_node = node(),
+    case get_optmial_elevator_for_order([node()|nodes()], Order, Elevator_states, {node(), -1}) == node() of
+        true ->
+            io:format("JEG KOM HIT I HVERT FALL\n"),
             Order;
-        _Else ->
+        false ->
             get_most_efficient_order(Remaining_orders_to_evaluate, Elevator_states)
     end.
 
