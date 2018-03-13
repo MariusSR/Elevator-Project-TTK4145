@@ -45,12 +45,9 @@ get_optmial_elevator_for_order([Node|Remaining_nodes_to_evaluate], Order, Elevat
 % the elevator is moving and X = 0 if the order is in the oposite direcation as the elevator.
 %-------------------------------------------------------------------------------------------------
 calculate_FS({Button_type, Floor}, State_of_elevator) -> %when is_integer(Floor) andalso is_record(State_of_elevator, state) ->
-    io:format("WALLALLALALALAA,"),
     Distance = abs(Floor - State_of_elevator#state.floor),
-    io:format("ABSABSABSABS\n"),
     case is_elevator_moving_towards_order(Floor, State_of_elevator) of
         true ->
-            io:format("TRUUUUUUUUETEMUND\n"),
             case is_order_in_same_direction_as_elevator_is_moving(Button_type, State_of_elevator) of
                 true ->
                     _FS = ?NUMBER_OF_FLOORS + 1 - Distance;
