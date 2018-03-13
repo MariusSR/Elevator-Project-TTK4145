@@ -125,21 +125,12 @@ fsm(door_open, Latest_floor, {Button_type, Floor}) ->
             node_communicator ! {order_finished, {Button, Latest_floor}},
             node_communicator ! {order_finished, {cab_button, Latest_floor}};
         _Else ->
-            Test = choose_direction(Order, Latest_floor),
-            io:format("TEST: ~p\n", [Test]),
-            node_communicator ! {order_finished, {Test, Latest_floor}},
+            node_communicator ! {order_finished, {convert_to_button_type(choose_direction(Order, Latest_floor)), Latest_floor}},
             node_communicator ! {order_finished, {cab_button, Latest_floor}}
     end,
     
     case Latest_floor == Floor of
-        true ->
-            % case Button_type of
-            %     cab_button ->
-            %         node_communicator ! {order_finished, Order};
-            %     _Button ->
-            %         node_communicator ! {order_finished, Order},
-            %         node_communicator ! {order_finished, {cab_button, Floor}}
-            % end,            
+        true ->            
             fsm(idle, Latest_floor);
         false ->
             Moving_direction = choose_direction(Order, Latest_floor),
@@ -182,23 +173,31 @@ choose_direction({_Button_type, Floor}, Latest_floor) when Latest_floor < Floor 
 choose_direction({_Button_type, Floor}, Latest_floor) when Latest_floor > Floor ->
     down_dir.
 
-remove_order(Moving_direction, Floor) ->
-    case Moving_direction of 
-        up_dir ->
-            node_communicator ! {order_finished, {up_button, Floor}};
-        down_dir ->
-            node_communicator ! {order_finished, {down_button, Floor}};
-        Unexpected ->
-            io:format("Unexpected error in fsm, fsm(moving) with reason: ~p~n", [Unexpected])
-        end,
-        node_communicator ! {order_finished, {cab_button, Floor}}.
+% remove_order(Moving_direction, Floor) ->
+%     case Moving_direction of 
+%         up_dir ->
+%             node_communicator ! {order_finished, {up_button, Floor}};
+%         down_dir ->
+%             node_communicator ! {order_finished, {down_button, Floor}};
+%         Unexpected ->
+%             io:format("Unexpected error in fsm, fsm(moving) with reason: ~p~n", [Unexpected])
+%     end,
+%     node_communicator ! {order_finished, {cab_button, Floor}}.
 
-remove_order({cab_button, Floor}) ->
-    node_communicator ! {order_finished, {cab_button, Floor}};
-remove_order({Button_type, Floor}) ->
-    node_communicator ! {order_finished, {Button_type, Floor}},
-    node_communicator ! {order_finished, {cab_button, Floor}}.
+% remove_order({cab_button, Floor}) ->
+%     node_communicator ! {order_finished, {cab_button, Floor}};
+% remove_order({Button_type, Floor}) ->
+%     node_communicator ! {order_finished, {Button_type, Floor}},
+%     node_communicator ! {order_finished, {cab_button, Floor}}.
 
+
+convert_to_button_type(up_dir) ->
+    up_button;
+convert_to_button_type(down_dir) ->
+    down_button;
+convert_to_button_type(stop_dir) ->
+    io:format("ERROR: tried to convert stop_dir to button type\n"),
+    error.
 
 
 
