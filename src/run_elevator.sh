@@ -12,7 +12,5 @@ mv *.beam ../ebin/;
 
 # Run init_node:start()
 cd ~/Desktop/project-ssm/ebin/
-erl -s init_node start
-
-# Make shure to kill ElevatorServer
-pkill ElevatorServer
+# erl -s init_node start
+gnome-terminal -x erl -s init_node start
