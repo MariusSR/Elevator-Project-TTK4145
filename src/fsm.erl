@@ -7,9 +7,7 @@
 
 -record(state, {movement, floor}).
 
-% TODO: fix state communication to order_communicator (uncomment and test).
-% TODO: Ask scheduler for new order when idle (uncomment and test).
-% TODO: Send remove_order to node_communicator when order finished in open_door(uncomment and test).
+% TODO: add feature for å blokke vha cab button!
 
 start() ->
     Floor = init_elevator(),
