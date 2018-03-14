@@ -11,7 +11,9 @@
 -define(SLEEP_TIME, 100).
 -define(TIMEOUT, 100).
 
-%% Loop iterating over all order buttons to check for new orders
+%--------------------------------------------------------------------------------------------------
+% Loop iterating over all order buttons to check for new orders.
+%--------------------------------------------------------------------------------------------------
 read_button_loop(1) ->
     timer:sleep(?SLEEP_TIME),
     lists:foreach(fun(Button_type) -> send_new_order_to_ordermanager(Button_type, 1) end, [up_button, cab_button]),
@@ -25,7 +27,9 @@ read_button_loop(Floor) when is_integer(Floor) andalso Floor > 1 andalso Floor <
     lists:foreach(fun(Button_type) -> send_new_order_to_ordermanager(Button_type, Floor) end, [up_button, down_button, cab_button]),
     read_button_loop(Floor + 1).
 
-%% Checks if the button of type Button_type at floor Floor is pressed. If pressed, sends order to order_manager.
+%--------------------------------------------------------------------------------------------------
+% Checks if 'Button_type' at 'Floor' is pressed. If pressed, sends order to order_manager.
+%--------------------------------------------------------------------------------------------------
 send_new_order_to_ordermanager(Button_type, Floor)
 when is_integer(Floor) andalso Floor >= 1 andalso Floor =< ?NUMBER_OF_FLOORS andalso is_atom(Button_type) ->
     driver ! {get_order_button_status, Button_type, Floor, self()},
