@@ -2,7 +2,7 @@
 %% This module takes care of communication with the elevator driver over TCP. A      %%
 %% loop-function is spawned, which is always available for receiving requests about  %%
 %% reading from and writing to the elevator hardware. The function loop runs forever %%
-%% whereas start returns the PID for loop.              						     %%
+%% whereas start returns the PID for loop.              			     %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 -module(driver_communication).
@@ -79,10 +79,10 @@ main_loop(Socket) ->
 	main_loop(Socket).
 
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% Help functions taking care of communication with the elevator driver. The return  %%
-%% values are sent back to the process asking for information                        %%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%--------------------------------------------------------------------------------------------------
+% Help functions taking care of communication with the elevator driver.
+% The return values are sent back to the process asking for information.
+%--------------------------------------------------------------------------------------------------
 
 return_order_button_status(Socket, PID, Button_type, Floor) when is_pid(PID) andalso is_integer(Button_type) andalso is_integer(Floor) andalso Floor >= 0 andalso Floor < ?NUMBER_OF_FLOORS ->
 	gen_tcp:send(Socket, [6, Button_type, Floor, 0]),
@@ -116,8 +116,6 @@ return_stop_button_status(Socket, PID) when is_pid(PID) ->
 		end.
 
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 turn_off_leds_at_floor(1) ->
     lists:foreach(fun(Button_type) -> driver ! {set_order_button_LED, Button_type, 1, off} end, [up_button, cab_button]),
     turn_off_leds_at_floor(2);
@@ -128,6 +126,7 @@ turn_off_leds_at_floor(?NUMBER_OF_FLOORS) ->
 turn_off_leds_at_floor(Floor) when is_integer(Floor) andalso Floor > 1 andalso Floor < ?NUMBER_OF_FLOORS ->
     lists:foreach(fun(Button_type) -> driver ! {set_order_button_LED, Button_type, Floor, off} end, [up_button, down_button, cab_button]),
     turn_off_leds_at_floor(Floor + 1).
+
 
 initialize_LED(Socket) ->
 	gen_tcp:send(Socket, [4, 0, 0, 0]),		% turn off door open LED
