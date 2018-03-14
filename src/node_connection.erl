@@ -25,7 +25,9 @@ start() ->
 	spawn(fun() -> listen_for_nodes() end),
 	io:format("Node cluster initialized, now searching for friends.~n").
 
-%% Start node cluster with coockie
+%--------------------------------------------------------------------------------------------------
+% Start node cluster with coockie
+%--------------------------------------------------------------------------------------------------
 init_node_cluster() ->
 	os:cmd("epmd -daemon"), %% check what this is
 	%timer:sleep(100), % perhaps needed
@@ -33,12 +35,16 @@ init_node_cluster() ->
 	{ok, _Pid} = net_kernel:start([ThisNode, longnames, ?TICKTIME]),
 	erlang:set_cookie(ThisNode, ?COOKIE).
 
-%% Get local IP address on format 123.456.789.012
+%--------------------------------------------------------------------------------------------------
+% Get local IP address on format 123.456.789.012
+%--------------------------------------------------------------------------------------------------
 get_IP() ->
-	{ok, Addresses} = inet:getif(), 				% Undocumented function returning all local IPs
+	{ok, Addresses} = inet:getif(), 		% Undocumented function returning all local IPs
 	inet_parse:ntoa(element(1, hd(Addresses))).     % Choose the first IP and parses it to a string
 
-%% Broadcast its own node name
+%--------------------------------------------------------------------------------------------------
+% Broadcast its own node name
+%--------------------------------------------------------------------------------------------------
 broadcast_self() ->
 	{ok, BroadcastSocket} = gen_udp:open(?BROADCAST_PORT, [list, {broadcast, true}]),
 	broadcast_self(BroadcastSocket).
@@ -48,7 +54,9 @@ broadcast_self(BroadcastSocket) ->
 	timer:sleep(?BROADCAST_SLEEP),
 	broadcast_self(BroadcastSocket).
 
-%% Listen for new nodes to connect
+%--------------------------------------------------------------------------------------------------
+% Listen for new nodes to connect
+%--------------------------------------------------------------------------------------------------
 listen_for_nodes() ->
 	{ok, ReceiveSocket} = gen_udp:open(?RECEIVE_PORT, [list, {active, false}]),
 	listen_for_nodes(ReceiveSocket).
