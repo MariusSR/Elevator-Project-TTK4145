@@ -50,7 +50,7 @@ calculate_FS({Button_type, Floor}, State_of_elevator) -> %when is_integer(Floor)
     Distance = abs(Floor - State_of_elevator#state.floor),
     case is_elevator_moving_towards_order(Floor, State_of_elevator) of
         true ->
-            case is_order_in_same_direction_as_elevator_is_moving(Button_type, State_of_elevator) of
+            case is_order_in_same_direction_as_elevator_is_moving(Floor, Button_type, State_of_elevator) of
                 true ->
                     FS = ?NUMBER_OF_FLOORS + 1 - Distance,
                     io:format("        FSa: ~p ~p ~p\n", [FS, Button_type, Floor]),
@@ -71,13 +71,17 @@ calculate_FS({Button_type, Floor}, State_of_elevator) -> %when is_integer(Floor)
 %-------------------------------------------------------------------------------------------------
 is_elevator_moving_towards_order(Order_floor, State_of_elevator) ->
     (State_of_elevator#state.movement == up_dir)   and (Order_floor > State_of_elevator#state.floor) or
-    (State_of_elevator#state.movement == down_dir) and (Order_floor < State_of_elevator#state.floor) or
-    (State_of_elevator#state.movement == stop_dir).
+    (State_of_elevator#state.movement == down_dir) and (Order_floor < State_of_elevator#state.floor).
+    %(State_of_elevator#state.movement == stop_dir).
 
 %-------------------------------------------------------------------------------------------------
 % Boolean help function. Returns true if the order and elevator is in the same direction.
 %-------------------------------------------------------------------------------------------------
-is_order_in_same_direction_as_elevator_is_moving(up_button, State_of_elevator) ->
+is_order_in_same_direction_as_elevator_is_moving(1, up_button, _State_of_elevator) ->
+    true;
+is_order_in_same_direction_as_elevator_is_moving(?NUMBER_OF_FLOORS, down_button, _State_of_elevator) ->
+    true;
+is_order_in_same_direction_as_elevator_is_moving(_Floor, up_button, State_of_elevator) ->
     (State_of_elevator#state.movement == up_dir) or (State_of_elevator#state.movement == stop_dir);
-is_order_in_same_direction_as_elevator_is_moving(down_button, State_of_elevator) ->
+is_order_in_same_direction_as_elevator_is_moving(_Floor, down_button, State_of_elevator) ->
     (State_of_elevator#state.movement == down_dir) or (State_of_elevator#state.movement == stop_dir).
