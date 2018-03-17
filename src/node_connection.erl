@@ -29,8 +29,7 @@ start() ->
 % Start node cluster with coockie
 %--------------------------------------------------------------------------------------------------
 init_node_cluster() ->
-	os:cmd("epmd -daemon"), %% check what this is
-	%timer:sleep(100), % perhaps needed
+	os:cmd("epmd -daemon"),				% Spawns the the name server required by distributed Erlang
 	ThisNode = list_to_atom("elevator@" ++ get_IP()),
 	{ok, _Pid} = net_kernel:start([ThisNode, longnames, ?TICKTIME]),
 	erlang:set_cookie(ThisNode, ?COOKIE).
@@ -39,7 +38,7 @@ init_node_cluster() ->
 % Get local IP address on format 123.456.789.012
 %--------------------------------------------------------------------------------------------------
 get_IP() ->
-	{ok, Addresses} = inet:getif(), 		% Undocumented function returning all local IPs
+	{ok, Addresses} = inet:getif(), 				% Undocumented function returning all local IPs
 	inet_parse:ntoa(element(1, hd(Addresses))).     % Choose the first IP and parses it to a string
 
 %--------------------------------------------------------------------------------------------------
@@ -77,6 +76,7 @@ listen_for_nodes(ReceiveSocket) ->
 			ok;
 		{error, Reason} ->
 			io:format("ERROR: receiving node failed due to: ~s~n", [Reason]);
+
 		Unexpected ->
 			io:format("unexpected message in listen for nodes: ~p~n", [Unexpected])
 	end,
