@@ -6,10 +6,14 @@
 -record(state,  {movement, floor}).
 
 start() ->
+    io:format("DEBUG UNO"),
     main_loop(#orders{}, dict:new()).
 
 main_loop(Orders, Elevator_states) ->
+    io:format("DEBUG DOZ"),
+    tiemr:sleep(2000),
     io:format("Orders: ~p         ~p         ~p~n", [Orders#orders.assigned_hall_orders, Orders#orders.unassigned_hall_orders, Orders#orders.cab_orders]),
+    io:format("DEBUG Trezzzz"),
     %io:format("States: ~p\n", [Elevator_states]),
     receive
         %----------------------------------------------------------------------------------------------

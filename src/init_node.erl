@@ -4,11 +4,13 @@
 start() -> 
     node_connection:start(),
      
-    register(driver, spawn(fun()-> driver_communication:start() end)),
+    register(driver, spawn(fun() -> driver_communication:start() end)),
     io:format("driver PID: ~p\n", [whereis(driver)]),
 
-    register(order_manager, spawn(fun()-> order_manager:start() end)),
+    register(order_manager, spawn(fun() -> order_manager:start() end)),
     io:format("ordermanager PID: ~p\n", [whereis(order_manager)]),
+
+    timer:sleep(10000),
 
     register(fsm, spawn(fun()-> fsm:start() end)),
     io:format("FSM PID: ~p\n", [whereis(fsm)]),
@@ -18,8 +20,6 @@ start() ->
 
     A = spawn(fun()-> button_reader:read_button_loop(1) end),
     io:format("button_reader PID: ~p\n", [A]),
-
-   
 
     io:format("Start completed\n\n").
 
