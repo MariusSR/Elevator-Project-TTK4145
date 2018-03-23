@@ -7,7 +7,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
-%%%%%%% TODO: document why epmd is used.
+%%%%%%% TODO: endre rekkefølgen på funksjonene, typ skal get_IP nederst?
 
 -module(node_connection).
 -export([start/0]).
@@ -23,6 +23,7 @@ start() ->
 	init_node_cluster(),
 	spawn(fun() -> broadcast_self() end),
 	spawn(fun() -> listen_for_nodes() end),
+	spawn(fun() -> start_node_monitoring() end),
 	io:format("Node cluster initialized, now searching for friends.~n").
 
 %--------------------------------------------------------------------------------------------------
@@ -81,3 +82,19 @@ listen_for_nodes(ReceiveSocket) ->
 			io:format("unexpected message in listen for nodes: ~p~n", [Unexpected])
 	end,
 	listen_for_nodes(ReceiveSocket).
+
+%--------------------------------------------------------------------------------------------------
+% HER SKAL NODEDØD OPPDAGES
+%--------------------------------------------------------------------------------------------------
+start_node_monitoring() ->
+	net_kernel:monitor_nodes(true),
+	node_monitoring_loop().
+
+node_monitoring_loop() ->
+	receive
+		{nodeup, Node} ->
+			io:format("ny node i systemet: ~p\n", [Node]);
+		{nodedown, Node} ->
+			io:format("node fjernet fra systemet: ~p\n", [Node])
+	end,
+	node_monitoring_loop().
