@@ -36,7 +36,8 @@ main_loop(Orders, Elevator_states) ->
                 false ->
                     node_communicator ! {order_added, Hall_order, From_node}
             end,
-            case lists:member(Hall_order, Orders#orders.assigned_hall_orders ++ Orders#orders.unassigned_hall_orders) of
+            Assigned_hall_orders = lists:map(fun({Assigned_order, _Node}) -> Assigned_order end, Orders#orders.assigned_hall_orders), % creats a list of the orders only. GI DENNE BVARIABLENE BEDRE NAVN?
+            case lists:member(Hall_order, Assigned_hall_orders ++ Orders#orders.unassigned_hall_orders) of
                 true ->
                     main_loop(Orders, Elevator_states);
                 false ->
@@ -47,14 +48,14 @@ main_loop(Orders, Elevator_states) ->
         %----------------------------------------------------------------------------------------------
         % Mark 'Hall_order' as assigned, moving it from unassigned to assigned of 'Orders'
         %----------------------------------------------------------------------------------------------
-        {mark_order_assigned, Hall_order, _Node} ->
+        {mark_order_assigned, Hall_order, Node} ->
             %io:format("Received mark order assigned in Order Manager:~p\n", [Hall_order]),
-            case lists:member(Hall_order, Orders#orders.assigned_hall_orders) of
+            case lists:member({Hall_order, Node}, Orders#orders.assigned_hall_orders) of
                 true ->
                     main_loop(Orders, Elevator_states);
                 false ->
-                    Updated_assigned_hall_orders   = Orders#orders.assigned_hall_orders ++ [Hall_order],
-                    Updated_unassigned_hall_orders = [X || X <- Orders#orders.unassigned_hall_orders,   X /= Hall_order],
+                    Updated_assigned_hall_orders   = Orders#orders.assigned_hall_orders ++ [{Hall_order, Node}],
+                    Updated_unassigned_hall_orders = [X || X <- Orders#orders.unassigned_hall_orders,   X /= Hall_order], %% endre til å bruke lists:fitler?
                     Updated_orders = Orders#orders{unassigned_hall_orders = Updated_unassigned_hall_orders,
                                                      assigned_hall_orders = Updated_assigned_hall_orders},
                     main_loop(Updated_orders, Elevator_states)
@@ -72,8 +73,9 @@ main_loop(Orders, Elevator_states) ->
         % Hall orders
         {remove_order, {Hall_button, Floor}} when is_atom(Hall_button) andalso Floor >= 1 andalso Floor =< ?NUMBER_OF_FLOORS ->
             %io:format("Received remove order in Order Manager:~p\n", [{Hall_button, Floor}]),
-            Updated_unassigned_hall_orders = [X || X <- Orders#orders.unassigned_hall_orders, X /= {Hall_button, Floor}],
-            Updated_assigned_hall_orders   = [X || X <- Orders#orders.assigned_hall_orders,   X /= {Hall_button, Floor}],
+            Hall_order = {Hall_button, Floor},
+            Updated_unassigned_hall_orders = [X || X <- Orders#orders.unassigned_hall_orders, X /= Hall_order], %update these to use filter?
+            Updated_assigned_hall_orders   = [X || X <- Orders#orders.assigned_hall_orders,   X /= {Hall_order, _}],
             Updated_orders = Orders#orders{unassigned_hall_orders = Updated_unassigned_hall_orders,
                                              assigned_hall_orders = Updated_assigned_hall_orders},
             main_loop(Updated_orders, Elevator_states);
@@ -122,9 +124,45 @@ main_loop(Orders, Elevator_states) ->
             end,
             main_loop(Orders, Elevator_states);
 
+        %----------------------------------------------------------------------------------------------
+        % Moves orders assigned to 'Node' to the the forn of the list of unassigend orders
+        %----------------------------------------------------------------------------------------------
+        {node_down, Node} ->
+            Orders_assigned_to_offline_node = lists:filter(fun({_Order, Assigned_node}) -> Assigned_node == Node end, Orders#orders.assigned_hall_orders),
+            Hall_orders_extracted           = lists:map(fun({Order, _Node}) -> Order end, Orders_assigned_to_offline_node),
+            Updated_assigned_hall_orders    = lists:filter(fun({_Order, Assigned_node}) -> Assigned_node /= Node end, Orders#orders.assigned_hall_orders),
+            Updated_unassigned_hall_orders  = Hall_orders_extracted ++ Orders#orders.unassigned_hall_orders,
+            Updated_orders = Orders#orders{unassigned_hall_orders = Updated_unassigned_hall_orders,
+                                             assigned_hall_orders = Updated_assigned_hall_orders},
+            main_loop(Updated_orders, Elevator_states);
+
+
         Unexpected ->
             io:format("Unexpected message in order_manager: ~p~n", [Unexpected])
     end.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+%% DETTE KAN TROLIG SLETTES:
 
     % do_them_magic(Orders, Elevator_states) ->
     %     io:format("Magic"),

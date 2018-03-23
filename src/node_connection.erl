@@ -67,8 +67,7 @@ listen_for_nodes(ReceiveSocket) ->
 			Node = list_to_atom(NodeName),
 			case lists:member(Node, [node()|nodes()]) of
 				false ->
-					net_kernel:connect_node(Node),
-					io:format("New node connected: ~w~n", [Node]);
+					net_kernel:connect_node(Node);
 				true -> 
 					ok
 			end;
@@ -93,8 +92,11 @@ start_node_monitoring() ->
 node_monitoring_loop() ->
 	receive
 		{nodeup, Node} ->
-			io:format("ny node i systemet: ~p\n", [Node]);
+			io:format("New node connected: ~p\n", [Node]);
+			%% TODO: få tak i gamle ordre
+
 		{nodedown, Node} ->
-			io:format("node fjernet fra systemet: ~p\n", [Node])
+			io:format("Node disconnected: ~p\n", [Node]),
+			order_manager ! {node_down, Node}
 	end,
 	node_monitoring_loop().
