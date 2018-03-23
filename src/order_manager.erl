@@ -6,14 +6,10 @@
 -record(state,  {movement, floor}).
 
 start() ->
-    io:format("DEBUG UNO"),
     main_loop(#orders{}, dict:new()).
 
 main_loop(Orders, Elevator_states) ->
-    io:format("DEBUG DOZ"),
-    tiemr:sleep(2000),
     io:format("Orders: ~p         ~p         ~p~n", [Orders#orders.assigned_hall_orders, Orders#orders.unassigned_hall_orders, Orders#orders.cab_orders]),
-    io:format("DEBUG Trezzzz"),
     %io:format("States: ~p\n", [Elevator_states]),
     receive
         %----------------------------------------------------------------------------------------------
@@ -78,8 +74,8 @@ main_loop(Orders, Elevator_states) ->
         {remove_order, {Hall_button, Floor}} when is_atom(Hall_button) andalso Floor >= 1 andalso Floor =< ?NUMBER_OF_FLOORS ->
             %io:format("Received remove order in Order Manager:~p\n", [{Hall_button, Floor}]),
             Hall_order = {Hall_button, Floor},
-            Updated_unassigned_hall_orders = [X || X <- Orders#orders.unassigned_hall_orders, X /= Hall_order], %update these to use filter?
-            Updated_assigned_hall_orders   = [X || X <- Orders#orders.assigned_hall_orders,   X /= {Hall_order, _}],
+            Updated_unassigned_hall_orders = lists:filter(fun(Order) -> Order /= Hall_order end, Orders#orders.unassigned_hall_orders), %[X || X <- Orders#orders.unassigned_hall_orders, X /= Hall_order], %update these to use filter?
+            Updated_assigned_hall_orders   = lists:filter(fun({Order, _Node}) -> Order /= Hall_order end, Orders#orders.assigned_hall_orders), % [X || X <- Orders#orders.assigned_hall_orders,   X /= {Hall_order, _}],
             Updated_orders = Orders#orders{unassigned_hall_orders = Updated_unassigned_hall_orders,
                                              assigned_hall_orders = Updated_assigned_hall_orders},
             main_loop(Updated_orders, Elevator_states);

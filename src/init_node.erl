@@ -10,8 +10,6 @@ start() ->
     register(order_manager, spawn(fun() -> order_manager:start() end)),
     io:format("ordermanager PID: ~p\n", [whereis(order_manager)]),
 
-    timer:sleep(10000),
-
     register(fsm, spawn(fun()-> fsm:start() end)),
     io:format("FSM PID: ~p\n", [whereis(fsm)]),
 
