@@ -154,11 +154,6 @@ fsm(stopped, Latest_floor, {Button_type, Floor}) ->
 fsm(door_open, Latest_floor, {Button_type, Floor}) ->
     Order = {Button_type, Floor},
     io:format("FSM: Door open~n"),
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    % Simen added this, agree it should be here? (added fo get more natural FS value from scheduler when door is open)
-    % I am talking about the line just below this, updating the state
-    node_communicator ! {reached_new_state, #state{movement = stop_dir, floor = Latest_floor}}, %THIS LINE
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     timer:sleep(?DOOR_OPEN_TIME),
     driver ! {set_door_open_LED, off},
     io:format("FSM: Closed door~n"),
