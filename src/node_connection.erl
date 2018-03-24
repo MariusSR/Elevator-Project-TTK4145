@@ -93,7 +93,6 @@ node_monitoring_loop() ->
 	receive
 		{nodeup, Node} ->
 			io:format("New node connected: ~p\n", [Node]);
-			%% TODO: få tak i gamle ordre
 
 		{nodedown, Node} ->
 			io:format("Node disconnected: ~p\n", [Node]),
