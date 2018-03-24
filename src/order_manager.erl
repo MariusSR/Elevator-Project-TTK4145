@@ -6,7 +6,9 @@
 -record(state,  {movement, floor}).
 
 start() ->
-    main_loop(#orders{}, dict:new()).
+    Existing_orders = get_existing_orders(),
+    % legg til tilsvarende for states
+    main_loop(Existing_orders, dict:new()).
 
 main_loop(Orders, Elevator_states) ->
     io:format("Orders: ~p         ~p         ~p~n", [Orders#orders.assigned_hall_orders, Orders#orders.unassigned_hall_orders, Orders#orders.cab_orders]),
@@ -24,6 +26,7 @@ main_loop(Orders, Elevator_states) ->
                 false ->
                     Updated_orders = Orders#orders{cab_orders = Orders#orders.cab_orders ++ [{cab_button, Floor}]},
                     node_communicator ! {set_order_button_LED, on, {cab_button, Floor}},
+                    write_cab_order_to_file(Floor),
                     main_loop(Updated_orders, Elevator_states)
             end;
         % Hall orders
@@ -69,6 +72,7 @@ main_loop(Orders, Elevator_states) ->
             %io:format("Received remove order in Order Manager:~p\n", [{cab_button, Floor}]),
             Updated_cab_orders = [X || X <- Orders#orders.cab_orders, X /= {cab_button, Floor}],
             Updated_orders     = Orders#orders{cab_orders = Updated_cab_orders},
+            remove_cab_order_from_file(Floor),
             main_loop(Updated_orders, Elevator_states);
         % Hall orders
         {remove_order, {Hall_button, Floor}} when is_atom(Hall_button) andalso Floor >= 1 andalso Floor =< ?NUMBER_OF_FLOORS ->
@@ -136,15 +140,32 @@ main_loop(Orders, Elevator_states) ->
                                              assigned_hall_orders = Updated_assigned_hall_orders},
             main_loop(Updated_orders, Elevator_states);
 
-
         Unexpected ->
             io:format("Unexpected message in order_manager: ~p~n", [Unexpected])
     end.
 
 
 
+get_existing_orders() ->
+    Existing_cab_orders = get_existing_cab_orders_from_file(),
+    %Hall_orders = .... TODO: hent eksisterende ordre. For dette må vel node_communicator være oppe og går, og dermed må rekkefølgen endres i node_init-filen.
+    #orders{cab_orders = Existing_cab_orders}.
 
+write_cab_order_to_file(Floor) ->
+    dets:open_file(node(), [{type, bag}]),
+    dets:insert({cab_button, Floor}),
+    dets:close(node()).
 
+remove_cab_order_from_file(Floor) ->
+    dets:open_file(node(), [{type, bag}]),
+    dets:delete_object(node(), {cab_button, Floor}),
+    dets:close(node()).
+
+get_existing_cab_orders_from_file() ->
+    dets:open_file(node(), [{type, bag}]),
+    Cab_orders = dets:lookup(node(), [{cab_button}]),
+    detas:close(node()),
+    Cab_orders.
 
 
 
