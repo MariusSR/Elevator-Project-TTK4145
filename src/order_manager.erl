@@ -164,7 +164,7 @@ remove_cab_order_from_file(Floor) ->
 get_existing_cab_orders_from_file() ->
     dets:open_file(node(), [{type, bag}]),
     Cab_orders = dets:lookup(node(), [{cab_button}]),
-    detas:close(node()),
+    dets:close(node()),
     Cab_orders.
 
 
