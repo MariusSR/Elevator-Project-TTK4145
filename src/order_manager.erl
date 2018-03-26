@@ -6,7 +6,7 @@
 -record(state,  {movement, floor}).
 
 start() ->
-    Existing_orders = get_existing_orders(),
+    Existing_orders = get_existing_orders(), % HER MÅ DET TENNES LED!
     % legg til tilsvarende for states
     main_loop(Existing_orders, dict:new()).
 
@@ -154,7 +154,6 @@ get_existing_orders() ->
 write_cab_order_to_file(Floor) ->
     dets:open_file(node(), [{type, bag}]),
     dets:insert(node(), {cab_button, Floor}),
-    Cab_orders = dets:lookup(node(), [{cab_button}]),
     dets:close(node()).
 
 remove_cab_order_from_file(Floor) ->
@@ -165,7 +164,6 @@ remove_cab_order_from_file(Floor) ->
 get_existing_cab_orders_from_file() ->
     dets:open_file(node(), [{type, bag}]),
     Cab_orders = dets:lookup(node(), cab_button),
-    io:format("Cabs:~p\n", [Cab_orders]),
     dets:close(node()),
     Cab_orders.
 
