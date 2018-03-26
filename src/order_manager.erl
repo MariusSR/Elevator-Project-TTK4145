@@ -153,7 +153,7 @@ get_existing_orders() ->
 
 write_cab_order_to_file(Floor) ->
     dets:open_file(node(), [{type, bag}]),
-    dets:insert({cab_button, Floor}),
+    dets:insert(node(), {cab_button, Floor}),
     dets:close(node()).
 
 remove_cab_order_from_file(Floor) ->
