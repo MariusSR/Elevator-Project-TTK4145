@@ -145,7 +145,8 @@ main_loop(Orders, Elevator_states) ->
         %----------------------------------------------------------------------------------------------
         {node_up, New_node} ->
             io:format("Mottek node_up\n"),
-            node_communicator ! {sync_hall_orders_with_new_node, New_node, Orders#orders.assigned_hall_orders, Orders#orders.unassigned_hall_orders};
+            node_communicator ! {sync_hall_orders_with_new_node, New_node, Orders#orders.assigned_hall_orders, Orders#orders.unassigned_hall_orders},
+            main_loop(Orders, Elevator_states);
 
         Unexpected ->
             io:format("Unexpected message in order_manager: ~p~n", [Unexpected])
