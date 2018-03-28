@@ -153,7 +153,7 @@ main_loop(Orders, Elevator_states) ->
 
 get_existing_orders() ->
     Cab_orders = get_existing_cab_orders_from_file(),
-    {_Assigend_hall_orders, _Unassigend_hall_orders} = get_existing_hall_orders(),
+    {_Assigend_hall_orders, _Unassigend_hall_orders} = get_existing_hall_orders(nodes()),
     #orders{cab_orders = Cab_orders}. % update this to include hall_orders
 
 get_existing_cab_orders_from_file() ->
@@ -162,7 +162,10 @@ get_existing_cab_orders_from_file() ->
     dets:close(node()),
     Cab_orders.
 
-get_existing_hall_orders() ->
+get_existing_hall_orders([]) ->
+    io:format("No orders existing since nodes()=~p\n", [nodes()]),
+    {[], []};
+get_existing_hall_orders(_Nodes) ->
     receive
         {existing_hall_orders, Assigned_hall_orders, Unassigend_hall_orders} ->
             io:format("Existing orders returned: ~p     ~p\n", [Assigned_hall_orders, Unassigend_hall_orders]),
@@ -170,7 +173,7 @@ get_existing_hall_orders() ->
 
         Other ->
             io:format("Ignored the following msg as initialization of this node is not yet complete ~p~n", [Other]),
-            get_existing_hall_orders()
+            get_existing_hall_orders(nodes())
 
     after
         1000 ->
