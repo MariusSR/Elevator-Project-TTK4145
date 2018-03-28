@@ -129,7 +129,7 @@ main_loop(Orders, Elevator_states) ->
             main_loop(Orders, Elevator_states);
 
         %----------------------------------------------------------------------------------------------
-        % Moves orders assigned to 'Node' to the the forn of the list of unassigend orders
+        % Moves orders assigned to 'Node' to the the fron of the list of unassigend orders
         %----------------------------------------------------------------------------------------------
         {node_down, Node} ->
             Orders_assigned_to_offline_node = lists:filter(fun({_Order, Assigned_node}) -> Assigned_node == Node end, Orders#orders.assigned_hall_orders),
@@ -139,17 +139,46 @@ main_loop(Orders, Elevator_states) ->
             Updated_orders = Orders#orders{unassigned_hall_orders = Updated_unassigned_hall_orders,
                                              assigned_hall_orders = Updated_assigned_hall_orders},
             main_loop(Updated_orders, Elevator_states);
+        
+        %----------------------------------------------------------------------------------------------
+        % Send a copy of existing hall orders to the newly connected node
+        %----------------------------------------------------------------------------------------------
+        {node_up, New_node} ->
+            node_communicator ! {sync_hall_orders_with_new_node, New_node, Orders#orders.assigned_hall_orders, Orders#orders.unassigned_hall_orders};
 
         Unexpected ->
             io:format("Unexpected message in order_manager: ~p~n", [Unexpected])
     end.
 
 
-
 get_existing_orders() ->
-    Existing_cab_orders = get_existing_cab_orders_from_file(),
-    %Hall_orders = .... TODO: hent eksisterende ordre. For dette må vel node_communicator være oppe og går, og dermed må rekkefølgen endres i node_init-filen.
-    #orders{cab_orders = Existing_cab_orders}.
+    Cab_orders = get_existing_cab_orders_from_file(),
+    {_Assigend_hall_orders, _Unassigend_hall_orders} = get_existing_hall_orders(nodes()),
+    #orders{cab_orders = Cab_orders}. % update this to include hall_orders
+
+get_existing_cab_orders_from_file() ->
+    dets:open_file(node(), [{type, bag}]),
+    Cab_orders = dets:lookup(node(), cab_button),
+    dets:close(node()),
+    Cab_orders.
+
+get_existing_hall_orders([]) ->
+    {[], []};
+get_existing_hall_orders(_Nodes) ->
+    receive
+        {existing_hall_orders, Assigned_hall_orders, Unassigend_hall_orders} ->
+            io:format("Existing orders returned: ~p     ~p\n", [Assigned_hall_orders, Unassigend_hall_orders]),
+            {Assigned_hall_orders, Unassigend_hall_orders};
+
+        Other ->
+            io:format("Ignored the following msg as initialization of this node is not yet complete ~p~n", [Other]),
+            get_existing_hall_orders(nodes())
+
+    after
+        1000 ->
+            io:format("ERROR: No list of existing orders received within its time limit, assuming no hall orders exist"),
+            {[], []}
+    end.
 
 write_cab_order_to_file(Floor) ->
     dets:open_file(node(), [{type, bag}]),
@@ -160,18 +189,6 @@ remove_cab_order_from_file(Floor) ->
     dets:open_file(node(), [{type, bag}]),
     dets:delete_object(node(), {cab_button, Floor}),
     dets:close(node()).
-
-get_existing_cab_orders_from_file() ->
-    dets:open_file(node(), [{type, bag}]),
-    Cab_orders = dets:lookup(node(), cab_button),
-    dets:close(node()),
-    Cab_orders.
-
-
-
-
-
-
 
 
 

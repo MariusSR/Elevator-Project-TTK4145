@@ -92,7 +92,8 @@ start_node_monitoring() ->
 node_monitoring_loop() ->
 	receive
 		{nodeup, Node} ->
-			io:format("New node connected: ~p\n", [Node]);
+			io:format("New node connected: ~p\n", [Node]),
+			order_manager ! {node_up, Node};
 
 		{nodedown, Node} ->
 			io:format("Node disconnected: ~p\n", [Node]),
