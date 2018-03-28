@@ -163,6 +163,7 @@ get_existing_cab_orders_from_file() ->
     Cab_orders.
 
 get_existing_hall_orders([]) ->
+    io:format("No orders existing"),
     {[], []};
 get_existing_hall_orders(_Nodes) ->
     receive
