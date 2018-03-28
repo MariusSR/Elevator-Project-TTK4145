@@ -86,6 +86,7 @@ listen_for_nodes(ReceiveSocket) ->
 % HER SKAL NODEDØD OPPDAGES
 %--------------------------------------------------------------------------------------------------
 start_node_monitoring() ->
+	io:format("EKSISTERENDE NDOER ER: ~p\n", [nodes()]),
 	timer:sleep(1000), %to prevent this node from registring existing nodes as "new nodes"
 	net_kernel:monitor_nodes(true),
 	node_monitoring_loop().
