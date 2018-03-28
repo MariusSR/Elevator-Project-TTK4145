@@ -24,7 +24,7 @@ start() ->
 	spawn(fun() -> broadcast_self() end),
 	spawn(fun() -> listen_for_nodes() end),
 	spawn(fun() -> start_node_monitoring() end),
-	timer:sleep(1000), % wait for connection 
+	%timer:sleep(1000), % wait for connection (still under debug)
 	io:format("Node cluster initialized, now searching for friends.~n").
 
 %--------------------------------------------------------------------------------------------------
@@ -94,9 +94,9 @@ start_node_monitoring() ->
 node_monitoring_loop() ->
 	receive
 		{nodeup, New_node} ->
-			io:format("New node connected: ~p\n", [New_node]),
-			timer:sleep(1000), %wait for new node to spwan properly
-			order_manager ! {node_up, New_node};
+			io:format("New node connected: ~p\n", [New_node]);
+			%timer:sleep(1000), %wait for new node to spwan properly
+			%order_manager ! {node_up, New_node};
 
 		{nodedown, Node} ->
 			io:format("Node disconnected: ~p\n", [Node]),
