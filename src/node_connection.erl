@@ -87,15 +87,15 @@ listen_for_nodes(ReceiveSocket) ->
 % HER SKAL NODEDØD OPPDAGES
 %--------------------------------------------------------------------------------------------------
 start_node_monitoring() ->
-	timer:sleep(1000), %to prevent this node from registring existing nodes as "new nodes"
+	timer:sleep(500), %to prevent this node from registring existing nodes as "new nodes"
 	net_kernel:monitor_nodes(true),
 	node_monitoring_loop().
 
 node_monitoring_loop() ->
 	receive
-		{nodeup, Node} ->
-			io:format("New node connected: ~p\n", [Node]),
-			order_manager ! {node_up, Node};
+		{nodeup, New_node} ->
+			io:format("New node connected: ~p\n", [New_node]),
+			order_manager ! {node_up, New_node};
 
 		{nodedown, Node} ->
 			io:format("Node disconnected: ~p\n", [Node]),
