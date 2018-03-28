@@ -24,7 +24,7 @@ start() ->
 	spawn(fun() -> broadcast_self() end),
 	spawn(fun() -> listen_for_nodes() end),
 	spawn(fun() -> start_node_monitoring() end),
-	timer:sleep(500), % wait for connection 
+	timer:sleep(1000), % wait for connection 
 	io:format("Node cluster initialized, now searching for friends.~n").
 
 %--------------------------------------------------------------------------------------------------
