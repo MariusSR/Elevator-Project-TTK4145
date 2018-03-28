@@ -73,6 +73,7 @@ main_loop() ->
             {node_communicator, New_node} ! {existing_hall_orders, Assigned_hall_orders, Unassigned_hall_orders};
         
         {existing_hall_orders, Assigned_hall_orders, Unassigned_hall_orders} ->
+            io:format("Nuu returnerar eg\n"),
             order_manager ! {existing_hall_orders, Assigned_hall_orders, Unassigned_hall_orders};
 
         %%% FOR DEBUG ONLY %%%
