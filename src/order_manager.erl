@@ -6,7 +6,7 @@
 -record(state,  {movement, floor}).
 
 start() ->
-    Existing_cab_orders = get_existing_cab_orders(), % HER MÅ DET TENNES LED!
+    Existing_cab_orders = get_existing_cab_orders(),
     % legg til tilsvarende for states
     main_loop(Existing_cab_orders, dict:new()).
 
@@ -180,63 +180,3 @@ remove_cab_order_from_file(Floor) ->
     dets:open_file(File_name, [{type, bag}]),
     dets:delete_object(File_name, {cab_button, Floor}),
     dets:close(File_name).
-
-
-
-% get_existing_hall_orders([]) ->
-%     io:format("No orders existing since nodes()=~p\n", [nodes()]),
-%     {[], []};
-% get_existing_hall_orders(_Nodes) ->
-%     receive
-%         {existing_hall_orders, Assigned_hall_orders, Unassigend_hall_orders} ->
-%             io:format("Existing orders returned: ~p     ~p\n", [Assigned_hall_orders, Unassigend_hall_orders]),
-%             {Assigned_hall_orders, Unassigend_hall_orders};
-
-%         Other ->
-%             io:format("Ignored the following msg as initialization of this node is not yet complete ~p~n", [Other]),
-%             get_existing_hall_orders(nodes())
-
-%     after
-%         1000 ->
-%             io:format("ERROR: No list of existing orders received within its time limit, assuming no hall orders exist"),
-%             {[], []}
-%     end.
-
-
-
-
-
-
-
-
-
-%% DETTE KAN TROLIG SLETTES:
-
-    % do_them_magic(Orders, Elevator_states) ->
-    %     io:format("Magic"),
-    %     Oldest_unassigned_hall_order = hd(Orders#orders.unassigned_hall_orders),
-    %     Idle_elevators = get_idle_elevator(Elevator_states).
-    %     % [X] Stopp ved alle floors der det er en order.
-    %     % [ ] Ta alltid den eldste ordren når idle.
-    %     % [ ] Si i fra om at du ranet en ordre, slik at den som mistet ordren sin må få beskjed om å finne seg en ny ordre.
-    %     % [ ] Hvis brødhuer stiger poå, dvs de trykker på cab order i feil retning, blir det nedprioritert ifht assigned orders og om det er noen ordre av typen unasssigend over seg.
-    
-    % get_idle_elevator(Elevator_states) ->
-    %     Is_idle = fun(_Key, Dictionary_value) -> Dictionary_value#state.movement == idle end,
-    %     dict:filter(Is_idle, Elevator_states).
-    %     Is_local = fun({Node, _Floor}) -> Node == node() end,
-
-
-
-% {get_unassigned_order, PID} when is_pid(PID) ->
-%             %io:format("Got: Get unassigned order in Order Manager\n")
-%             case  Orders#orders.cab_orders ++ Orders#orders.unassigned_hall_orders of
-%                 [] ->
-%                     PID ! no_orders_available;
-%                 [{cab_button, Floor}|_Tail] ->
-%                     PID ! {cab_button, Floor};
-%                 [Next_order|_Tail] ->
-%                     node_communicator ! {new_order_assigned, Next_order},
-%                     PID ! Next_order
-%             end,
-%             main_loop(Orders, Elevator_states);
