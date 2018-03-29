@@ -39,6 +39,7 @@ main_loop(Socket) ->
 		{set_order_button_LED, down_button, Floor, off} when is_integer(Floor) andalso Floor >= 1 andalso Floor =< ?NUMBER_OF_FLOORS ->
 			gen_tcp:send(Socket, [2, 1, Floor - 1, 0]);
 		{set_order_button_LED, cab_button,  Floor, on}  when is_integer(Floor) andalso Floor >= 1 andalso Floor =< ?NUMBER_OF_FLOORS ->
+			io:format("eg mottek floor ~p\n", [Floor]),
 			gen_tcp:send(Socket, [2, 2, Floor - 1, 1]);
 		{set_order_button_LED, cab_button,  Floor, off} when is_integer(Floor) andalso Floor >= 1 andalso Floor =< ?NUMBER_OF_FLOORS ->
 			gen_tcp:send(Socket, [2, 2, Floor - 1, 0]);

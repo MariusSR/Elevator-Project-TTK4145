@@ -10,7 +10,7 @@
 %%%%%%% TODO: endre rekkefølgen på funksjonene, typ skal get_IP nederst?
 
 -module(node_connection).
--export([start/0]).
+-export([start/0, get_IP/0]).
 
 -define(RECEIVE_PORT,    5679).
 -define(BROADCAST_PORT,  5678).
@@ -24,7 +24,6 @@ start() ->
 	spawn(fun() -> broadcast_self() end),
 	spawn(fun() -> listen_for_nodes() end),
 	spawn(fun() -> start_node_monitoring() end),
-	%timer:sleep(1000), % wait for connection (still under debug)
 	io:format("Node cluster initialized, now searching for friends.~n").
 
 %--------------------------------------------------------------------------------------------------
@@ -32,40 +31,40 @@ start() ->
 %--------------------------------------------------------------------------------------------------
 init_node_cluster() ->
 	os:cmd("epmd -daemon"),				% Spawns the the name server required by distributed Erlang
-	ThisNode = list_to_atom("elevator@" ++ get_IP()),
-	{ok, _Pid} = net_kernel:start([ThisNode, longnames, ?TICKTIME]),
-	erlang:set_cookie(ThisNode, ?COOKIE).
+	This_node = list_to_atom("elevator@" ++ get_IP()),
+	{ok, _Pid} = net_kernel:start([This_node, longnames, ?TICKTIME]),
+	erlang:set_cookie(This_node, ?COOKIE).
 
 %--------------------------------------------------------------------------------------------------
 % Get local IP address on format 123.456.789.012
 %--------------------------------------------------------------------------------------------------
 get_IP() ->
-	{ok, Addresses} = inet:getif(), 				% Undocumented function returning all local IPs
-	inet_parse:ntoa(element(1, hd(Addresses))).     % Choose the first IP and parses it to a string
+	{ok, Addresses} = inet:getif(), 			   % Undocumented function returning all local IPs
+	inet_parse:ntoa(element(1, hd(Addresses))).    % Chooses the first IP and parses it to a string
 
 %--------------------------------------------------------------------------------------------------
 % Broadcast its own node name
 %--------------------------------------------------------------------------------------------------
 broadcast_self() ->
-	{ok, BroadcastSocket} = gen_udp:open(?BROADCAST_PORT, [list, {broadcast, true}]),
-	broadcast_self(BroadcastSocket).
+	{ok, Broadcast_socket} = gen_udp:open(?BROADCAST_PORT, [list, {broadcast, true}]),
+	broadcast_self(Broadcast_socket).
 
-broadcast_self(BroadcastSocket) ->
-	gen_udp:send(BroadcastSocket, {255, 255, 255, 255}, ?RECEIVE_PORT, atom_to_list(node())),
+broadcast_self(Broadcast_socket) ->
+	gen_udp:send(Broadcast_socket, {255, 255, 255, 255}, ?RECEIVE_PORT, atom_to_list(node())),
 	timer:sleep(?BROADCAST_SLEEP),
-	broadcast_self(BroadcastSocket).
+	broadcast_self(Broadcast_socket).
 
 %--------------------------------------------------------------------------------------------------
 % Listen for new nodes to connect
 %--------------------------------------------------------------------------------------------------
 listen_for_nodes() ->
-	{ok, ReceiveSocket} = gen_udp:open(?RECEIVE_PORT, [list, {active, false}]),
-	listen_for_nodes(ReceiveSocket).
+	{ok, Receive_socket} = gen_udp:open(?RECEIVE_PORT, [list, {active, false}]),
+	listen_for_nodes(Receive_socket).
 
-listen_for_nodes(ReceiveSocket) ->
-	case gen_udp:recv(ReceiveSocket, 0, ?TIMEOUT) of
-		{ok, {_Address, _Port, NodeName}} ->
-			Node = list_to_atom(NodeName),
+listen_for_nodes(Receive_socket) ->
+	case gen_udp:recv(Receive_socket, 0, ?TIMEOUT) of
+		{ok, {_Address, _Port, Node_name}} ->
+			Node = list_to_atom(Node_name),
 			case lists:member(Node, [node()|nodes()]) of
 				false ->
 					net_kernel:connect_node(Node);
@@ -79,27 +78,29 @@ listen_for_nodes(ReceiveSocket) ->
 			io:format("ERROR: receiving node failed due to: ~s~n", [Reason]);
 
 		Unexpected ->
-			io:format("unexpected message in listen for nodes: ~p~n", [Unexpected])
+			io:format("Unexpected message in listen for nodes: ~p~n", [Unexpected])
 	end,
-	listen_for_nodes(ReceiveSocket).
+	listen_for_nodes(Receive_socket).
 
 %--------------------------------------------------------------------------------------------------
 % HER SKAL NODEDØD OPPDAGES
 %--------------------------------------------------------------------------------------------------
 start_node_monitoring() ->
-	timer:sleep(500), %to prevent this node from registring existing nodes as "new nodes"
+	timer:sleep(500), % Sleep to prevent this node from registring existing nodes as "new nodes"
 	net_kernel:monitor_nodes(true),
 	node_monitoring_loop().
 
 node_monitoring_loop() ->
 	receive
 		{nodeup, New_node} ->
-			io:format("New node connected: ~p\n", [New_node]);
-			%timer:sleep(1000), %wait for new node to spwan properly
-			%order_manager ! {node_up, New_node};
+			io:format("New node connected: ~p\n", [New_node]),
+			order_manager ! {node_up, New_node};
 
 		{nodedown, Node} ->
 			io:format("Node disconnected: ~p\n", [Node]),
-			order_manager ! {node_down, Node}
+			order_manager ! {node_down, Node};
+		
+		Unexpected ->
+			io:format("Unexpected message in node_monitoring_loop: ~p~n", [Unexpected])
 	end,
 	node_monitoring_loop().
