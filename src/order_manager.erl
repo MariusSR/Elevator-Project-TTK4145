@@ -6,9 +6,9 @@
 -record(state,  {movement, floor}).
 
 start() ->
-    Existing_orders = get_existing_orders(), % HER MÅ DET TENNES LED!
+    Existing_cab_orders = get_existing_cab_orders(), % HER MÅ DET TENNES LED!
     % legg til tilsvarende for states
-    main_loop(Existing_orders, dict:new()).
+    main_loop(Existing_cab_orders, dict:new()).
 
 main_loop(Orders, Elevator_states) ->
     io:format("Orders: ~p         ~p         ~p~n", [Orders#orders.assigned_hall_orders, Orders#orders.unassigned_hall_orders, Orders#orders.cab_orders]),
@@ -141,58 +141,66 @@ main_loop(Orders, Elevator_states) ->
             main_loop(Updated_orders, Elevator_states);
         
         %----------------------------------------------------------------------------------------------
-        % Send a copy of existing hall orders to the newly connected node
+        % Sends a copy of existing hall orders to the newly connected node
         %----------------------------------------------------------------------------------------------
         {node_up, New_node} ->
             node_communicator ! {sync_hall_orders_with_new_node, New_node, Orders#orders.assigned_hall_orders, Orders#orders.unassigned_hall_orders},
             main_loop(Orders, Elevator_states);
+
+        {existing_hall_orders, Updated_assigned_hall_orders, Updated_unassigend_hall_orders} ->
+            % Denne beskjeden vil komme 1 gang per eksisterende annen node. Kanskje vi skal ta unionen av dem alle? Burde være like though. Nå vinner den siste.
+            Updated_orders = Orders#orders{assigned_hall_orders = Updated_assigned_hall_orders, unassigned_hall_orders = Updated_unassigend_hall_orders},
+            main_loop(Updated_orders, Elevator_states);
 
         Unexpected ->
             io:format("Unexpected message in order_manager: ~p~n", [Unexpected])
     end.
 
 
-get_existing_orders() ->
+get_existing_cab_orders() ->
     Cab_orders = get_existing_cab_orders_from_file(),
-    {_Assigend_hall_orders, _Unassigend_hall_orders} = get_existing_hall_orders(nodes()),
-    #orders{cab_orders = Cab_orders}. % update this to include hall_orders
+    lists:foreach(fun(Cab_order) -> node_communicator ! {set_order_button_LED, on, Cab_order} end, Cab_orders),
+    #orders{cab_orders = Cab_orders}.
 
 get_existing_cab_orders_from_file() ->
-    dets:open_file(node(), [{type, bag}]),
-    Cab_orders = dets:lookup(node(), cab_button),
-    dets:close(node()),
+    File_name = list_to_atom("elevator@" ++ node_connection:get_IP()),
+    dets:open_file(File_name, [{type, bag}]),
+    Cab_orders = dets:lookup(File_name, cab_button),
+    dets:close(File_name),
     Cab_orders.
 
-get_existing_hall_orders([]) ->
-    io:format("No orders existing since nodes()=~p\n", [nodes()]),
-    {[], []};
-get_existing_hall_orders(_Nodes) ->
-    receive
-        {existing_hall_orders, Assigned_hall_orders, Unassigend_hall_orders} ->
-            io:format("Existing orders returned: ~p     ~p\n", [Assigned_hall_orders, Unassigend_hall_orders]),
-            {Assigned_hall_orders, Unassigend_hall_orders};
-
-        Other ->
-            io:format("Ignored the following msg as initialization of this node is not yet complete ~p~n", [Other]),
-            get_existing_hall_orders(nodes())
-
-    after
-        1000 ->
-            io:format("ERROR: No list of existing orders received within its time limit, assuming no hall orders exist"),
-            {[], []}
-    end.
-
 write_cab_order_to_file(Floor) ->
-    dets:open_file(node(), [{type, bag}]),
-    dets:insert(node(), {cab_button, Floor}),
-    dets:close(node()).
+    File_name = node(),
+    dets:open_file(File_name, [{type, bag}]),
+    dets:insert(File_name, {cab_button, Floor}),
+    dets:close(File_name).
 
 remove_cab_order_from_file(Floor) ->
-    dets:open_file(node(), [{type, bag}]),
-    dets:delete_object(node(), {cab_button, Floor}),
-    dets:close(node()).
+    File_name = node(),
+    dets:open_file(File_name, [{type, bag}]),
+    dets:delete_object(File_name, {cab_button, Floor}),
+    dets:close(File_name).
 
 
+
+% get_existing_hall_orders([]) ->
+%     io:format("No orders existing since nodes()=~p\n", [nodes()]),
+%     {[], []};
+% get_existing_hall_orders(_Nodes) ->
+%     receive
+%         {existing_hall_orders, Assigned_hall_orders, Unassigend_hall_orders} ->
+%             io:format("Existing orders returned: ~p     ~p\n", [Assigned_hall_orders, Unassigend_hall_orders]),
+%             {Assigned_hall_orders, Unassigend_hall_orders};
+
+%         Other ->
+%             io:format("Ignored the following msg as initialization of this node is not yet complete ~p~n", [Other]),
+%             get_existing_hall_orders(nodes())
+
+%     after
+%         1000 ->
+%             io:format("ERROR: No list of existing orders received within its time limit, assuming no hall orders exist"),
+%             {[], []}
+%     end.
 
 
 
