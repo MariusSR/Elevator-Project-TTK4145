@@ -7,3 +7,4 @@
 6) Vi må bestemme rekkefølgen på cab_orders. Nå blir disse prioritert over å ta nye bestillinger, men den første
    cabentrykket utføres først, altså ikke den nærmeste eller den i "samme retning". Sistnevnte er vanskelig å
    implementere siden retningen lagret i staten er stop-dir ...
+7) Endre navn på turn_off_leds_at_floor i driver_comm til å gjenspeile at den slukker ALLE LEDS
