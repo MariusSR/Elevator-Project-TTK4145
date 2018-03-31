@@ -21,7 +21,7 @@ main_loop(Watch_list) -> %watch_list er en liste av ordre med tilhørende PID fo
             end;
         
         {timed_out, PID, Order} ->
-            main_loop(watch_list -- [{PID, Order}])
+            main_loop(Watch_list -- [{PID, Order}])
     end.
 
 watchdog_timer(Order) ->
