@@ -17,7 +17,9 @@ main_loop(Watch_list) -> %watch_list er en liste av ordre med tilhørende PID fo
                     main_loop(Watch_list);
                 {PID, Order} ->
                     PID ! order_finished,
-                    main_loop(Watch_list -- {PID, Order})
+                    main_loop(Watch_list -- {PID, Order});
+                Unexpected ->
+                    io:format("Unexpected shieet: ~p\n", [Unexpected])
             end;
         
         {timed_out, PID, Order} ->
