@@ -9,7 +9,7 @@ main_loop(Watch_list) -> %watch_list er en liste av ordre med tilhørende PID fo
     receive
         {start_watching, Order} ->
             PID = spawn(fun() -> watchdog_timer(Order) end),
-            main_loop(Watch_list ++ {PID, Order});
+            main_loop(Watch_list ++ [{PID, Order}]);
         
         {stop_watching, Order} -> % tenker denne skal kalles når en ordre blir utført, uavhengig om den watches eller ikke. cab og hall sendes hver for seg, som 2 kall
             case lists:keyfind(Order, 2, Watch_list) of
