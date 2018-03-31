@@ -12,6 +12,9 @@ start() ->
     register(order_manager, spawn(fun() -> order_manager:start() end)),
     io:format("ordermanager PID: ~p\n", [whereis(order_manager)]),
 
+    register(watchdog, spawn(fun() -> watchdog:start() end)),
+    io:format("watchdog PID: ~p\n", [whereis(watchdog)]),
+
     node_connection:start(),
 
     register(fsm, spawn(fun()-> fsm:start() end)),
@@ -32,6 +35,9 @@ start_local(Port) ->
 
     register(order_manager, spawn(fun()-> order_manager:start() end)),
     io:format("ordermanager PID: ~p\n", [whereis(order_manager)]),
+
+    register(watchdog, spawn(fun() -> watchdog:start() end)),
+    io:format("watchdog PID: ~p\n", [whereis(watchdog)]),
 
     %node_connection:start(),
 
