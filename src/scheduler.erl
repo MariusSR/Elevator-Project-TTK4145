@@ -31,7 +31,7 @@ get_optmial_elevator_for_order([Node|Remaining_nodes_to_evaluate], Order, Elevat
         error ->
             ok;
         {ok, State_of_elevator} ->
-            io:format("NODEN SOM BEREGNES PAA ER: ~p\n", [Node]),
+            %io:format("NODEN SOM BEREGNES PAA ER: ~p\n", [Node]),
             FS_for_this_node = calculate_FS(Order, State_of_elevator),
             case FS_for_this_node > element(2, Best) of
                 true ->
@@ -54,16 +54,16 @@ calculate_FS({Button_type, Floor}, State_of_elevator) -> %when is_integer(Floor)
             case is_order_in_same_direction_as_elevator_is_moving(Floor, Button_type, State_of_elevator) of
                 true ->
                     FS = ?NUMBER_OF_FLOORS + 1 - Distance,
-                    io:format("        FSa: ~p ~p ~p\n", [FS, Button_type, Floor]),
+                    %io:format("        FSa: ~p ~p ~p\n", [FS, Button_type, Floor]),
                     FS;
                 false ->
                     FS = ?NUMBER_OF_FLOORS - Distance,
-                    io:format("        FSb: ~p ~p ~p\n", [FS, Button_type, Floor]),
+                    %io:format("        FSb: ~p ~p ~p\n", [FS, Button_type, Floor]),
                     FS
             end;
         false ->
             FS = 1 - Distance, % added the subtraction of distance so that two elevator both idle or door_open (=stop_dir) not always get same value
-            io:format("        FSc: ~p ~p ~p\n", [FS, Button_type, Floor]),
+            %io:format("        FSc: ~p ~p ~p\n", [FS, Button_type, Floor]),
             FS
     end.
 

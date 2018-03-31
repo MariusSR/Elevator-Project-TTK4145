@@ -12,22 +12,26 @@ main_loop(Watch_list) -> %watch_list er en liste av ordre med tilhørende PID fo
             main_loop(Watch_list ++ {PID, Order});
         
         {stop_watching, Order} -> % tenker denne skal kalles når en ordre blir utført, uavhengig om den watches eller ikke. cab og hall sendes hver for seg, som 2 kall
-            PID = 1, % her må PID finnes fra watch_list, nå bare en dummy-verdi. bruke case of for å sjekke om PIDen faktisk finnes, altså om ordren er i watch_listen
-            PID ! order_finished, %kun hvis den finnes
-            main_loop(Watch_list -- {PID, Order}) %kun hvis den finnes (men kan gjøres uansett da)
+            case lists:keyfind(Order, 2, Watch_list) of
+                false ->
+                    main_loop(Watch_list);
+                {PID, Order} ->
+                    PID ! order_finished,
+                    main_loop(Watch_list -- {PID, Order})
+            end;
         
         {timed_out, PID, Order} ->
             main_loop(watch_list -- {PID, Order})            
-    end,
+    end.
 
 watchdog_timer(Order) ->
     receive
         order_finished ->
-            ok;
+            ok
     after
         ?TIME_LIMIT ->
             io:format("Order timed out!\n"),
-            order_manager ! {unassign_order, Order}, %denne må lages i order_manager
+            order_manager ! {unassign_hall_order, Order}, %denne må lages i order_manager
             watchdog ! {timed_out, self(), Order}
     end.
         

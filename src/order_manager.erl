@@ -59,10 +59,22 @@ main_loop(Orders, Elevator_states) ->
                 false ->
                     Updated_assigned_hall_orders   = Orders#orders.assigned_hall_orders ++ [{Hall_order, Node}],
                     Updated_unassigned_hall_orders = [X || X <- Orders#orders.unassigned_hall_orders,   X /= Hall_order], %% endre til å bruke lists:fitler?
-                    Updated_orders = Orders#orders{unassigned_hall_orders = Updated_unassigned_hall_orders,
-                                                     assigned_hall_orders = Updated_assigned_hall_orders},
+                    Updated_orders                 = Orders#orders{unassigned_hall_orders = Updated_unassigned_hall_orders,
+                                                                     assigned_hall_orders = Updated_assigned_hall_orders},
+                    watchdog ! {start_watching, Hall_order},
                     main_loop(Updated_orders, Elevator_states)
             end;
+        
+        %----------------------------------------------------------------------------------------------
+        % Move 'Hall_order' from being assigned back to the list of unassigned orders
+        %----------------------------------------------------------------------------------------------
+        {unassign_hall_order, Hall_order} ->
+            Is_not_same_order              = fun(Assigned_hall_order) -> element(1, Assigned_hall_order) /= Hall_order end,
+            Updated_assigned_hall_orders   = lists:filter(Is_not_same_order, Orders#orders.assigned_hall_orders),
+            Updated_unassigned_hall_orders = [Hall_order] ++ Orders#orders.unassigned_hall_orders,
+            Updated_orders                 = Orders#orders{unassigned_hall_orders = Updated_unassigned_hall_orders,
+                                                             assigned_hall_orders = Updated_assigned_hall_orders},
+            main_loop(Updated_orders, Elevator_states);
 
         %----------------------------------------------------------------------------------------------
         % Removes all occourences of an order from Orders
@@ -70,7 +82,7 @@ main_loop(Orders, Elevator_states) ->
         % Cab orders
         {remove_order, {cab_button, Floor}} when Floor >= 1 andalso Floor =< ?NUMBER_OF_FLOORS ->
             %io:format("Received remove order in Order Manager:~p\n", [{cab_button, Floor}]),
-            Updated_cab_orders = [X || X <- Orders#orders.cab_orders, X /= {cab_button, Floor}],
+            Updated_cab_orders = [X || X <- Orders#orders.cab_orders, X /= {cab_button, Floor}], %bruke filter istedet?
             Updated_orders     = Orders#orders{cab_orders = Updated_cab_orders},
             remove_cab_order_from_file(Floor),
             main_loop(Updated_orders, Elevator_states);
@@ -80,8 +92,9 @@ main_loop(Orders, Elevator_states) ->
             Hall_order = {Hall_button, Floor},
             Updated_unassigned_hall_orders = lists:filter(fun(Order) -> Order /= Hall_order end, Orders#orders.unassigned_hall_orders), %[X || X <- Orders#orders.unassigned_hall_orders, X /= Hall_order], %update these to use filter?
             Updated_assigned_hall_orders   = lists:filter(fun({Order, _Node}) -> Order /= Hall_order end, Orders#orders.assigned_hall_orders), % [X || X <- Orders#orders.assigned_hall_orders,   X /= {Hall_order, _}],
-            Updated_orders = Orders#orders{unassigned_hall_orders = Updated_unassigned_hall_orders,
-                                             assigned_hall_orders = Updated_assigned_hall_orders},
+            Updated_orders                 = Orders#orders{unassigned_hall_orders = Updated_unassigned_hall_orders,
+                                                             assigned_hall_orders = Updated_assigned_hall_orders},
+            watchdog ! {stop_watching, Hall_order},
             main_loop(Updated_orders, Elevator_states);
 
         %----------------------------------------------------------------------------------------------
@@ -98,11 +111,11 @@ main_loop(Orders, Elevator_states) ->
         % Moving up
         {should_elevator_stop, Floor, up_dir, PID} when Floor >= 1 andalso Floor =< ?NUMBER_OF_FLOORS andalso is_pid(PID) ->
             PID ! lists:member({cab_button, Floor}, Orders#orders.cab_orders) or
-                  lists:member({up_button, Floor}, Orders#orders.unassigned_hall_orders), % ++ Orders#orders.assigned_hall_orders),
+                  lists:member({up_button,  Floor}, Orders#orders.unassigned_hall_orders), % ++ Orders#orders.assigned_hall_orders),
             main_loop(Orders, Elevator_states);
         % Moving down
         {should_elevator_stop, Floor, down_dir, PID} when Floor >= 1 andalso Floor =< ?NUMBER_OF_FLOORS andalso is_pid(PID) ->
-            PID ! lists:member({cab_button, Floor}, Orders#orders.cab_orders) or
+            PID ! lists:member({cab_button,  Floor}, Orders#orders.cab_orders) or
                   lists:member({down_button, Floor}, Orders#orders.unassigned_hall_orders), % ++ Orders#orders.assigned_hall_orders),
             main_loop(Orders, Elevator_states);
         % Idle elevator
@@ -136,8 +149,8 @@ main_loop(Orders, Elevator_states) ->
             Hall_orders_extracted           = lists:map(fun({Order, _Node}) -> Order end, Orders_assigned_to_offline_node),
             Updated_assigned_hall_orders    = lists:filter(fun({_Order, Assigned_node}) -> Assigned_node /= Node end, Orders#orders.assigned_hall_orders),
             Updated_unassigned_hall_orders  = Hall_orders_extracted ++ Orders#orders.unassigned_hall_orders,
-            Updated_orders = Orders#orders{unassigned_hall_orders = Updated_unassigned_hall_orders,
-                                             assigned_hall_orders = Updated_assigned_hall_orders},
+            Updated_orders                  = Orders#orders{unassigned_hall_orders = Updated_unassigned_hall_orders,
+                                                              assigned_hall_orders = Updated_assigned_hall_orders},
             main_loop(Updated_orders, Elevator_states);
         
         %----------------------------------------------------------------------------------------------
