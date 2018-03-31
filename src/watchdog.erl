@@ -12,14 +12,14 @@ main_loop(Watch_list) -> %watch_list er en liste av ordre med tilhørende PID fo
             main_loop(Watch_list ++ {PID, Order});
         
         {stop_watching, Order} -> % tenker denne skal kalles når en ordre blir utført, uavhengig om den watches eller ikke. cab og hall sendes hver for seg, som 2 kall
+            io:format("Watching diiiiz: ~p\n", [Watch_list]),
+            io:format("Checking diiiiz: ~p\n", [Order])
             case lists:keyfind(Order, 2, Watch_list) of
                 false ->
                     main_loop(Watch_list);
                 {PID, Order} ->
                     PID ! order_finished,
-                    main_loop(Watch_list -- {PID, Order});
-                Unexpected ->
-                    io:format("Unexpected shieet: ~p\n", [Unexpected])
+                    main_loop(Watch_list -- {PID, Order})
             end;
         
         {timed_out, PID, Order} ->
