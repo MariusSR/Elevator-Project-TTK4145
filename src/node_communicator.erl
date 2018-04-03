@@ -76,7 +76,7 @@ main_loop() ->
             order_manager ! {existing_hall_orders, Assigned_hall_orders, Unassigned_hall_orders},
             driver ! turn_off_all_leds,
             Existing_orders = lists:map(fun({Assigned_order, _Node}) -> Assigned_order end, Assigned_hall_orders) ++ Unassigned_hall_orders,
-            foreach(fun({Button_type, Floor}) -> driver ! {set_order_button_LED, Button_type, Floor, on} end, Existing_orders);
+            lists:foreach(fun({Button_type, Floor}) -> driver ! {set_order_button_LED, Button_type, Floor, on} end, Existing_orders);
 
         %%% FOR DEBUG ONLY %%%
         reset ->
