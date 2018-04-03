@@ -157,13 +157,13 @@ main_loop(Orders, Elevator_states) ->
         % Sends (and receives) a copy of existing hall orders and current states to the newly connected
         %----------------------------------------------------------------------------------------------
         {node_up, New_node} ->
-            node_communicator ! {sync_hall_orders_and_states, New_node, Orders#orders.assigned_hall_orders, Orders#orders.unassigned_hall_orders, julenissen},
+            node_communicator ! {sync_hall_orders_and_states, New_node, Orders#orders.assigned_hall_orders, Orders#orders.unassigned_hall_orders, Elevator_states},
             main_loop(Orders, Elevator_states);
 
-        {existing_hall_orders_and_states, Updated_assigned_hall_orders, Updated_unassigned_hall_orders, Elevator_states} ->
+        {existing_hall_orders_and_states, Updated_assigned_hall_orders, Updated_unassigned_hall_orders, Updated_elevator_states} ->
             % Denne beskjeden vil komme 1 gang per eksisterende annen node. Kanskje vi skal ta unionen av dem alle? Burde være like though. Nå vinner den siste.
             Updated_orders = Orders#orders{assigned_hall_orders = Updated_assigned_hall_orders, unassigned_hall_orders = Updated_unassigned_hall_orders},
-            main_loop(Updated_orders, Elevator_states);
+            main_loop(Updated_orders, Updated_elevator_states);
 
         Unexpected ->
             io:format("Unexpected message in order_manager: ~p~n", [Unexpected]),
