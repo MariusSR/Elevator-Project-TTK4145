@@ -123,7 +123,9 @@ node_monitoring_loop() ->
 			order_manager ! {node_down, Node};
 		
 		wait ->
-			timer:sleep(?OFFLINE_SLEEP);
+			net_kernel:monitor_nodes(false),
+			timer:sleep(?OFFLINE_SLEEP),
+			start_node_monitoring();
 		
 		Unexpected ->
 			io:format("Unexpected message in node_monitoring_loop: ~p~n", [Unexpected])
