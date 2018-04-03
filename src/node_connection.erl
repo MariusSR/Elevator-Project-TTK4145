@@ -30,7 +30,7 @@ start() ->
 
 loop(PIDs) ->
 	receive
-		disconnected_node ->
+		disconnect_node ->
 			lists:foreach(fun(PID) -> exit(PID, normal) end, PIDs),
 			net_kernel:disconnect_node(node()),
 			timer:sleep(?OFFLINE_SLEEP),
