@@ -32,7 +32,7 @@ loop(PIDs) ->
 	receive
 		disconnect_node ->
 			lists:foreach(fun(PID) -> exit(PID, normal) end, PIDs),
-			net_kernel:disconnect_node(node()),
+			erlang:disconnect_node(node()),
 			timer:sleep(?OFFLINE_SLEEP),
 			start();
 
