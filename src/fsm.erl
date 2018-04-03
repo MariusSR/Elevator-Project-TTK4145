@@ -190,8 +190,9 @@ fsm(door_open, Latest_floor, {Button_type, Floor}) ->
     end.
 
 fsm(error) ->
+    io:format("FSM: error~n"),
     driver ! {set_motor_dir, stop_dir},
-    io:format("KILL HERRERRR NODE COMM\n"),
+    node_connection ! disconnect_node,
     timer:sleep(?DISCONNECTED_TIME),
     start().
 
