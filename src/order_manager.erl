@@ -168,8 +168,8 @@ main_loop(Orders, Elevator_states) ->
             Updated_orders = Orders#orders{assigned_hall_orders = Updated_assigned_hall_orders, unassigned_hall_orders = Updated_unassigend_hall_orders},
             main_loop(Updated_orders, Elevator_states);
 
-        reset_order_manager ->
-            start();
+        % reset_order_manager ->
+        %     start();
 
         Unexpected ->
             io:format("Unexpected message in order_manager: ~p~n", [Unexpected])
