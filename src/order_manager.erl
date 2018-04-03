@@ -11,7 +11,12 @@ start() ->
     main_loop(Existing_cab_orders, dict:new()).
 
 main_loop(Orders, Elevator_states) ->
-    io:format("Orders: ~p         ~p         ~p~n", [Orders#orders.assigned_hall_orders, Orders#orders.unassigned_hall_orders, Orders#orders.cab_orders]),
+    case (Orders#orders.assigned_hall_orders =/= []) or (Orders#orders.unassigned_hall_orders =/= []) or (Orders#orders.cab_orders =/= []) of
+        true ->
+            io:format("Orders: ~p         ~p         ~p~n", [Orders#orders.assigned_hall_orders, Orders#orders.unassigned_hall_orders, Orders#orders.cab_orders]);
+        false ->
+            ok
+    end, 
     %io:format("States: ~p\n", [Elevator_states]),
     receive
         %----------------------------------------------------------------------------------------------
