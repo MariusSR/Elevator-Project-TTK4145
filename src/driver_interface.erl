@@ -5,7 +5,7 @@
 %% whereas start returns the PID for loop.              			   			     %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
--module(driver_communication).
+-module(driver_interface).
 -export([start/0, start/1]).
 -include("parameters.hrl").
 -define(TIMEOUT, 2000).
