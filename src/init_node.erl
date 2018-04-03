@@ -1,7 +1,7 @@
 -module(init_node).
 -export([start/0, start_local/1]).
 
-start() ->      
+start() ->
     register(driver, spawn(fun() -> driver_communication:start() end)),
     io:format("driver PID: ~p\n", [whereis(driver)]),
     timer:sleep(100), % wait for driver to finish its initialization

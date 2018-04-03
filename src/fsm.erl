@@ -4,6 +4,7 @@
 -include("parameters.hrl").
 -define(DOOR_OPEN_TIME, 2000).
 -define(FLOOR_SENSOR_SLEEP_BETWEEN_FLOORS, 100).
+-define(DISCONNECTED_TIME, 10000).
 
 -record(state, {movement, floor}).
 
@@ -51,9 +52,18 @@ fsm(idle_loop, Latest_floor) ->
 fsm(moving, Latest_floor, Moving_direction, {Button_type, Floor}) ->
     io:format("FSM: moving with order: ~p~n", [{Button_type, Floor}]),
     node_communicator ! {reached_new_state, #state{movement = Moving_direction, floor = Latest_floor}},
+    watchdog ! start_watching_movement,
     fsm(moving_loop, Latest_floor, Moving_direction, {Button_type, Floor});
 
 fsm(moving_loop, Latest_floor, Moving_direction, {Button_type, Floor}) ->
+    watchdog ! is_movement_timed_out,
+    receive
+        true ->
+            fsm(error);
+        false ->
+            ok
+    end,
+
     Order = {Button_type, Floor},
     driver ! {get_floor, self()},
     receive 
@@ -99,6 +109,7 @@ fsm(moving_loop, Latest_floor, Moving_direction, {Button_type, Floor}) ->
 fsm(stopped, Latest_floor, {Button_type, Floor}) ->
     io:format("FSM: Stopped~n"),
     driver ! {set_door_open_LED, on},
+    watchdog ! stop_watching_movement,
     fsm(door_open, Latest_floor, {Button_type, Floor});
 
 %Door open state
@@ -178,13 +189,28 @@ fsm(door_open, Latest_floor, {Button_type, Floor}) ->
             fsm(moving, Latest_floor, Moving_direction, Order)
     end.
 
+fsm(error) ->
+    driver ! {set_motor_dir, stop_dir},
+    io:format("KILL HERRERRR NODE COMM\n"),
+    timer:sleep(?DISCONNECTED_TIME),
+    start().
+
+
 % ---------------------------------------- Help functions ------------------------------------------------------------
 
 init_elevator() ->
     io:format("FSM: Initialise elevator!\n"),
+    watchdog ! start_watching_movement,
     init_elevator_loop().
     
 init_elevator_loop() ->
+    watchdog ! is_movement_timed_out,
+    receive
+        true ->
+            fsm(error);
+        false ->
+            ok
+    end,
     driver ! {get_floor, self()},
     receive 
         between_floors ->
@@ -194,6 +220,7 @@ init_elevator_loop() ->
         {floor, Latest_floor} ->
             driver ! {set_motor_dir, stop_dir},
             driver ! {set_floor_LED, Latest_floor},
+            watchdog ! stop_watching_movement,
             Latest_floor;
         Unexpected ->
             io:format("Unexpected msg received in fsm.erl:~p\n", [Unexpected])
