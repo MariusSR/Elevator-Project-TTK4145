@@ -32,8 +32,8 @@ loop(PIDs) ->
 	receive
 		disconnect_node ->
 			lists:foreach(fun(PID) -> PID ! wait end, PIDs),
-			erlang:disconnect_node(node()),
-			io:format("Disconnected !!!!!!! ~p\n\n\n", [node()]),
+			rpc:eval_everywhere(erlang, disconnect_node, [node()]),
+			io:format("Disconnected !!!!!!! ~p\n\n\n", [nodes()]),
 			timer:sleep(?OFFLINE_SLEEP),
 			loop(PIDs);
 
