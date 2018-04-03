@@ -52,7 +52,7 @@ fsm(idle_loop, Latest_floor) ->
 fsm(moving, Latest_floor, Moving_direction, {Button_type, Floor}) ->
     io:format("FSM: moving with order: ~p~n", [{Button_type, Floor}]),
     node_communicator ! {reached_new_state, #state{movement = Moving_direction, floor = Latest_floor}},
-    watchdog ! start_watching_movement,
+    watchdog ! {start_watching_movement, abs(Floor - Latest_floor)},
     fsm(moving_loop, Latest_floor, Moving_direction, {Button_type, Floor});
 
 fsm(moving_loop, Latest_floor, Moving_direction, {Button_type, Floor}) ->
@@ -244,7 +244,7 @@ choose_direction({_Button_type, Floor}, Latest_floor) when Latest_floor > Floor 
 % remove_order(Moving_direction, Floor) ->
 %     case Moving_direction of 
 %         up_dir ->
-%             node_communicator ! {order_finished, {up_button, Floor}};
+%             node_communicator 6000! {order_finished, {up_button, Floor}};
 %         down_dir ->
 %             node_communicator ! {order_finished, {down_button, Floor}};
 %         Unexpected ->
@@ -331,7 +331,7 @@ convert_to_button_type(stop_dir) ->
 %             timer:sleep(500),
 %             fsm(idle_loop, Latest_floor);
 %         Unexpected ->
-%             io:format("Unexpected error in fsm(idle_loop) recv: recieved illegal order from scheduler: ~p~n", [Unexpected]),
+%             io:format("Unexpec6000ted error in fsm(idle_loop) recv: recieved illegal order from scheduler: ~p~n", [Unexpected]),
 %             fsm(idle, Latest_floor)
 %     after
 %         2000 ->
