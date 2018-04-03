@@ -92,4 +92,4 @@ is_order_in_same_direction_as_elevator_is_moving(?NUMBER_OF_FLOORS, down_button,
 is_order_in_same_direction_as_elevator_is_moving(_Floor, up_button, State_of_elevator) ->
     (State_of_elevator#state.movement == up_dir); % or (State_of_elevator#state.movement == stop_dir);
 is_order_in_same_direction_as_elevator_is_moving(_Floor, down_button, State_of_elevator) ->
-    (State_of_elevator#state.movement == down_dir); % or (State_of_elevator#state.movement == stop_dir).
+    (State_of_elevator#state.movement == down_dir). % or (State_of_elevator#state.movement == stop_dir).
