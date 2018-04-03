@@ -31,10 +31,11 @@ start() ->
 loop(PIDs) ->
 	receive
 		disconnect_node ->
-			lists:foreach(fun(PID) -> exit(PID, normal) end, PIDs),
+			lists:foreach(fun(PID) -> PID ! wait end, PIDs),
 			erlang:disconnect_node(node()),
+			io:format("Disconnected !!!!!!! ~p\n\n\n", [node()]),
 			timer:sleep(?OFFLINE_SLEEP),
-			start();
+			loop([Broadcast_PID, Listen_PID, Monitoring_PID]);
 
 		Unexpected ->
 			io:format("Unexpected message in node_connection loop: ~p~n", [Unexpected]),
@@ -62,11 +63,14 @@ get_IP() ->
 %--------------------------------------------------------------------------------------------------
 broadcast_self() ->
 	{ok, Broadcast_socket} = gen_udp:open(?BROADCAST_PORT, [list, {broadcast, true}]),
+	gen_udp:send(Broadcast_socket, {255, 255, 255, 255}, ?RECEIVE_PORT, atom_to_list(node())),
 	broadcast_self(Broadcast_socket).
 
 broadcast_self(Broadcast_socket) ->
+	receive wait -> timer:sleep(?OFFLINE_SLEEP)
+	after ?BROADCAST_SLEEP -> ok
+	end,
 	gen_udp:send(Broadcast_socket, {255, 255, 255, 255}, ?RECEIVE_PORT, atom_to_list(node())),
-	timer:sleep(?BROADCAST_SLEEP),
 	broadcast_self(Broadcast_socket).
 
 %--------------------------------------------------------------------------------------------------
@@ -77,6 +81,9 @@ listen_for_nodes() ->
 	listen_for_nodes(Receive_socket).
 
 listen_for_nodes(Receive_socket) ->
+	receive wait -> timer:sleep(?OFFLINE_SLEEP)
+	after 50 -> ok
+	end,
 	case gen_udp:recv(Receive_socket, 0, ?TIMEOUT) of
 		{ok, {_Address, _Port, Node_name}} ->
 			Node = list_to_atom(Node_name),
@@ -114,6 +121,9 @@ node_monitoring_loop() ->
 		{nodedown, Node} ->
 			io:format("Node disconnected: ~p\n", [Node]),
 			order_manager ! {node_down, Node};
+		
+		wait ->
+			timer:sleep(?OFFLINE_SLEEP);
 		
 		Unexpected ->
 			io:format("Unexpected message in node_monitoring_loop: ~p~n", [Unexpected])
