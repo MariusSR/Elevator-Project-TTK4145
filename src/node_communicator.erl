@@ -69,14 +69,13 @@ main_loop() ->
         {update_state, Node, New_state} when is_atom(Node) andalso is_record(New_state, state) ->
             order_manager ! {update_state, Node, New_state};
 
-        {sync_hall_orders_with_new_node, New_node, Assigned_hall_orders, Unassigned_hall_orders} ->
-            {node_communicator, New_node} ! {existing_hall_orders, Assigned_hall_orders, Unassigned_hall_orders};
+        {sync_hall_orders_and_states, New_node, Assigned_hall_orders, Unassigned_hall_orders, Elevator_states} ->
+            {node_communicator, New_node} ! {existing_hall_orders_and_states, Assigned_hall_orders, Unassigned_hall_orders, Elevator_states};
         
-        {existing_hall_orders, Assigned_hall_orders, Unassigned_hall_orders} ->
-            order_manager ! {existing_hall_orders, Assigned_hall_orders, Unassigned_hall_orders},
+        {existing_hall_orders_and_states, Assigned_hall_orders, Unassigned_hall_orders, Elevator_states} ->
+            order_manager ! {existing_hall_orders_and_states, Assigned_hall_orders, Unassigned_hall_orders, Elevator_states},
             driver ! turn_off_all_leds,
             Existing_orders = lists:map(fun({Assigned_order, _Node}) -> Assigned_order end, Assigned_hall_orders) ++ Unassigned_hall_orders,
-            io:format("Existing orders ~p\n", [Existing_orders]),
             lists:foreach(fun({Button_type, Floor}) -> driver ! {set_order_button_LED, Button_type, Floor, on} end, Existing_orders);
 
         %%% FOR DEBUG ONLY %%%
