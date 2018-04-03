@@ -35,7 +35,6 @@ loop(PIDs) ->
 			rpc:eval_everywhere(erlang, disconnect_node, [node()]),
 			timer:sleep(50), %fjern denne
 			io:format("Disconnected !!!!!!! ~p\n\n\n", [nodes()]), %fjern denne
-			order_manager ! reset_order_manager,
 			timer:sleep(?OFFLINE_SLEEP),
 			loop(PIDs);
 
