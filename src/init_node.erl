@@ -17,6 +17,7 @@ start() ->
 
     register(node_connection, spawn(fun() -> node_connection:start() end)),
     io:format("node_connection PID: ~p\n", [whereis(node_connection)]),
+    timer:sleep(100), % wait for node cluster to be started on this node
 
     register(fsm, spawn(fun()-> fsm:start() end)),
     io:format("FSM PID: ~p\n", [whereis(fsm)]),
