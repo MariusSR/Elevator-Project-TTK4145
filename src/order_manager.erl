@@ -7,16 +7,11 @@
 
 start() ->
     Existing_cab_orders = get_existing_cab_orders(),
-    % legg til tilsvarende for states
+    % legg til tilsvarende for states !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     main_loop(Existing_cab_orders, dict:new()).
 
 main_loop(Orders, Elevator_states) ->
-    case (Orders#orders.assigned_hall_orders =/= []) or (Orders#orders.unassigned_hall_orders =/= []) or (Orders#orders.cab_orders =/= []) of
-        true ->
-            io:format("Orders: ~p         ~p         ~p~n", [Orders#orders.assigned_hall_orders, Orders#orders.unassigned_hall_orders, Orders#orders.cab_orders]);
-        false ->
-            ok
-    end, 
+    io:format("Orders: ~p         ~p         ~p~n", [Orders#orders.assigned_hall_orders, Orders#orders.unassigned_hall_orders, Orders#orders.cab_orders]),
     %io:format("States: ~p\n", [Elevator_states]),
     receive
         %----------------------------------------------------------------------------------------------
@@ -165,10 +160,16 @@ main_loop(Orders, Elevator_states) ->
             node_communicator ! {sync_hall_orders_with_new_node, New_node, Orders#orders.assigned_hall_orders, Orders#orders.unassigned_hall_orders},
             main_loop(Orders, Elevator_states);
 
+        %----------------------------------------------------------------------------------------------
+        % NOE HER!!!!!
+        %----------------------------------------------------------------------------------------------
         {existing_hall_orders, Updated_assigned_hall_orders, Updated_unassigend_hall_orders} ->
             % Denne beskjeden vil komme 1 gang per eksisterende annen node. Kanskje vi skal ta unionen av dem alle? Burde være like though. Nå vinner den siste.
             Updated_orders = Orders#orders{assigned_hall_orders = Updated_assigned_hall_orders, unassigned_hall_orders = Updated_unassigend_hall_orders},
             main_loop(Updated_orders, Elevator_states);
+
+        reset_order_manager ->
+            start();
 
         Unexpected ->
             io:format("Unexpected message in order_manager: ~p~n", [Unexpected])
