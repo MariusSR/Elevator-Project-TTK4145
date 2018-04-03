@@ -35,7 +35,7 @@ loop(PIDs) ->
 			erlang:disconnect_node(node()),
 			io:format("Disconnected !!!!!!! ~p\n\n\n", [node()]),
 			timer:sleep(?OFFLINE_SLEEP),
-			loop([Broadcast_PID, Listen_PID, Monitoring_PID]);
+			loop(PIDs);
 
 		Unexpected ->
 			io:format("Unexpected message in node_connection loop: ~p~n", [Unexpected]),
