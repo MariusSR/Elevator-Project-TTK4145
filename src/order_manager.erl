@@ -157,7 +157,7 @@ main_loop(Orders, Elevator_states) ->
         % Sends (and receives) a copy of existing hall orders and current states to the newly connected
         %----------------------------------------------------------------------------------------------
         {node_up, New_node} ->
-            node_communicator ! {sync_hall_orders_and_states, New_node, Orders#orders.assigned_hall_orders, Orders#orders.unassigned_hall_orders, Elevator_states},
+            node_communicator ! {sync_hall_orders_and_states, New_node, Orders#orders.assigned_hall_orders, Orders#orders.unassigned_hall_orders, julenissen},
             main_loop(Orders, Elevator_states);
 
         {existing_hall_orders_and_states, Updated_assigned_hall_orders, Updated_unassigned_hall_orders, Elevator_states} ->
@@ -166,7 +166,8 @@ main_loop(Orders, Elevator_states) ->
             main_loop(Updated_orders, Elevator_states);
 
         Unexpected ->
-            io:format("Unexpected message in order_manager: ~p~n", [Unexpected])
+            io:format("Unexpected message in order_manager: ~p~n", [Unexpected]),
+            main_loop(Orders, Elevator_states)
     end.
 
 
