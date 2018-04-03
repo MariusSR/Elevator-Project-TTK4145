@@ -53,7 +53,8 @@ calculate_FS({Button_type, Floor}, State_of_elevator) -> %when is_integer(Floor)
 
     case (Floor == State_of_elevator#state.floor) and (State_of_elevator#state.movement == stop_dir) of
         true ->
-            FS = ?NUMBER_OF_FLOORS + 2;
+            FS = ?NUMBER_OF_FLOORS + 2,
+            FS;
         false ->
             case is_elevator_moving_towards_order(Floor, State_of_elevator) of
                 true ->

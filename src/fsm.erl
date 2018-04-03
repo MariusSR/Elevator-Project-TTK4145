@@ -181,7 +181,7 @@ fsm(door_open, Latest_floor, {Button_type, Floor}) ->
 % ---------------------------------------- Help functions ------------------------------------------------------------
 
 init_elevator() ->
-    io:format("Initialise elevator!\n"),
+    io:format("FSM: Initialise elevator!\n"),
     init_elevator_loop().
     
 init_elevator_loop() ->
