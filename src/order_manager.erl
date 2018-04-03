@@ -17,7 +17,7 @@ main_loop(Orders, Elevator_states) ->
         false ->
             ok
     end, 
-    %io:format("States: ~p\n", [Elevator_states]),
+    io:format("States: ~p\n", [Elevator_states]),
     receive
         %----------------------------------------------------------------------------------------------
         % Acknowledge the order and append it to correspoding list of 'Orders' if not already present
