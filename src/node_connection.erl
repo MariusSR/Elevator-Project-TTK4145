@@ -15,16 +15,31 @@
 -define(RECEIVE_PORT,    5679).
 -define(BROADCAST_PORT,  5678).
 -define(BROADCAST_SLEEP, 5000).
+-define(OFFLINE_SLEEP,  10000).
 -define(TIMEOUT,         2000).
 -define(TICKTIME,        1000).
 -define(COOKIE,  'top_secret').
 
 start() ->
 	init_node_cluster(),
-	spawn(fun() -> broadcast_self() end),
-	spawn(fun() -> listen_for_nodes() end),
-	spawn(fun() -> start_node_monitoring() end),
-	io:format("Node cluster initialized, now searching for friends.~n").
+	Broadcast_PID  = spawn(fun() -> broadcast_self() end),
+	Listen_PID     = spawn(fun() -> listen_for_nodes() end),
+	Monitoring_PID = spawn(fun() -> start_node_monitoring() end),
+	io:format("Node cluster initialized, now searching for friends.~n"),
+	loop([Broadcast_PID, Listen_PID, Monitoring_PID]).
+
+loop(PIDs) ->
+	receive
+		disconnected_node ->
+			lists:foreach(fun(PID) -> exit(PID, normal) end, PIDs),
+			net_kernel:disconnect_node(node()),
+			timer:sleep(?OFFLINE_SLEEP),
+			start();
+
+		Unexpected ->
+			io:format("Unexpected message in node_connection loop: ~p~n", [Unexpected]),
+			loop(PIDs)
+	end.
 
 %--------------------------------------------------------------------------------------------------
 % Start node cluster with coockie

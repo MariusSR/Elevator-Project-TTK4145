@@ -2,7 +2,7 @@
 -export([start/0, start_local/1]).
 
 start() ->
-    register(driver, spawn(fun() -> driver_communication:start() end)),
+    register(driver, spawn(fun() -> driver_interface:start() end)),
     io:format("driver PID: ~p\n", [whereis(driver)]),
     timer:sleep(100), % wait for driver to finish its initialization
 
@@ -15,7 +15,8 @@ start() ->
     register(watchdog, spawn(fun() -> watchdog:start() end)),
     io:format("watchdog PID: ~p\n", [whereis(watchdog)]),
 
-    node_connection:start(),
+    register(node_connection, spawn(fun() -> node_connection:start() end)),
+    io:format("node_connection PID: ~p\n", [whereis(node_connection)]),
 
     register(fsm, spawn(fun()-> fsm:start() end)),
     io:format("FSM PID: ~p\n", [whereis(fsm)]),
@@ -27,7 +28,7 @@ start() ->
 
 
 start_local(Port) ->     
-    register(driver, spawn(fun()-> driver_communication:start(Port) end)),
+    register(driver, spawn(fun()-> driver_interface:start(Port) end)),
     io:format("driver PID: ~p\n", [whereis(driver)]),
 
     register(node_communicator, spawn(fun()-> node_communicator:start() end)),
