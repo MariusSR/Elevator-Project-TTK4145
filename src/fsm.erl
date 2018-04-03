@@ -52,7 +52,7 @@ fsm(idle_loop, Latest_floor) ->
 fsm(moving, Latest_floor, Moving_direction, {Button_type, Floor}) ->
     io:format("FSM: moving with order: ~p~n", [{Button_type, Floor}]),
     node_communicator ! {reached_new_state, #state{movement = Moving_direction, floor = Latest_floor}},
-    watchdog ! {start_watching_movement, abs(Floor - Latest_floor)},
+    watchdog ! start_watching_movement,
     fsm(moving_loop, Latest_floor, Moving_direction, {Button_type, Floor});
 
 fsm(moving_loop, Latest_floor, Moving_direction, {Button_type, Floor}) ->
@@ -75,6 +75,8 @@ fsm(moving_loop, Latest_floor, Moving_direction, {Button_type, Floor}) ->
         {floor, New_floor} when New_floor /= Latest_floor ->
             driver ! {set_floor_LED, New_floor},
             node_communicator ! {reached_new_state, #state{movement = Moving_direction, floor = New_floor}},
+            watchdog ! stop_watching_movement,
+            watchdog ! start_watching_movement,
             case New_floor of
                 _Floor when New_floor == Floor orelse (New_floor == ?NUMBER_OF_FLOORS andalso Moving_direction == up_dir) orelse 
                            (New_floor == 1 andalso Moving_direction == down_button) -> 

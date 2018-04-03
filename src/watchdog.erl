@@ -1,7 +1,7 @@
 -module(watchdog).
 -export([start/0]).
 -define(TIME_LIMIT_ORDER, 10000).
--define(TIME_LIMIT_MOVE_BETWEEN_FLOORS, 8000).
+-define(TIME_LIMIT_MOVING_BETWEEN_FLOORS, 3000).
 
 start() ->
     main_loop([], {no_pid, false}).
@@ -25,8 +25,8 @@ main_loop(Watch_list, Movement_status) -> %watch_list er en liste av ordre med t
                     main_loop(Watch_list -- [{PID, Order}], Movement_status)
             end;
 
-        {start_watching_movement, Distance}->
-            PID = spawn(fun() -> watchdog_timer(between_floor, Distance) end),
+        start_watching_movement ->
+            PID = spawn(fun() -> watchdog_timer(between_floor) end),
             main_loop(Watch_list, {PID, false});
         
         stop_watching_movement ->
@@ -58,14 +58,14 @@ watchdog_timer(assigned_hall_order, Order) ->
             io:format("Order timed out!\n"),
             order_manager ! {unassign_hall_order, Order},
             watchdog ! {order_timed_out, self(), Order}
-    end;
+    end.
         
-watchdog_timer(between_floor, Distance) ->
+watchdog_timer(between_floor) ->
     receive
         reached_floor ->
             ok
     after
-        ?TIME_LIMIT_MOVE_BETWEEN_FLOORS * Distance ->
+        ?TIME_LIMIT_MOVING_BETWEEN_FLOORS ->
             io:format("Used too much time moving between floors!\n"),
             watchdog ! movement_timed_out
     end.
