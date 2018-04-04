@@ -1,4 +1,4 @@
-%%test
+%NEW FSM BRANCH
 
 -module(fsm).
 -export([start/0]).
