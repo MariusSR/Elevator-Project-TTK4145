@@ -43,7 +43,7 @@ fsm_loop(State, Latest_floor, Moving_dir, Assigned_order, Unassigned_order_list)
         %----------------------------------------------------------------------------------------------
         % Receives and updates the list of unassigned orders
         %----------------------------------------------------------------------------------------------
-        {order_list, New_unnasigned_order_list} ->
+        {update_order_list, Updated_unnasigned_order_list} ->
             % HER MÅ VI HUSKE Å SEND OGSÅ NÅR NOE ASSIGNES (dvs da endre jo unassigned-listen, og det må fsm få vite)
             fsm_loop(State, Latest_floor, Moving_dir, Assigned_order, New_unnasigned_order_list);
 
@@ -51,7 +51,7 @@ fsm_loop(State, Latest_floor, Moving_dir, Assigned_order, Unassigned_order_list)
         %----------------------------------------------------------------------------------------------
         % Elevator reched a (potentially new) floor
         %----------------------------------------------------------------------------------------------
-        {floorSensor, Read_floor} ->
+        {floor_sensor, Read_floor} ->
             case {State, Read_floor} of 
                 {uninitialized, between_floors} ->
                     driver   ! {set_motor_dir, down_dir},
@@ -166,3 +166,21 @@ sleep_loop() ->
 
 should_elevator_stop(Latest_floor, Moving_dir, Orders) ->   %%Skriv denne 
     true.
+
+% %----------------------------------------------------------------------------------------------
+% % Checks is the elevator should stop at 'Floor' when moving in the specified direction
+% %----------------------------------------------------------------------------------------------
+% % Moving up
+% {should_elevator_stop, Floor, up_dir, PID} when Floor >= 1 andalso Floor =< ?NUMBER_OF_FLOORS andalso is_pid(PID) ->
+%     PID ! lists:member({cab_button, Floor}, Orders#orders.cab_orders) or
+%             lists:member({up_button,  Floor}, Orders#orders.unassigned_hall_orders), % ++ Orders#orders.assigned_hall_orders),
+%     main_loop(Orders, Elevator_states);
+% % Moving down
+% {should_elevator_stop, Floor, down_dir, PID} when Floor >= 1 andalso Floor =< ?NUMBER_OF_FLOORS andalso is_pid(PID) ->
+%     PID ! lists:member({cab_button,  Floor}, Orders#orders.cab_orders) or
+%             lists:member({down_button, Floor}, Orders#orders.unassigned_hall_orders), % ++ Orders#orders.assigned_hall_orders),
+%     main_loop(Orders, Elevator_states);
+% % Idle elevator
+% {should_elevator_stop, Floor, stop_dir, PID} when is_pid(PID) ->
+%     PID ! lists:member({cab_button, Floor}, Orders#orders.cab_orders),
+%     main_loop(Orders, Elevator_states);

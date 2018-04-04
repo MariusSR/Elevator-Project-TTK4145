@@ -2,12 +2,13 @@
 -export([start/0]).
 -include("parameters.hrl").
 
+-define(ASSIGN_ORDER_WAIT_PERIOD, 300). % GI BEDRE NAVN OG TUNE
+
 -record(orders, {assigned_hall_orders = [], unassigned_hall_orders = [], cab_orders = []}).
 -record(state,  {movement, floor}).
 
 start() ->
     Existing_cab_orders = get_existing_cab_orders(),
-    % legg til tilsvarende for states !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     main_loop(Existing_cab_orders, dict:new()).
 
 main_loop(Orders, Elevator_states) ->
@@ -19,7 +20,6 @@ main_loop(Orders, Elevator_states) ->
         %----------------------------------------------------------------------------------------------
         % Cab orders
         {add_order, {cab_button, Floor}, From_node} when Floor >= 1 andalso Floor =< ?NUMBER_OF_FLOORS andalso is_atom(From_node) ->
-            %io:format("Received add order in Order Manager:~p\n", [{cab_button, Floor}]),
             case lists:member({cab_button, Floor}, Orders#orders.cab_orders) of
                 true ->
                     main_loop(Orders, Elevator_states);
@@ -31,7 +31,6 @@ main_loop(Orders, Elevator_states) ->
             end;
         % Hall orders
         {add_order, {Hall_button, Floor}, From_node} when is_atom(Hall_button) andalso Floor >= 1 andalso Floor =< ?NUMBER_OF_FLOORS andalso is_atom(From_node) ->
-            %io:format("Received add order in Order Manager:~p\n", [{Hall_button, Floor}]),
             Hall_order = {Hall_button, Floor},
             case From_node == node() of
                 true ->
@@ -45,6 +44,7 @@ main_loop(Orders, Elevator_states) ->
                     main_loop(Orders, Elevator_states);
                 false ->
                     Updated_orders = Orders#orders{unassigned_hall_orders = Orders#orders.unassigned_hall_orders ++ [Hall_order]},
+                    fsm ! {update_order_list, Updated_orders#orders.unassigned_hall_orders},
                     main_loop(Updated_orders, Elevator_states)
             end;
 
@@ -61,6 +61,7 @@ main_loop(Orders, Elevator_states) ->
                     Updated_unassigned_hall_orders = [X || X <- Orders#orders.unassigned_hall_orders,   X /= Hall_order], %% endre til å bruke lists:fitler?
                     Updated_orders                 = Orders#orders{unassigned_hall_orders = Updated_unassigned_hall_orders,
                                                                      assigned_hall_orders = Updated_assigned_hall_orders},
+                    fsm ! {update_order_list, Updated_unassigned_hall_orders},
                     watchdog ! {start_watching, Hall_order},
                     main_loop(Updated_orders, Elevator_states)
             end;
@@ -74,6 +75,7 @@ main_loop(Orders, Elevator_states) ->
             Updated_unassigned_hall_orders = [Hall_order] ++ Orders#orders.unassigned_hall_orders,
             Updated_orders                 = Orders#orders{unassigned_hall_orders = Updated_unassigned_hall_orders,
                                                              assigned_hall_orders = Updated_assigned_hall_orders},
+            fsm ! {update_order_list, Updated_unassigned_hall_orders},
             main_loop(Updated_orders, Elevator_states);
 
         %----------------------------------------------------------------------------------------------
@@ -94,49 +96,37 @@ main_loop(Orders, Elevator_states) ->
             Updated_assigned_hall_orders   = lists:filter(fun({Order, _Node}) -> Order /= Hall_order end, Orders#orders.assigned_hall_orders), % [X || X <- Orders#orders.assigned_hall_orders,   X /= {Hall_order, _}],
             Updated_orders                 = Orders#orders{unassigned_hall_orders = Updated_unassigned_hall_orders,
                                                              assigned_hall_orders = Updated_assigned_hall_orders},
+            fsm ! {update_order_list, Updated_unassigned_hall_orders},
             watchdog ! {stop_watching, Hall_order},
             main_loop(Updated_orders, Elevator_states);
 
         %----------------------------------------------------------------------------------------------
         % Update state of 'Node' in 'Elevator_states', adding it if not present
         %----------------------------------------------------------------------------------------------
-        {update_state, Node, New_state} when is_atom(Node) andalso is_record(New_state, state) ->
-            %io:format("Received update state in Order Manager, NODE: ~p, STATE: ~w\n", [Node, New_state]),
+        {update_state, node(), New_state} when New_state#state.movement == stop_dir ->
+            Updated_states = dict:store(Node, New_state, Elevator_states),
+            order_manager ! assign_order,
+            main_loop(Orders, Updated_states);
+
+        {update_state, Node, New_state} ->
             Updated_states = dict:store(Node, New_state, Elevator_states),
             main_loop(Orders, Updated_states);
 
-        %----------------------------------------------------------------------------------------------
-        % Checks is the elevator should stop at 'Floor' when moving in the specified direction
-        %----------------------------------------------------------------------------------------------
-        % Moving up
-        {should_elevator_stop, Floor, up_dir, PID} when Floor >= 1 andalso Floor =< ?NUMBER_OF_FLOORS andalso is_pid(PID) ->
-            PID ! lists:member({cab_button, Floor}, Orders#orders.cab_orders) or
-                  lists:member({up_button,  Floor}, Orders#orders.unassigned_hall_orders), % ++ Orders#orders.assigned_hall_orders),
-            main_loop(Orders, Elevator_states);
-        % Moving down
-        {should_elevator_stop, Floor, down_dir, PID} when Floor >= 1 andalso Floor =< ?NUMBER_OF_FLOORS andalso is_pid(PID) ->
-            PID ! lists:member({cab_button,  Floor}, Orders#orders.cab_orders) or
-                  lists:member({down_button, Floor}, Orders#orders.unassigned_hall_orders), % ++ Orders#orders.assigned_hall_orders),
-            main_loop(Orders, Elevator_states);
-        % Idle elevator
-        {should_elevator_stop, Floor, stop_dir, PID} when is_pid(PID) ->
-            PID ! lists:member({cab_button, Floor}, Orders#orders.cab_orders),
-            main_loop(Orders, Elevator_states);
 
         %----------------------------------------------------------------------------------------------
         % Returns an order to be assigned if there exists a suitable one, prioritizing cab orders
         %----------------------------------------------------------------------------------------------
-        {get_unassigned_order, PID} when is_pid(PID) ->            
+        assign_order ->
             case Orders#orders.cab_orders of
-                [Order|_Remaining_orders] ->
-                    PID ! Order;
+                [Cab_order|_Remaining_orders] ->
+                    fsm ! {assigned_order, Cab_order};
                 [] ->
                     case scheduler:get_most_efficient_order(Orders#orders.unassigned_hall_orders, Elevator_states) of
                         no_orders_available ->
-                            PID ! no_orders_available;
-                        Order ->
-                            node_communicator ! {new_order_assigned, Order},
-                            PID ! Order
+                            spawn(fun() -> timer:sleep(?ASSIGN_ORDER_WAIT_PERIOD), order_manager ! assign_order end);
+                        Hall_order ->
+                            node_communicator ! {new_order_assigned, Hall_order},
+                            fsm ! Hall_order
                     end
             end,
             main_loop(Orders, Elevator_states);
@@ -151,6 +141,7 @@ main_loop(Orders, Elevator_states) ->
             Updated_unassigned_hall_orders  = Hall_orders_extracted ++ Orders#orders.unassigned_hall_orders,
             Updated_orders                  = Orders#orders{unassigned_hall_orders = Updated_unassigned_hall_orders,
                                                               assigned_hall_orders = Updated_assigned_hall_orders},
+            fsm ! {update_order_list, Updated_unassigned_hall_orders},
             main_loop(Updated_orders, Elevator_states);
         
         %----------------------------------------------------------------------------------------------
@@ -163,6 +154,7 @@ main_loop(Orders, Elevator_states) ->
         {existing_hall_orders_and_states, Updated_assigned_hall_orders, Updated_unassigned_hall_orders, Updated_elevator_states} ->
             % Denne beskjeden vil komme 1 gang per eksisterende annen node. Kanskje vi skal ta unionen av dem alle? Burde være like though. Nå vinner den siste.
             Updated_orders = Orders#orders{assigned_hall_orders = Updated_assigned_hall_orders, unassigned_hall_orders = Updated_unassigned_hall_orders},
+            fsm ! {update_order_list, Updated_unassigned_hall_orders},
             main_loop(Updated_orders, Updated_elevator_states);
 
         Unexpected ->
