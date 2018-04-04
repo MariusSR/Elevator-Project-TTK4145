@@ -12,6 +12,7 @@
 
 % Ordermanager skal sende Assigned ordre regelsmessig når fsm er i idle
 % Ordermanager skal sende Unnasigned_order_list når den endres.
+% Kontroller watchdog
 
 start() ->
     Floor = init_elevator(),
@@ -19,26 +20,22 @@ start() ->
 
 
 fsm_loop(State, Latest_floor, Moving_dir, Assigned_order, Unassigned_order_list) ->
-    {Order_button_type, Order_floor} = Order, % SKAL DET VÆRE ASSIGNED_ORDER her?
+    {Order_button_type, Order_floor} = Assigned_order,
     receive
         
         %----------------------------------------------------------------------------------------------
         % Receives a new order to be completed by this elevator
         %----------------------------------------------------------------------------------------------
-        {assigned_order, New_assigned_order} ->
+        {assigned_order, New_assigned_order} when State == idle ->
             case choose_direction(Order, Latest_floor) of 
-                stop_dir when Latest_floor == Order_floor ->
+                stop_dir ->
                     driver ! {set_door_open_LED, on},
                     fsm_loop(door_open, Latest_floor, stop_dir, New_assigned_order, Unassigned_order_list);
-                
-                stop_dir ->
-                    io:format("Error: recieved illegal order from scheduler: ~p~n", [Order]), % enig at det er error, men feilen er vel ikke illegal order?
-                    node_communicator ! {reached_new_state, #state{movement = stop_dir, floor = Latest_floor}},
-                    fsm_loop(idle, Latest_floor, stop_dir, _, _); % tror vi må sende NOE, f.eks. na, error eller []
                 
                 Moving_dir ->
                     io:format("Moving_dir: ~p~n", [Moving_dir]),
                     driver ! {set_motor_dir, Moving_dir},
+                    node_communicator ! {reached_new_state, #state{movement = Moving_dir, floor = Latest_floor},
                     fsm_loop(moving, Latest_floor, Moving_dir, New_assigned_order, Unassigned_order_list)
             end;
 
@@ -60,33 +57,27 @@ fsm_loop(State, Latest_floor, Moving_dir, Assigned_order, Unassigned_order_list)
                     %add watchdog functionality
                     io:format("Huhh, burde dette skje da\n");
 
-                {idle, _} -> ok;
-                
-                {moving, Latest_floor} -> ok;
-        
+                {idle, _}                -> ok;
+                {door_open, _}           -> ok;
+                {moving, Latest_floor}   -> ok;
                 {moving, between_floors} -> ok;
                 
                 {moving, Read_floor} ->
-                    driver ! {set_floor_LED, Read_floor},
+                    driver ! {set_floor_LED, Read_floor},get_IP
                     node_communicator ! {reached_new_state, #state{movement = Moving_dir, floor = New_floor}},
                     watchdog ! stop_watching_movement,                                                              %%Fiks dette
-                    watchdog ! start_watching_movement,
-                    case should_elevator_stop(Read_floor, Moving_dir, Assigned_order, Unassigned_order_list) ->      % Lag denne: FORSLAG: hva med å sende 1 liste, assign ++ unassign? Dessuten; er staten relevant?
+                    case should_elevator_stop(Read_floor, Moving_dir, Assigned_order ++ Unassigned_order_list) ->
                         true ->
                             driver ! {set_motor_dir, stop_dir},
-                            % SKAL WATCHDOGEN STOPPES (for movement) HER ELLER SKAL DET GJØRES ET ANNET STED?
-                            % MULIG LØSNING: IKKE STARTE DEN OVER (som nå) MEN BASRE STARTE HVIS should_stop = false?
-                            fsm_loop(stopped, Read_floor, stop_dir, Assigned_order, Unassigned_order_list);
+                            driver ! {set_door_open_LED, on},
+                            fsm_loop(door_open, Read_floor, stop_dir, Assigned_order, Unassigned_order_list);
                         false ->
+                            watchdog ! start_watching_movement,
                             fsm_loop(moving, Read_floor, Moving_dir, Assigned_order, Unassigned_order_list);
                     end;
                 
-                {door_open, _} -> ok; % SIMEN ENDRET DENNE TIL TUPPLE, ER DET RETT? OG KANSKJE FLYTTE DEN OPP?
-                    
-                % MANGLER VEL HER EN PATTERN MATCH PÅ state = stopped?
-                
                 Unexpected ->
-                    io:format("Unexpected error in fsm, {floorSensor, Read_floor} with reason: ~p\n", [Unexpected])
+                    io:format("Unexpected pattern match in fsm, {floorSensor, Read_floor}: ~p\n", [Unexpected])
             end;
         
         
@@ -94,20 +85,20 @@ fsm_loop(State, Latest_floor, Moving_dir, Assigned_order, Unassigned_order_list)
         % Received message for door to close after being open for 'DOOR_OPEN_TIME' ms
         %----------------------------------------------------------------------------------------------
         close_door ->
+            io:format("fsm: Closing door\n"),
             driver ! {set_door_open_LED, off},
-            io:format("FSM: Closed door\n"),
+            Direction_headed = choose_dir(Assigned_order, Latest_floor),
             node_communicator ! {order_finished, {cab_button, Latest_floor}},
-            node_communicator ! {order_finished, {convert_to_button_type(Moving_dir), Latest_floor}},
+            node_communicator ! {order_finished, {convert_to_button_type(Direction_headed), Latest_floor}},
 
             case Latest_floor == Order_floor of 
                 true ->            
                     node_communicator ! {reached_new_state, #state{movement = stop_dir, floor = Latest_floor}},
-                    fsm_loop(idle, Latest_floor, Moving_dir, Assigned_order, Unassigned_order_list) % HER MÅ VEL ASSIGNED ORDER ENDRES TIL non ELLER LIKNENDE?
+                    fsm_loop(idle, Latest_floor, stop_dir, none, Unassigned_order_list)
                 false ->
-                    Moving_direction = choose_direction(Order, Latest_floor), % SKAL DET VÆRE ASSIGNED_ORDER HER?
-                    driver ! {set_motor_dir, Moving_direction},
-                    fsm(moving, Latest_floor, Moving_direction, Order) % HER TRENGS FLERE PARAMETRE, SAMT skal det være assigend order?
-            end.
+                    driver ! {set_motor_dir, Direction_headed},
+                    fsm_loop(moving, Latest_floor, Direction_headed, Assigned_order, Unassigned_order_list)
+            end;
 
 
         %----------------------------------------------------------------------------------------------
@@ -115,23 +106,18 @@ fsm_loop(State, Latest_floor, Moving_dir, Assigned_order, Unassigned_order_list)
         %----------------------------------------------------------------------------------------------
         timeout_movement ->
             io:format("FSM: timeout_movement~n"),
-            driver ! {set_motor_dir, stop_dir},
-            node_connection ! disconnect_node,
-            timer:sleep(?DISCONNECTED_TIME),        %%Fucker denne opp pga køopphoping?
-                                     %%%%%%%%%%%%%%%%% Ja, gjør vel det. Burde motta og forkaste alle mld, bør vi ikke?
-            start().
-        
-
+            driver ! {set_motor_dir, stop_dir},            
+            disconnect_node_and_sleep(),
+            fsm_loop(uninitialized, Latest_floor, stop_dir, none, [])
 
         Unexpected ->
             io:format("Unexpected error in fsm main recv: ~p\n", [Unexpected])
 
     end,
             
-fsm_loop(State, Latest_floor, Moving_dir, Assigned_order, Unassigned_order_list)
-
-
-
+fsm_loop(State, Latest_floor, Moving_dir, Assigned_order, Unassigned_order_list).
+                                
+                       
 % ---------------------------------------- Help functions ------------------------------------------------------------
 
 init_elevator() ->
@@ -184,5 +170,17 @@ convert_to_button_type(up_dir) ->
 convert_to_button_type(down_dir) ->
     down_button;
 convert_to_button_type(stop_dir) ->
-    io:format("ERROR: tried to convert stop_dir to button type\n"),
-    error.
+    cab_button.
+
+disconnect_node_and_sleep() ->
+    node_connection ! disconnect_node,
+    spawn(fun() -> timer(disconnection, ?DISCONNECTED_TIME)),
+    sleep_loop().
+
+sleep_loop() ->
+    receive
+        {disconnection, timeout} ->
+            ok;
+        Disregarded_message ->
+            magic_loop()
+    end.
