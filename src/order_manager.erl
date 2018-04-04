@@ -25,6 +25,7 @@ main_loop(Orders, Elevator_states) ->
                     main_loop(Orders, Elevator_states);
                 false ->
                     Updated_orders = Orders#orders{cab_orders = Orders#orders.cab_orders ++ [{cab_button, Floor}]},
+                    fsm ! {update_order_list, Updated_orders#orders.cab_orders ++ Updated_orders#orders.unassigned_hall_orders},
                     node_communicator ! {set_order_button_LED, on, {cab_button, Floor}},
                     write_cab_order_to_file(Floor),
                     main_loop(Updated_orders, Elevator_states)
@@ -44,7 +45,7 @@ main_loop(Orders, Elevator_states) ->
                     main_loop(Orders, Elevator_states);
                 false ->
                     Updated_orders = Orders#orders{unassigned_hall_orders = Orders#orders.unassigned_hall_orders ++ [Hall_order]},
-                    fsm ! {update_order_list, Updated_orders#orders.unassigned_hall_orders},
+                    fsm ! {update_order_list, Updated_orders#orders.cab_orders ++ Updated_orders#orders.unassigned_hall_orders},
                     main_loop(Updated_orders, Elevator_states)
             end;
 
@@ -61,7 +62,7 @@ main_loop(Orders, Elevator_states) ->
                     Updated_unassigned_hall_orders = [X || X <- Orders#orders.unassigned_hall_orders,   X /= Hall_order], %% endre til å bruke lists:fitler?
                     Updated_orders                 = Orders#orders{unassigned_hall_orders = Updated_unassigned_hall_orders,
                                                                      assigned_hall_orders = Updated_assigned_hall_orders},
-                    fsm ! {update_order_list, Updated_unassigned_hall_orders},
+                    fsm ! {update_order_list, Orders#orders.cab_orders ++ Updated_unassigned_hall_orders},
                     watchdog ! {start_watching, Hall_order},
                     main_loop(Updated_orders, Elevator_states)
             end;
@@ -75,7 +76,7 @@ main_loop(Orders, Elevator_states) ->
             Updated_unassigned_hall_orders = [Hall_order] ++ Orders#orders.unassigned_hall_orders,
             Updated_orders                 = Orders#orders{unassigned_hall_orders = Updated_unassigned_hall_orders,
                                                              assigned_hall_orders = Updated_assigned_hall_orders},
-            fsm ! {update_order_list, Updated_unassigned_hall_orders},
+            fsm ! {update_order_list, Orders#orders.cab_orders ++ Updated_unassigned_hall_orders},
             main_loop(Updated_orders, Elevator_states);
 
         %----------------------------------------------------------------------------------------------
@@ -86,6 +87,7 @@ main_loop(Orders, Elevator_states) ->
             %io:format("Received remove order in Order Manager:~p\n", [{cab_button, Floor}]),
             Updated_cab_orders = [X || X <- Orders#orders.cab_orders, X /= {cab_button, Floor}], %bruke filter istedet?
             Updated_orders     = Orders#orders{cab_orders = Updated_cab_orders},
+            fsm ! {update_order_list, Updated_cab_orders ++ Updated_orders#orders.unassigned_hall_orders},
             remove_cab_order_from_file(Floor),
             main_loop(Updated_orders, Elevator_states);
         % Hall orders
@@ -96,14 +98,14 @@ main_loop(Orders, Elevator_states) ->
             Updated_assigned_hall_orders   = lists:filter(fun({Order, _Node}) -> Order /= Hall_order end, Orders#orders.assigned_hall_orders), % [X || X <- Orders#orders.assigned_hall_orders,   X /= {Hall_order, _}],
             Updated_orders                 = Orders#orders{unassigned_hall_orders = Updated_unassigned_hall_orders,
                                                              assigned_hall_orders = Updated_assigned_hall_orders},
-            fsm ! {update_order_list, Updated_unassigned_hall_orders},
+            fsm ! {update_order_list, Orders#orders.cab_orders ++ Updated_unassigned_hall_orders},
             watchdog ! {stop_watching, Hall_order},
             main_loop(Updated_orders, Elevator_states);
 
         %----------------------------------------------------------------------------------------------
         % Update state of 'Node' in 'Elevator_states', adding it if not present
         %----------------------------------------------------------------------------------------------
-        {update_state, node(), New_state} when New_state#state.movement == stop_dir ->
+        {update_state, Node, New_state} when Node == node() andalso New_state#state.movement == stop_dir ->
             Updated_states = dict:store(Node, New_state, Elevator_states),
             order_manager ! assign_order,
             main_loop(Orders, Updated_states);
@@ -141,7 +143,7 @@ main_loop(Orders, Elevator_states) ->
             Updated_unassigned_hall_orders  = Hall_orders_extracted ++ Orders#orders.unassigned_hall_orders,
             Updated_orders                  = Orders#orders{unassigned_hall_orders = Updated_unassigned_hall_orders,
                                                               assigned_hall_orders = Updated_assigned_hall_orders},
-            fsm ! {update_order_list, Updated_unassigned_hall_orders},
+            fsm ! {update_order_list, Orders#orders.cab_orders ++ Updated_unassigned_hall_orders},
             main_loop(Updated_orders, Elevator_states);
         
         %----------------------------------------------------------------------------------------------
@@ -154,7 +156,7 @@ main_loop(Orders, Elevator_states) ->
         {existing_hall_orders_and_states, Updated_assigned_hall_orders, Updated_unassigned_hall_orders, Updated_elevator_states} ->
             % Denne beskjeden vil komme 1 gang per eksisterende annen node. Kanskje vi skal ta unionen av dem alle? Burde være like though. Nå vinner den siste.
             Updated_orders = Orders#orders{assigned_hall_orders = Updated_assigned_hall_orders, unassigned_hall_orders = Updated_unassigned_hall_orders},
-            fsm ! {update_order_list, Updated_unassigned_hall_orders},
+            fsm ! {update_order_list, Orders#orders.cab_orders ++ Updated_unassigned_hall_orders},
             main_loop(Updated_orders, Updated_elevator_states);
 
         Unexpected ->

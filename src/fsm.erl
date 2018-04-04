@@ -16,6 +16,7 @@
 
 start() ->
     io:format("FSM state: Uninitialized\n"),
+    watchdog ! start_watching_movement,
     fsm_loop(uninitialized, undefined, stop_dir, none, []).
 
 
@@ -32,11 +33,12 @@ fsm_loop(State, Latest_floor, Moving_dir, Assigned_order, Unassigned_order_list)
                     spawn(fun() -> timer:sleep(?DOOR_OPEN_TIME), fsm ! close_door end),
                     fsm_loop(door_open, Latest_floor, stop_dir, New_assigned_order, Unassigned_order_list);
                 
-                Moving_dir ->
-                    io:format("Moving_dir: ~p~n", [Moving_dir]),
-                    driver ! {set_motor_dir, Moving_dir},
-                    node_communicator ! {reached_new_state, #state{movement = Moving_dir, floor = Latest_floor}},
-                    fsm_loop(moving, Latest_floor, Moving_dir, New_assigned_order, Unassigned_order_list)
+                Direction_headed ->
+                    io:format("Moving_dir: ~p~n", [Direction_headed]),
+                    driver ! {set_motor_dir, Direction_headed},
+                    node_communicator ! {reached_new_state, #state{movement = Direction_headed, floor = Latest_floor}},
+                    fsm_loop(moving, Latest_floor, Direction_headed, New_assigned_order, Unassigned_order_list)
+                
             end;
 
         
@@ -55,7 +57,6 @@ fsm_loop(State, Latest_floor, Moving_dir, Assigned_order, Unassigned_order_list)
             case {State, Read_floor} of 
                 {uninitialized, between_floors} ->
                     driver   ! {set_motor_dir, down_dir},
-                    watchdog ! start_watching_movement,
                     fsm_loop(uninitialized, undefined, down_dir, none, Unassigned_order_list);
 
                 {uninitialized, _} ->
@@ -76,7 +77,7 @@ fsm_loop(State, Latest_floor, Moving_dir, Assigned_order, Unassigned_order_list)
                     driver ! {set_floor_LED, Read_floor},
                     node_communicator ! {reached_new_state, #state{movement = Moving_dir, floor = Read_floor}},
                     watchdog ! stop_watching_movement,                                                              %%Fiks dette
-                    case should_elevator_stop(Read_floor, Moving_dir, Assigned_order ++ Unassigned_order_list) of
+                    case should_elevator_stop(Read_floor, Moving_dir, [Assigned_order] ++ Unassigned_order_list) of
                         true ->
                             driver ! {set_motor_dir, stop_dir},
                             driver ! {set_door_open_LED, on},
@@ -122,6 +123,7 @@ fsm_loop(State, Latest_floor, Moving_dir, Assigned_order, Unassigned_order_list)
             driver ! {set_motor_dir, stop_dir},            
             disconnect_node_and_sleep(),
             io:format("FSM state: Uninitialized\n"),
+            watchdog ! start_watching_movement,
             fsm_loop(uninitialized, undefined, stop_dir, none, []);
 
         Unexpected ->
@@ -169,23 +171,9 @@ sleep_loop() ->
             sleep_loop()
     end.
 
-should_elevator_stop(Latest_floor, Moving_dir, Orders) ->   %%Skriv denne 
-    true.
-
-% %----------------------------------------------------------------------------------------------
-% % Checks is the elevator should stop at 'Floor' when moving in the specified direction
-% %----------------------------------------------------------------------------------------------
-% % Moving up
-% {should_elevator_stop, Floor, up_dir, PID} when Floor >= 1 andalso Floor =< ?NUMBER_OF_FLOORS andalso is_pid(PID) ->
-%     PID ! lists:member({cab_button, Floor}, Orders#orders.cab_orders) or
-%             lists:member({up_button,  Floor}, Orders#orders.unassigned_hall_orders), % ++ Orders#orders.assigned_hall_orders),
-%     main_loop(Orders, Elevator_states);
-% % Moving down
-% {should_elevator_stop, Floor, down_dir, PID} when Floor >= 1 andalso Floor =< ?NUMBER_OF_FLOORS andalso is_pid(PID) ->
-%     PID ! lists:member({cab_button,  Floor}, Orders#orders.cab_orders) or
-%             lists:member({down_button, Floor}, Orders#orders.unassigned_hall_orders), % ++ Orders#orders.assigned_hall_orders),
-%     main_loop(Orders, Elevator_states);
-% % Idle elevator
-% {should_elevator_stop, Floor, stop_dir, PID} when is_pid(PID) ->
-%     PID ! lists:member({cab_button, Floor}, Orders#orders.cab_orders),
-%     main_loop(Orders, Elevator_states);
+%----------------------------------------------------------------------------------------------
+% Checks is the elevator should stop at 'Floor' when moving in the specified direction
+%----------------------------------------------------------------------------------------------
+should_elevator_stop(Floor, Moving_dir, Orders) ->
+    lists:member({cab_button, Floor}, Orders) or
+    lists:member({convert_to_button_type(Moving_dir), Floor}, Orders).

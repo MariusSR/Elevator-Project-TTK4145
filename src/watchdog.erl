@@ -4,7 +4,7 @@
 -define(TIME_LIMIT_MOVING_BETWEEN_FLOORS, 3000).
 
 start() ->
-    main_loop([], {no_pid, false}).
+    main_loop([], no_pid).
 
 main_loop(Watch_list, Movement_watcher_PID) -> %watch_list er en liste av ordre med tilhørende PID for prosess som timer den, altå [{PID, Order}, ...]
     receive
@@ -26,15 +26,15 @@ main_loop(Watch_list, Movement_watcher_PID) -> %watch_list er en liste av ordre 
 
         start_watching_movement ->
             PID = spawn(fun() -> watchdog_timer(between_floor) end),
-            main_loop(Watch_list, {PID, false});
+            main_loop(Watch_list, PID);
 
 
         stop_watching_movement when is_pid(Movement_watcher_PID)->
             Movement_watcher_PID ! reached_floor,
-            main_loop(Watch_list, {no_pid, false});
+            main_loop(Watch_list, no_pid);
 
         stop_watching_movement ->
-            main_loop(Watch_list, {no_pid, false}).
+            main_loop(Watch_list, no_pid);
 
 
         {order_timed_out, PID, Order} ->
