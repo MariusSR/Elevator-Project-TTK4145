@@ -121,7 +121,7 @@ fsm_loop(State, Latest_floor, Moving_dir, Assigned_order, Unassigned_order_list)
             io:format("FSM: timeout_movement~n"),
             driver ! {set_motor_dir, stop_dir},            
             disconnect_node_and_sleep(),
-             io:format("FSM state: Uninitialized\n"),
+            io:format("FSM state: Uninitialized\n"),
             fsm_loop(uninitialized, undefined, stop_dir, none, []);
 
         Unexpected ->
