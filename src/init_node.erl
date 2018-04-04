@@ -22,8 +22,7 @@ start() ->
     register(fsm, spawn(fun()-> fsm:start() end)),
     io:format("FSM PID: ~p\n", [whereis(fsm)]),
 
-    A = spawn(fun()-> button_reader:read_button_loop(1) end),
-    io:format("button_reader PID: ~p\n", [A]),
+    button_reader:start(),
 
     io:format("Start completed\n\n").
 
