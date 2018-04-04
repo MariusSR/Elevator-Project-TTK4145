@@ -9,3 +9,5 @@
    implementere siden retningen lagret i staten er stop-dir ...
 7) Endre navn på turn_off_leds_at_floor i driver_comm til å gjenspeile at den slukker ALLE LEDS
 8) Fix at LED ikke tennes ved innhopp i cluster
+9) Kanskje endre hvordan slukk-alle-led-funksjonen fungerer, slik at sleepen i node_communicators existing... ikke trengs
+10) Endre til at states som order_man vet om uttrykkes som idle, ikke stop dir 

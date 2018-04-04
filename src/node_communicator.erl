@@ -73,8 +73,9 @@ main_loop() ->
             {node_communicator, New_node} ! {existing_hall_orders_and_states, Assigned_hall_orders, Unassigned_hall_orders, Elevator_states};
         
         {existing_hall_orders_and_states, Assigned_hall_orders, Unassigned_hall_orders, Elevator_states} ->
-            order_manager ! {existing_hall_orders_and_states, Assigned_hall_orders, Unassigned_hall_orders, Elevator_states},
             driver ! turn_off_all_leds,
+            order_manager ! {existing_hall_orders_and_states, Assigned_hall_orders, Unassigned_hall_orders, Elevator_states},
+            timer:sleep(5), % Sleep to ensure proper initialization of driver and order_manager
             Existing_orders = lists:map(fun({Assigned_order, _Node}) -> Assigned_order end, Assigned_hall_orders) ++ Unassigned_hall_orders,
             lists:foreach(fun({Button_type, Floor}) -> driver ! {set_order_button_LED, Button_type, Floor, on} end, Existing_orders);
 
