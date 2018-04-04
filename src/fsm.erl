@@ -19,17 +19,23 @@ start() ->
 
 
 fsm_loop(State, Latest_floor, Moving_dir, Assigned_order, Unassigned_order_list) ->
-    {Order_button_type, Order_floor} = Order,
+    {Order_button_type, Order_floor} = Order, % SKAL DET VÆRE ASSIGNED_ORDER her?
     receive
+        
+        %----------------------------------------------------------------------------------------------
+        % Receives a new order to be completed by this elevator
+        %----------------------------------------------------------------------------------------------
         {assigned_order, New_assigned_order} ->
             case choose_direction(Order, Latest_floor) of 
-                stop_dir when Latest_floor == Order_Floor ->
+                stop_dir when Latest_floor == Order_floor ->
                     driver ! {set_door_open_LED, on},
                     fsm_loop(door_open, Latest_floor, stop_dir, New_assigned_order, Unassigned_order_list);
+                
                 stop_dir ->
-                    io:format("Error: recieved illegal order from scheduler: ~p~n", [Order]),
+                    io:format("Error: recieved illegal order from scheduler: ~p~n", [Order]), % enig at det er error, men feilen er vel ikke illegal order?
                     node_communicator ! {reached_new_state, #state{movement = stop_dir, floor = Latest_floor}},
-                    fsm_loop(idle, Latest_floor, stop_dir, _, _);
+                    fsm_loop(idle, Latest_floor, stop_dir, _, _); % tror vi må sende NOE, f.eks. na, error eller []
+                
                 Moving_dir ->
                     io:format("Moving_dir: ~p~n", [Moving_dir]),
                     driver ! {set_motor_dir, Moving_dir},
@@ -37,9 +43,17 @@ fsm_loop(State, Latest_floor, Moving_dir, Assigned_order, Unassigned_order_list)
             end;
 
         
+        %----------------------------------------------------------------------------------------------
+        % Receives and updates the list of unassigned orders
+        %----------------------------------------------------------------------------------------------
         {order_list, New_unnasigned_order_list} ->
+            % HER MÅ VI HUSKE Å SEND OGSÅ NÅR NOE ASSIGNES (dvs da endre jo unassigned-listen, og det må fsm få vite)
             fsm_loop(State, Latest_floor, Moving_dir, New_assigned_order, New_unnasigned_order_list);
 
+        
+        %----------------------------------------------------------------------------------------------
+        % Elevator reched a (potentially new) floor
+        %----------------------------------------------------------------------------------------------
         {floorSensor, Read_floor} ->
             case {State, Read_floor} of 
                 {uninitialized, _} ->
@@ -57,20 +71,28 @@ fsm_loop(State, Latest_floor, Moving_dir, Assigned_order, Unassigned_order_list)
                     node_communicator ! {reached_new_state, #state{movement = Moving_dir, floor = New_floor}},
                     watchdog ! stop_watching_movement,                                                              %%Fiks dette
                     watchdog ! start_watching_movement,
-                    case should_elevator_stop(Read_floor, Moving_dir, Assigned_order, Unassigned_order_list) ->      % Lag denne 
+                    case should_elevator_stop(Read_floor, Moving_dir, Assigned_order, Unassigned_order_list) ->      % Lag denne: FORSLAG: hva med å sende 1 liste, assign ++ unassign? Dessuten; er staten relevant?
                         true ->
                             driver ! {set_motor_dir, stop_dir},
+                            % SKAL WATCHDOGEN STOPPES (for movement) HER ELLER SKAL DET GJØRES ET ANNET STED?
+                            % MULIG LØSNING: IKKE STARTE DEN OVER (som nå) MEN BASRE STARTE HVIS should_stop = false?
                             fsm_loop(stopped, Read_floor, stop_dir, Assigned_order, Unassigned_order_list);
                         false ->
                             fsm_loop(moving, Read_floor, Moving_dir, Assigned_order, Unassigned_order_list);
                     end;
                 
-                door_open -> ok;
-
+                {door_open, _} -> ok; % SIMEN ENDRET DENNE TIL TUPPLE, ER DET RETT? OG KANSKJE FLYTTE DEN OPP?
+                    
+                % MANGLER VEL HER EN PATTERN MATCH PÅ state = stopped?
+                
                 Unexpected ->
                     io:format("Unexpected error in fsm, {floorSensor, Read_floor} with reason: ~p\n", [Unexpected])
             end;
         
+        
+        %----------------------------------------------------------------------------------------------
+        % Received message for door to close after being open for 'DOOR_OPEN_TIME' ms
+        %----------------------------------------------------------------------------------------------
         close_door ->
             driver ! {set_door_open_LED, off},
             io:format("FSM: Closed door\n"),
@@ -80,29 +102,32 @@ fsm_loop(State, Latest_floor, Moving_dir, Assigned_order, Unassigned_order_list)
             case Latest_floor == Order_floor of 
                 true ->            
                     node_communicator ! {reached_new_state, #state{movement = stop_dir, floor = Latest_floor}},
-                    fsm_loop(idle, Latest_floor, Moving_dir, Assigned_order, Unassigned_order_list)
+                    fsm_loop(idle, Latest_floor, Moving_dir, Assigned_order, Unassigned_order_list) % HER MÅ VEL ASSIGNED ORDER ENDRES TIL non ELLER LIKNENDE?
                 false ->
-                    Moving_direction = choose_direction(Order, Latest_floor),
+                    Moving_direction = choose_direction(Order, Latest_floor), % SKAL DET VÆRE ASSIGNED_ORDER HER?
                     driver ! {set_motor_dir, Moving_direction},
-                    fsm(moving, Latest_floor, Moving_direction, Order)
+                    fsm(moving, Latest_floor, Moving_direction, Order) % HER TRENGS FLERE PARAMETRE, SAMT skal det være assigend order?
             end.
 
-            
-        %timeout_close_door ->
-        %    driver ! {set_door_open_LED, off},
-        %    ;
-        
+
+        %----------------------------------------------------------------------------------------------
+        % Elevator movement to next floor timed out, disconnecting the node and restarts FSM
+        %----------------------------------------------------------------------------------------------
         timeout_movement ->
             io:format("FSM: timeout_movement~n"),
             driver ! {set_motor_dir, stop_dir},
             node_connection ! disconnect_node,
             timer:sleep(?DISCONNECTED_TIME),        %%Fucker denne opp pga køopphoping?
+                                     %%%%%%%%%%%%%%%%% Ja, gjør vel det. Burde motta og forkaste alle mld, bør vi ikke?
             start().
+        
+
 
         Unexpected ->
             io:format("Unexpected error in fsm main recv: ~p\n", [Unexpected])
 
     end,
+            
 fsm_loop(State, Latest_floor, Moving_dir, Assigned_order, Unassigned_order_list)
 
 
