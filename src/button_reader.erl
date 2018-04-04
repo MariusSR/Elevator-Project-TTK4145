@@ -6,10 +6,18 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 -module(button_reader).
--export([read_button_loop/1]).
+-export([start/0]).
 -include("parameters.hrl").
 -define(SLEEP_TIME, 100).
 -define(TIMEOUT, 100).
+-define(READ_FLOOR_SENSOR_INTERVAL, 200).
+
+start() ->
+    Button_reader_PID = spawn(fun()-> read_button_loop(1) end),
+    io:format("button_reader PID: ~p\n", [Button_reader_PID]),
+
+    Floor_sensor_reader_PID = spawn(fun()-> read_floor_sensor_loop() end),
+    io:format("floor_sensor_reader PID: ~p\n", [Floor_sensor_reader_PID]).
 
 %--------------------------------------------------------------------------------------------------
 % Loop iterating over all order buttons to check for new orders.
@@ -46,3 +54,17 @@ when is_integer(Floor) andalso Floor >= 1 andalso Floor =< ?NUMBER_OF_FLOORS and
         ?TIMEOUT ->
             io:format("Timeout in button reader module\n")
     end.
+
+
+read_floor_sensor_loop() ->
+    driver ! {get_floor, self()},
+    receive
+        between_floors ->
+            fsm !  {floor_sensor, between_floors} ;
+        {floor, Read_floor} ->
+            fsm !  {floor_sensor, Read_floor};
+        Unexpected ->
+            io:format("Unexpected msg in read_floor_sensor: ~p\n", [Unexpected])
+    end,
+    timer:sleep(?READ_FLOOR_SENSOR_INTERVAL),
+    read_floor_sensor_loop().
