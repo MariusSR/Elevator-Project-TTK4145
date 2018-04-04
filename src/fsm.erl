@@ -8,34 +8,34 @@
 -define(FLOOR_SENSOR_SLEEP_BETWEEN_FLOORS, 100).
 -define(DISCONNECTED_TIME, 10000).
 
--record(state, {movement, floor}).
+-record(state, {movement, floor}).                                          % trenger vi egentlig denne? 
 
 % Ordermanager skal sende Assigned ordre regelsmessig når fsm er i idle
 % Ordermanager skal sende Unnasigned_order_list når den endres.
 % Kontroller watchdog
 
 start() ->
-    Floor = init_elevator(),
-    fsm_loop(idle, Floor, _, _, _).
+    fsm_loop(uninitialized, undefined, stop_dir, none, []).
 
 
 fsm_loop(State, Latest_floor, Moving_dir, Assigned_order, Unassigned_order_list) ->
-    {Order_button_type, Order_floor} = Assigned_order,
+    {_Order_button_type, Order_floor} = Assigned_order,
     receive
         
         %----------------------------------------------------------------------------------------------
         % Receives a new order to be completed by this elevator
         %----------------------------------------------------------------------------------------------
         {assigned_order, New_assigned_order} when State == idle ->
-            case choose_direction(Order, Latest_floor) of 
+            case choose_direction(New_assigned_order, Latest_floor) of 
                 stop_dir ->
                     driver ! {set_door_open_LED, on},
+                    spawn(fun() -> timer:sleep(?DOOR_OPEN_TIME), fsm ! close_door end),
                     fsm_loop(door_open, Latest_floor, stop_dir, New_assigned_order, Unassigned_order_list);
                 
                 Moving_dir ->
                     io:format("Moving_dir: ~p~n", [Moving_dir]),
                     driver ! {set_motor_dir, Moving_dir},
-                    node_communicator ! {reached_new_state, #state{movement = Moving_dir, floor = Latest_floor},
+                    node_communicator ! {reached_new_state, #state{movement = Moving_dir, floor = Latest_floor}},
                     fsm_loop(moving, Latest_floor, Moving_dir, New_assigned_order, Unassigned_order_list)
             end;
 
@@ -45,7 +45,7 @@ fsm_loop(State, Latest_floor, Moving_dir, Assigned_order, Unassigned_order_list)
         %----------------------------------------------------------------------------------------------
         {order_list, New_unnasigned_order_list} ->
             % HER MÅ VI HUSKE Å SEND OGSÅ NÅR NOE ASSIGNES (dvs da endre jo unassigned-listen, og det må fsm få vite)
-            fsm_loop(State, Latest_floor, Moving_dir, New_assigned_order, New_unnasigned_order_list);
+            fsm_loop(State, Latest_floor, Moving_dir, Assigned_order, New_unnasigned_order_list);
 
         
         %----------------------------------------------------------------------------------------------
@@ -53,9 +53,18 @@ fsm_loop(State, Latest_floor, Moving_dir, Assigned_order, Unassigned_order_list)
         %----------------------------------------------------------------------------------------------
         {floorSensor, Read_floor} ->
             case {State, Read_floor} of 
+                {uninitialized, between_floors} ->
+                    driver   ! {set_motor_dir, down_dir},
+                    watchdog ! start_watching_movement,
+                    fsm_loop(uninitialized, undefined, down_dir, none, Unassigned_order_list);
+
                 {uninitialized, _} ->
-                    %add watchdog functionality
-                    io:format("Huhh, burde dette skje da\n");
+                    driver            ! {set_motor_dir, stop_dir},
+                    driver            ! {set_floor_LED, Read_floor},
+                    watchdog          ! stop_watching_movement,
+                    node_communicator ! {reached_new_state, #state{movement = Moving_dir, floor = Latest_floor}},
+                    fsm_loop(State, Read_floor, stop_dir, none, Unassigned_order_list);
+
 
                 {idle, _}                -> ok;
                 {door_open, _}           -> ok;
@@ -63,17 +72,17 @@ fsm_loop(State, Latest_floor, Moving_dir, Assigned_order, Unassigned_order_list)
                 {moving, between_floors} -> ok;
                 
                 {moving, Read_floor} ->
-                    driver ! {set_floor_LED, Read_floor},get_IP
-                    node_communicator ! {reached_new_state, #state{movement = Moving_dir, floor = New_floor}},
+                    driver ! {set_floor_LED, Read_floor},
+                    node_communicator ! {reached_new_state, #state{movement = Moving_dir, floor = Read_floor}},
                     watchdog ! stop_watching_movement,                                                              %%Fiks dette
-                    case should_elevator_stop(Read_floor, Moving_dir, Assigned_order ++ Unassigned_order_list) ->
+                    case should_elevator_stop(Read_floor, Moving_dir, Assigned_order ++ Unassigned_order_list) of
                         true ->
                             driver ! {set_motor_dir, stop_dir},
                             driver ! {set_door_open_LED, on},
                             fsm_loop(door_open, Read_floor, stop_dir, Assigned_order, Unassigned_order_list);
                         false ->
                             watchdog ! start_watching_movement,
-                            fsm_loop(moving, Read_floor, Moving_dir, Assigned_order, Unassigned_order_list);
+                            fsm_loop(moving, Read_floor, Moving_dir, Assigned_order, Unassigned_order_list)
                     end;
                 
                 Unexpected ->
@@ -87,14 +96,14 @@ fsm_loop(State, Latest_floor, Moving_dir, Assigned_order, Unassigned_order_list)
         close_door ->
             io:format("fsm: Closing door\n"),
             driver ! {set_door_open_LED, off},
-            Direction_headed = choose_dir(Assigned_order, Latest_floor),
+            Direction_headed = choose_direction(Assigned_order, Latest_floor),
             node_communicator ! {order_finished, {cab_button, Latest_floor}},
             node_communicator ! {order_finished, {convert_to_button_type(Direction_headed), Latest_floor}},
 
             case Latest_floor == Order_floor of 
                 true ->            
                     node_communicator ! {reached_new_state, #state{movement = stop_dir, floor = Latest_floor}},
-                    fsm_loop(idle, Latest_floor, stop_dir, none, Unassigned_order_list)
+                    fsm_loop(idle, Latest_floor, stop_dir, none, Unassigned_order_list);
                 false ->
                     driver ! {set_motor_dir, Direction_headed},
                     fsm_loop(moving, Latest_floor, Direction_headed, Assigned_order, Unassigned_order_list)
@@ -108,7 +117,7 @@ fsm_loop(State, Latest_floor, Moving_dir, Assigned_order, Unassigned_order_list)
             io:format("FSM: timeout_movement~n"),
             driver ! {set_motor_dir, stop_dir},            
             disconnect_node_and_sleep(),
-            fsm_loop(uninitialized, Latest_floor, stop_dir, none, [])
+            fsm_loop(uninitialized, undefined, stop_dir, none, []);
 
         Unexpected ->
             io:format("Unexpected error in fsm main recv: ~p\n", [Unexpected])
@@ -119,36 +128,6 @@ fsm_loop(State, Latest_floor, Moving_dir, Assigned_order, Unassigned_order_list)
                                 
                        
 % ---------------------------------------- Help functions ------------------------------------------------------------
-
-init_elevator() ->
-    io:format("FSM: Initialise elevator!\n"),
-    watchdog ! start_watching_movement,
-    init_elevator_loop().
-    
-init_elevator_loop() ->
-    watchdog ! is_movement_timed_out,
-    receive
-        true ->
-            fsm(error);
-        false ->
-            ok
-    end,
-    driver ! {get_floor, self()},
-    receive 
-        between_floors ->
-            driver ! {set_motor_dir, down_dir},
-            timer:sleep(100),
-            init_elevator_loop();
-        {floor, Latest_floor} ->
-            driver ! {set_motor_dir, stop_dir},
-            driver ! {set_floor_LED, Latest_floor},
-            watchdog ! stop_watching_movement,
-            Latest_floor;
-        Unexpected ->
-            io:format("Unexpected msg received in fsm.erl:~p\n", [Unexpected])
-    end.
-
-
 
 choose_direction({up_button, ?NUMBER_OF_FLOORS}, _Latest_floor) ->
     io:format("Error in choose dir! Called with up_button of top floor~n"),
@@ -174,13 +153,16 @@ convert_to_button_type(stop_dir) ->
 
 disconnect_node_and_sleep() ->
     node_connection ! disconnect_node,
-    spawn(fun() -> timer(disconnection, ?DISCONNECTED_TIME)),
+    spawn(fun() -> timer:sleep(?DISCONNECTED_TIME), fsm ! {disconnection, timeout} end),
     sleep_loop().
 
 sleep_loop() ->
     receive
         {disconnection, timeout} ->
             ok;
-        Disregarded_message ->
-            magic_loop()
+        _Disregarded_message ->
+            sleep_loop()
     end.
+
+should_elevator_stop(Latest_floor, Moving_dir, Orders) ->   %%Skriv denne 
+    true.
