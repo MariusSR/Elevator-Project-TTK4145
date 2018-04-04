@@ -1,3 +1,5 @@
+%%test
+
 -module(fsm).
 -export([start/0]).
 
