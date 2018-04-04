@@ -19,7 +19,6 @@ start() ->
 
 
 fsm_loop(State, Latest_floor, Moving_dir, Assigned_order, Unassigned_order_list) ->
-    {_Order_button_type, Order_floor} = Assigned_order,
     receive
         
         %----------------------------------------------------------------------------------------------
@@ -43,15 +42,15 @@ fsm_loop(State, Latest_floor, Moving_dir, Assigned_order, Unassigned_order_list)
         %----------------------------------------------------------------------------------------------
         % Receives and updates the list of unassigned orders
         %----------------------------------------------------------------------------------------------
-        {order_list, New_unnasigned_order_list} ->
+        {update_order_list, Updated_unnasigned_order_list} ->
             % HER MÅ VI HUSKE Å SEND OGSÅ NÅR NOE ASSIGNES (dvs da endre jo unassigned-listen, og det må fsm få vite)
-            fsm_loop(State, Latest_floor, Moving_dir, Assigned_order, New_unnasigned_order_list);
+            fsm_loop(State, Latest_floor, Moving_dir, Assigned_order, Updated_unnasigned_order_list);
 
         
         %----------------------------------------------------------------------------------------------
         % Elevator reched a (potentially new) floor
         %----------------------------------------------------------------------------------------------
-        {floorSensor, Read_floor} ->
+        {floor_sensor, Read_floor} ->
             case {State, Read_floor} of 
                 {uninitialized, between_floors} ->
                     driver   ! {set_motor_dir, down_dir},
@@ -86,7 +85,7 @@ fsm_loop(State, Latest_floor, Moving_dir, Assigned_order, Unassigned_order_list)
                     end;
                 
                 Unexpected ->
-                    io:format("Unexpected pattern match in fsm, {floorSensor, Read_floor}: ~p\n", [Unexpected])
+                    io:format("Unexpected pattern match in fsm, {floor_sensor, Read_floor}: ~p\n", [Unexpected])
             end;
         
         
@@ -100,7 +99,7 @@ fsm_loop(State, Latest_floor, Moving_dir, Assigned_order, Unassigned_order_list)
             node_communicator ! {order_finished, {cab_button, Latest_floor}},
             node_communicator ! {order_finished, {convert_to_button_type(Direction_headed), Latest_floor}},
 
-            case Latest_floor == Order_floor of 
+            case Latest_floor == element(2, Assigned_order) of 
                 true ->            
                     node_communicator ! {reached_new_state, #state{movement = stop_dir, floor = Latest_floor}},
                     fsm_loop(idle, Latest_floor, stop_dir, none, Unassigned_order_list);
