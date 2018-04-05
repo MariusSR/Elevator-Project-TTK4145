@@ -57,7 +57,7 @@ watchdog_timer(assigned_hall_order, Order) ->
     after
         ?TIME_LIMIT_ORDER ->
             io:format("Order timed out!\n"),
-            order_manager ! {unassign_hall_order, Order},
+            order_manager ! {unmark_order_assigned, Order},
             watchdog ! {order_timed_out, self(), Order}
     end.
         
