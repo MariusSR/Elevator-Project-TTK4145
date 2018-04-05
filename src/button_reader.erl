@@ -36,7 +36,7 @@ read_floor_sensor_loop() ->
     after
         ?RECEIVE_TIMEOUT ->
             io:format("Timeout reading floor sensor in button reader module\n")
-    end.
+    end,
     timer:sleep(?READ_FLOOR_SENSOR_INTERVAL),
     read_floor_sensor_loop().
 

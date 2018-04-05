@@ -8,14 +8,18 @@
 -export([start/0]).
 
 -include("parameters.hrl").
--record(state,  {movement, floor}).
+%-record(state,  {movement, floor}).
 
 % TODO: spawn from gloabl spawner, remember there is only coments for LED now
 % TODO: remove unnecessary comments
 % endre rekkefølgen på receivene, samle alle med order feks
+% Sjekk at detvar trygt å kommentere ut staten over
+
 
 start() ->
     main_loop().
+
+    
 
 main_loop() ->
     receive
@@ -26,7 +30,7 @@ main_loop() ->
         % is added locally and a 'set_order_button_LED' 'on' message is sent to all nodes.
         %--------------------------------------------------------------------------------------------------
         {new_order, {cab_button, Floor}} ->
-            node_communicator ! {add_order, {cab_button, Floor}, node()};
+            node_communicator ! {add_order, {cab_button, Floor}};
 
         {new_order, Order} when is_tuple(Order) ->
             lists:foreach(fun(Node) -> {node_communicator, Node} ! {add_order, Order, node()} end, nodes());
