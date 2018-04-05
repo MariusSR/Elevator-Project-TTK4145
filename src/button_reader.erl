@@ -1,15 +1,15 @@
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% This module consecutively checks if a button is pressed, and if it is it passes   %%
-%% the new order to Ordermanager. This is done with a loop called read_button_loop   %%
-%% which iterates over all buttons and sleeps for SLEEP_TIME ms when all buttons are %%
-%% sampled once.                                                                     %%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%=================================================================================================
+%% This module periodically
+%%     - samples the floor sensor and sends the result to 'fsm' and
+%%     - checks if any button is pressed and sends the result to 'order_manager'.
+%%=================================================================================================
 
 -module(button_reader).
 -export([start/0]).
+
 -include("parameters.hrl").
--define(SLEEP_TIME, 100).
--define(TIMEOUT, 100).
+-define(READ_BUTTON_SAMPLING_SLEEP, 100).
+-define(RECEIVE_TIMEOUT, 100).
 -define(READ_FLOOR_SENSOR_INTERVAL, 200).
 
 start() ->
@@ -19,11 +19,35 @@ start() ->
     Floor_sensor_reader_PID = spawn(fun()-> read_floor_sensor_loop() end),
     io:format("~s~p\n", [color:cyan("Floor_sensor_reader PID: "), Floor_sensor_reader_PID]).
 
+
+
 %--------------------------------------------------------------------------------------------------
-% Loop iterating over all order buttons to check for new orders.
+% Loop periodically sampling the floor sensor and sends its response to 'fsm'
+%--------------------------------------------------------------------------------------------------
+read_floor_sensor_loop() ->
+    driver ! {get_floor_status, self()},
+    receive
+        between_floors ->
+            fsm !  {floor_sensor, between_floors} ;
+        {floor, Read_floor} ->
+            fsm !  {floor_sensor, Read_floor};
+        Unexpected ->
+            io:format("Unexpected msg in read_floor_sensor: ~p\n", [Unexpected])
+    after
+        ?RECEIVE_TIMEOUT ->
+            io:format("Timeout reading floor sensor in button reader module\n")
+    end.
+    timer:sleep(?READ_FLOOR_SENSOR_INTERVAL),
+    read_floor_sensor_loop().
+
+
+
+
+%--------------------------------------------------------------------------------------------------
+% Loop iterating over all order buttons, periodically sampling/checking for new orders
 %--------------------------------------------------------------------------------------------------
 read_button_loop(1) ->
-    timer:sleep(?SLEEP_TIME),
+    timer:sleep(?READ_BUTTON_SAMPLING_SLEEP),
     lists:foreach(fun(Button_type) -> send_new_order_to_ordermanager(Button_type, 1) end, [up_button, cab_button]),
     read_button_loop(2);
 
@@ -35,11 +59,12 @@ read_button_loop(Floor) when is_integer(Floor) andalso Floor > 1 andalso Floor <
     lists:foreach(fun(Button_type) -> send_new_order_to_ordermanager(Button_type, Floor) end, [up_button, down_button, cab_button]),
     read_button_loop(Floor + 1).
 
+
+
 %--------------------------------------------------------------------------------------------------
-% Checks if 'Button_type' at 'Floor' is pressed. If pressed, sends order to order_manager.
+% Checks if 'Button_type' at 'Floor' is pressed. If pressed, sends order to 'order_manager'
 %--------------------------------------------------------------------------------------------------
-send_new_order_to_ordermanager(Button_type, Floor)
-when is_integer(Floor) andalso Floor >= 1 andalso Floor =< ?NUMBER_OF_FLOORS andalso is_atom(Button_type) ->
+send_new_order_to_ordermanager(Button_type, Floor) ->
     driver ! {get_order_button_status, Button_type, Floor, self()},
     receive
         {order_button_status, Button_type, Floor, 1} ->
@@ -51,20 +76,6 @@ when is_integer(Floor) andalso Floor >= 1 andalso Floor =< ?NUMBER_OF_FLOORS and
         Unexpected ->
             io:format("Unexpexted message received for button type ~p on floor ~p in the button_reader module: ~p\n", [Button_type, Floor, Unexpected])
     after
-        ?TIMEOUT ->
-            io:format("Timeout in button reader module\n")
+        ?RECEIVE_TIMEOUT ->
+            io:format("Timeout asking for order button status in button reader module\n")
     end.
-
-
-read_floor_sensor_loop() ->
-    driver ! {get_floor, self()},
-    receive
-        between_floors ->
-            fsm !  {floor_sensor, between_floors} ;
-        {floor, Read_floor} ->
-            fsm !  {floor_sensor, Read_floor};
-        Unexpected ->
-            io:format("Unexpected msg in read_floor_sensor: ~p\n", [Unexpected])
-    end,
-    timer:sleep(?READ_FLOOR_SENSOR_INTERVAL),
-    read_floor_sensor_loop().
