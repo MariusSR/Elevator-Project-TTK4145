@@ -24,6 +24,7 @@ cyan(Text)       -> [color(?CYAN),       Text, reset()].
 cyanb(Text)      -> [colorb(?CYAN),      Text, reset()].
 white(Text)      -> [color(?WHITE),      Text, reset()].
 whiteb(Text)     -> [colorb(?WHITE),     Text, reset()].
+
 on_black(Text)   -> [color(?BLACK_BG),   Text, reset_bg()].
 on_red(Text)     -> [color(?RED_BG),     Text, reset_bg()].
 on_green(Text)   -> [color(?GREEN_BG),   Text, reset_bg()].

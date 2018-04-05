@@ -11,6 +11,7 @@
 % Kontroller watchdog
 
 start() ->
+    timer:sleep(10),
     io:format("~s Uninitialized\n", [color:yellow("FSM state:")]),
     watchdog ! start_watching_movement,
     fsm_loop(uninitialized, undefined, stop_dir, none, []).
