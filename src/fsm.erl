@@ -6,7 +6,7 @@
 -define(FLOOR_SENSOR_SLEEP_BETWEEN_FLOORS, 100).
 -define(DISCONNECTED_TIME, 10000).
 
--record(state, {movement, floor}).                                          % trenger vi egentlig denne? 
+-record(state, {movement, floor}).
 
 % Kontroller watchdog
 
