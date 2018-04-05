@@ -81,6 +81,7 @@ fsm_loop(State, Latest_floor, Moving_dir, Assigned_order, Unassigned_order_list)
                         true ->
                             driver ! {set_motor_dir, stop_dir},
                             driver ! {set_door_open_LED, on},
+                            spawn(fun() -> timer:sleep(?DOOR_OPEN_TIME), fsm ! close_door end),
                             io:format("FSM state: Door open\n"),
                             fsm_loop(door_open, Read_floor, stop_dir, Assigned_order, Unassigned_order_list);
                         false ->
