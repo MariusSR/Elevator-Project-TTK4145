@@ -10,8 +10,6 @@
 
 -record(state, {movement, floor}).                                          % trenger vi egentlig denne? 
 
-% Ordermanager skal sende Assigned ordre regelsmessig når fsm er i idle
-% Ordermanager skal sende Unnasigned_order_list når den endres.
 % Kontroller watchdog
 
 start() ->
