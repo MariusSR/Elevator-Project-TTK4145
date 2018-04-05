@@ -18,7 +18,6 @@
 % endre rekkefølgen på receivene, samle alle med order feks
 
 start() ->
-    io:format("Main loop of node_communicator started\n"),
     main_loop().
 
 main_loop() ->
