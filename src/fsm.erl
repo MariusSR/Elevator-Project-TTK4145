@@ -11,7 +11,7 @@
 % Kontroller watchdog
 
 start() ->
-    %timer:sleep(1000),
+    timer:sleep(200),
     io:format("~s Uninitialized\n", [color:yellow("FSM state:")]),
     watchdog ! start_watching_movement,
     fsm_loop(uninitialized, undefined, stop_dir, none, []).
@@ -25,7 +25,6 @@ fsm_loop(State, Latest_floor, Moving_dir, Assigned_order, Unassigned_order_list)
         % Receives a new order to be completed by this elevator
         %----------------------------------------------------------------------------------------------
         {assigned_order, New_assigned_order, Updated_unassigned_order_list} when State == idle ->
-            io:format("~s\n", [color:magenta("FSM: got new assigned order")]),     % Debug
             case choose_direction(New_assigned_order, Latest_floor) of 
                 stop_dir ->
                     driver ! {set_door_open_LED, on},
@@ -198,8 +197,8 @@ sleep_loop() ->
 % Checks is the elevator should stop at 'Floor' when moving in the specified direction
 %----------------------------------------------------------------------------------------------
 should_elevator_stop(Floor, Moving_dir, Assigned_order, Orders) ->
-    lists:member({cab_button, Floor}, Orders) or
+    lists:member({cab_button, Floor}, Orders)                         or
     lists:member({convert_to_button_type(Moving_dir), Floor}, Orders) or
-    (Floor == element(2, Assigned_order)) or
-    (Floor == 1 andalso Moving_dir == down_dir) or 
+    (Floor == element(2, Assigned_order))                             or
+    (Floor == 1 andalso Moving_dir == down_dir)                       or 
     (Floor == ?NUMBER_OF_FLOORS andalso Moving_dir == up_dir).
