@@ -35,17 +35,21 @@ main_loop(Watch_list, Movement_watcher_PID) -> %watch_list er en liste av ordre 
             io:format("~s\n", [color:green("Stop_watching_movement_with_pid")]),
             main_loop(Watch_list, no_pid);
 
+
         stop_watching_movement ->
+            io:format("~s\n", [color:red("Stop_watching_movement_NOOOOOOOO_pid")]),
             main_loop(Watch_list, no_pid);
 
 
         {order_timed_out, PID, Order} ->
             main_loop(Watch_list -- [{PID, Order}], Movement_watcher_PID);
 
+
         movement_timed_out ->
             io:format("~s\n", [color:green("movement_timed_out")]),
             fsm ! timeout_movement,
             main_loop(Watch_list, no_pid);
+        
         
         reset_movement_time_out ->
             main_loop(Watch_list, no_pid)

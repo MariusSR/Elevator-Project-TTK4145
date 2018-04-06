@@ -15,7 +15,7 @@
 -define(RECEIVE_PORT,    5679).
 -define(BROADCAST_PORT,  5678).
 -define(BROADCAST_SLEEP, 5000).
--define(OFFLINE_SLEEP,  10000).
+-define(OFFLINE_SLEEP,   5000).
 -define(LISTEN_TIMEOUT,  2000).
 -define(TICKTIME,        1000).
 -define(COOKIE,  'top_secret').
@@ -32,7 +32,6 @@ loop(PIDs) ->
 		disconnect_node ->
 			lists:foreach(fun(PID) -> PID ! suspend end, PIDs),		 % Suspends reconnection of node
 			rpc:eval_everywhere(erlang, disconnect_node, [node()]),  % Discconnect node() everywhere
-			io:format("Eg disconnecta (husk spørre marius her"),
 			loop(PIDs);
 
 		Unexpected ->
