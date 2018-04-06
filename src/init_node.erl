@@ -46,4 +46,4 @@ start_local(Port) ->
 
     button_reader:start(),
     
-    io:format("\n").
+    io:format("\n\n").
