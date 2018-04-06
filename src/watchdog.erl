@@ -26,7 +26,7 @@ main_loop(Watch_list, Movement_watcher_PID) -> %watch_list er en liste av ordre 
 
 
         start_watching_movement ->
-            %io:format("~s\n", [color:green("Start_watching_movement")]),       % Debug
+            %io:format("~s\n", [color:green("Start_watching_movement")]),               % Debug
             PID = spawn(fun() -> watchdog_timer(between_floor) end),
             main_loop(Watch_list, PID);
 
