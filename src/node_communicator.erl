@@ -67,10 +67,10 @@ main_loop() ->
         % all nodes. Each node locally and independently then updates their order list.
         %--------------------------------------------------------------------------------------------------
         {order_finished, Order} ->
-            io:format("~s\n", [color:redb("Eg kjem her! ")]),
             lists:foreach(fun(Node) -> {node_communicator, Node} ! {clear_order, Order} end, [node()|nodes()]);
 
         {clear_order, {Button_type, Floor}} ->
+            io:format("~s\n", [color:redb("Eg kjem her! ")]),
             order_manager ! {remove_order, {Button_type, Floor}},
             driver        ! {set_order_button_LED, Button_type, Floor, off};
 
