@@ -79,17 +79,18 @@ fsm_loop(State, Latest_floor, Moving_dir, Assigned_order, Unassigned_order_list)
                 {door_open, _}           -> ok;
 
                 {moving, Latest_floor}   ->
-                    case should_elevator_stop(Latest_floor, Moving_dir, Unassigned_order_list) of
-                        true  -> 
-                            driver   ! {set_motor_dir, stop_dir},
-                            watchdog ! stop_watching_movement,
-                            driver   ! {set_door_open_LED, on},
-                            spawn(fun() -> timer:sleep(?DOOR_OPEN_TIME), fsm ! close_door end),
-                            io:format("~s Door open\n", [color:yellow("FSM state:")]),
-                            fsm_loop(door_open, Read_floor, stop_dir, {cab_button, Read_floor}, Unassigned_order_list);
-                        false -> 
-                            ok
-                    end;
+                    % case should_elevator_stop(Latest_floor, Moving_dir, Unassigned_order_list) of
+                    %     true  -> 
+                    %         driver   ! {set_motor_dir, stop_dir},
+                    %         watchdog ! stop_watching_movement,
+                    %         driver   ! {set_door_open_LED, on},
+                    %         spawn(fun() -> timer:sleep(?DOOR_OPEN_TIME), fsm ! close_door end),
+                    %         io:format("~s Door open\n", [color:yellow("FSM state:")]),
+                    %         fsm_loop(door_open, Read_floor, stop_dir, {cab_button, Read_floor}, Unassigned_order_list);
+                    %     false -> 
+                    %         ok
+                    % end;
+                    ok;
 
                 {moving, between_floors} -> ok;
                 
@@ -122,7 +123,9 @@ fsm_loop(State, Latest_floor, Moving_dir, Assigned_order, Unassigned_order_list)
             driver ! {set_door_open_LED, off},
             Direction_headed = choose_direction(Assigned_order, Latest_floor),
             node_communicator ! {order_finished, {cab_button, Latest_floor}},
-            node_communicator ! {order_finished, {convert_to_button_type(Direction_headed), Latest_floor}},
+            io:format("~s: ~p\n", [color:redb("Direction_headed"), Direction_headed]),
+            io:format("~s: ~p\n", [color:redb("element(1, Assigned_order)"), element(1, Assigned_order)]),
+            node_communicator ! {order_finished, {element(1, Assigned_order), Latest_floor}},
 
             case Latest_floor == element(2, Assigned_order) of 
                 true ->            
