@@ -87,7 +87,7 @@ main_loop(Orders, Elevator_states) ->
                     main_loop(Orders, Elevator_states);
                 false ->
                     Updated_assigned_hall_orders   = Orders#orders.assigned_hall_orders   ++ [{Hall_order, Node}],
-                    Updated_unassigned_hall_orders = Orders#orders.unassigned_hall_orders -- [{Hall_order, Node}],
+                    Updated_unassigned_hall_orders = Orders#orders.unassigned_hall_orders -- [Hall_order],
                     Updated_orders                 = Orders#orders{unassigned_hall_orders = Updated_unassigned_hall_orders,
                                                                      assigned_hall_orders = Updated_assigned_hall_orders},
                     watchdog ! {start_watching, Hall_order},
