@@ -197,4 +197,5 @@ sleep_loop() ->
 %----------------------------------------------------------------------------------------------
 should_elevator_stop(Floor, Moving_dir, Orders) ->
     lists:member({cab_button, Floor}, Orders) or
-    lists:member({convert_to_button_type(Moving_dir), Floor}, Orders).
+    lists:member({convert_to_button_type(Moving_dir), Floor}, Orders) or
+    Floor == 1 or Floor == ?NUMBER_OF_FLOORS.
