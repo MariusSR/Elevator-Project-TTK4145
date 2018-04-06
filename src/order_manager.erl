@@ -19,7 +19,7 @@ start() ->
     main_loop(Existing_cab_orders, dict:new()).
 
 main_loop(Orders, Elevator_states) ->
-    io:format("Assigned: ~p      Unassigned: ~p      Cab orders: ~p\n", [Orders#orders.assigned_hall_orders, Orders#orders.unassigned_hall_orders, Orders#orders.cab_orders]),
+    io:format("Assigned: ~p          Unassigned: ~p          Cab orders: ~p\n", [Orders#orders.assigned_hall_orders, Orders#orders.unassigned_hall_orders, Orders#orders.cab_orders]),
     receive
 
         %----------------------------------------------------------------------------------------------
@@ -84,7 +84,6 @@ main_loop(Orders, Elevator_states) ->
         {mark_order_assigned, Hall_order, Node} ->
             case lists:member({Hall_order, Node}, Orders#orders.assigned_hall_orders) of
                 true ->
-                    io:format("~s~p\n", [color:greenb("mark_order_assigned: "), Orders]),
                     main_loop(Orders, Elevator_states);
                 false ->
                     Updated_assigned_hall_orders   = Orders#orders.assigned_hall_orders   ++ [{Hall_order, Node}],
