@@ -1,12 +1,12 @@
 -module(watchdog).
 -export([start/0]).
--define(TIME_LIMIT_ORDER, 10000).
+-define(TIME_LIMIT_ORDER, 20000).
 -define(TIME_LIMIT_MOVING_BETWEEN_FLOORS, 3000).
 
 start() ->
     main_loop([], no_pid).
 
-main_loop(Watch_list, Movement_watcher_PID) -> %watch_list er en liste av ordre med tilhørende PID for prosess som timer den, altå [{PID, Order}, ...]
+main_loop(Watch_list, Movement_watcher_PID) -> % Watch_list er en liste av ordre med tilhørende PID for prosess som timer den, altå [{PID, Order}, ...]
     receive
 
         {start_watching, Order} -> % endre til start_watching_order
