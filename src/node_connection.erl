@@ -91,8 +91,8 @@ listen_for_nodes(Receive_socket) ->
 		{ok, {_Address, _Port, Node_name}} ->
 			Node = list_to_atom(Node_name),
 			case lists:member(Node, [node()|nodes()]) of
-				false -> net_kernel:connect_node(Node);
-				true  -> ignore
+				true  -> ignore;
+				false -> net_kernel:connect_node(Node)
 			end;
 
 		{error, timeout} -> ok;

@@ -6,6 +6,9 @@ start() ->
     io:format("Driver PID: ~p\n", [whereis(driver)]),
     timer:sleep(100), % wait for driver to finish its initialization
 
+    register(fsm, spawn(fun()-> fsm:start() end)),
+    io:format("FSM PID: ~p\n", [whereis(fsm)]),
+
     register(node_communicator, spawn(fun()-> node_communicator:start() end)),
     io:format("Node_communicator PID: ~p\n", [whereis(node_communicator)]),
 
@@ -18,9 +21,6 @@ start() ->
     register(node_connection, spawn(fun() -> node_connection:start() end)),
     io:format("Node_connection PID: ~p\n", [whereis(node_connection)]),
     timer:sleep(100), % wait for node cluster to be started on this node
-
-    register(fsm, spawn(fun()-> fsm:start() end)),
-    io:format("FSM PID: ~p\n", [whereis(fsm)]),
 
     button_reader:start(),
 

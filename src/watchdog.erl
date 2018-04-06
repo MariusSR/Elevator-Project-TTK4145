@@ -25,12 +25,14 @@ main_loop(Watch_list, Movement_watcher_PID) -> %watch_list er en liste av ordre 
 
 
         start_watching_movement ->
+            io:format("~s\n", [color:green("Start_watching_movement")]),
             PID = spawn(fun() -> watchdog_timer(between_floor) end),
             main_loop(Watch_list, PID);
 
 
         stop_watching_movement when is_pid(Movement_watcher_PID)->
             Movement_watcher_PID ! reached_floor,
+            io:format("~s\n", [color:green("Stop_watching_movement_with_pid")]),
             main_loop(Watch_list, no_pid);
 
         stop_watching_movement ->
@@ -41,6 +43,7 @@ main_loop(Watch_list, Movement_watcher_PID) -> %watch_list er en liste av ordre 
             main_loop(Watch_list -- [{PID, Order}], Movement_watcher_PID);
 
         movement_timed_out ->
+            io:format("~s\n", [color:green("movement_timed_out")]),
             fsm ! timeout_movement,
             main_loop(Watch_list, no_pid);
         
