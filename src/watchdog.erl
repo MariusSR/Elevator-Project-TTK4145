@@ -43,7 +43,7 @@ main_loop(Watch_list, Movement_watcher_PID) -> %watch_list er en liste av ordre 
 
 
         {order_timed_out, PID, Order} ->
-            io:format("~s\n", [color:red("order_timed_out")]),     % Debug
+            io:format("~s\n", [color:redb("Order_timed_out")]),     % Debug
             main_loop(Watch_list -- [{PID, Order}], Movement_watcher_PID);
 
 
