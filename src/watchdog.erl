@@ -25,19 +25,19 @@ main_loop(Watch_list, Movement_watcher_PID) -> %watch_list er en liste av ordre 
 
 
         start_watching_movement ->
-            io:format("~s\n", [color:green("Start_watching_movement")]),
+            %io:format("~s\n", [color:green("Start_watching_movement")]),       % Debug
             PID = spawn(fun() -> watchdog_timer(between_floor) end),
             main_loop(Watch_list, PID);
 
 
         stop_watching_movement when is_pid(Movement_watcher_PID)->
             Movement_watcher_PID ! reached_floor,
-            io:format("~s\n", [color:green("Stop_watching_movement_with_pid")]),
+            %io:format("~s\n", [color:green("Stop_watching_movement_with_pid")]),       % Debug
             main_loop(Watch_list, no_pid);
 
 
         stop_watching_movement ->
-            io:format("~s\n", [color:red("Stop_watching_movement_NOOOOOOOO_pid")]),
+            io:format("~s\n", [color:red("Stop_watching_movement_NOOOOOOOO_pid")]),     % Debug
             main_loop(Watch_list, no_pid);
 
 
@@ -50,7 +50,7 @@ main_loop(Watch_list, Movement_watcher_PID) -> %watch_list er en liste av ordre 
             fsm ! timeout_movement,
             main_loop(Watch_list, no_pid);
         
-        
+
         reset_movement_time_out ->
             main_loop(Watch_list, no_pid)
     end.

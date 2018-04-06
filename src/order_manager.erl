@@ -19,7 +19,7 @@ start() ->
     main_loop(Existing_cab_orders, dict:new()).
 
 main_loop(Orders, Elevator_states) ->
-    io:format("Assigned: ~p      Unassigned: ~p      Cab orders: ~p\n\n", [Orders#orders.assigned_hall_orders, Orders#orders.unassigned_hall_orders, Orders#orders.cab_orders]),
+    io:format("Assigned: ~p      Unassigned: ~p      Cab orders: ~p\n", [Orders#orders.assigned_hall_orders, Orders#orders.unassigned_hall_orders, Orders#orders.cab_orders]),
     receive
 
         %----------------------------------------------------------------------------------------------
