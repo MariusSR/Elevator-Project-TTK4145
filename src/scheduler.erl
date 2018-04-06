@@ -24,7 +24,7 @@ get_most_efficient_order([Order|Remaining_orders_to_evaluate], Elevator_states) 
 % whos FS value is the gratest. This is done by recurcively iterating over all elevators.
 %-------------------------------------------------------------------------------------------------
 get_optmial_elevator_for_order([], _Order, _Elevator_states, {Node, _FS}) ->
-    io:format("I WON: ~p\n", [Node]),
+    %io:format("I WON: ~p\n", [Node]),
     Node;
 get_optmial_elevator_for_order([Node|Remaining_nodes_to_evaluate], Order, Elevator_states, Best) ->
     case dict:find(Node, Elevator_states) of
@@ -54,7 +54,7 @@ calculate_FS({Button_type, Floor}, State_of_elevator) -> %when is_integer(Floor)
     case (Floor == State_of_elevator#state.floor) and (State_of_elevator#state.movement == stop_dir) of
         true ->
             FS = ?NUMBER_OF_FLOORS + 2,
-            io:format("aaa\n"),
+            %io:format("aaa\n"),
             FS;
             
         false ->
@@ -63,16 +63,16 @@ calculate_FS({Button_type, Floor}, State_of_elevator) -> %when is_integer(Floor)
                     case is_order_in_same_direction_as_elevator_is_moving(Floor, Button_type, State_of_elevator) of
                         true ->
                             FS = ?NUMBER_OF_FLOORS + 1 - Distance,
-                            io:format("        FSa: ~p ~p ~p\n", [FS, Button_type, Floor]),
+                            %io:format("        FSa: ~p ~p ~p\n", [FS, Button_type, Floor]),
                             FS;
                         false ->
                             FS = ?NUMBER_OF_FLOORS - Distance,
-                            io:format("        FSb: ~p ~p ~p\n", [FS, Button_type, Floor]),
+                            %io:format("        FSb: ~p ~p ~p\n", [FS, Button_type, Floor]),
                             FS
                     end;
                 false ->
                     FS = 1 - Distance, % added the subtraction of distance so that two elevator both idle or door_open (=stop_dir) not always get same value
-                    io:format("        FSc: ~p ~p ~p\n", [FS, Button_type, Floor]),
+                    %io:format("        FSc: ~p ~p ~p\n", [FS, Button_type, Floor]),
                     FS
             end
     end.

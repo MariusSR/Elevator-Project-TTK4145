@@ -7,6 +7,7 @@ start() ->
     main_loop([], no_pid).
 
 main_loop(Watch_list, Movement_watcher_PID) -> %watch_list er en liste av ordre med tilhørende PID for prosess som timer den, altå [{PID, Order}, ...]
+    io:format("~s~p\n", [color:greenb("Watch_list: "), Watch_list]),
     receive
 
         {start_watching, Order} -> % endre til start_watching_order
@@ -42,6 +43,7 @@ main_loop(Watch_list, Movement_watcher_PID) -> %watch_list er en liste av ordre 
 
 
         {order_timed_out, PID, Order} ->
+            io:format("~s\n", [color:red("order_timed_out")]),     % Debug
             main_loop(Watch_list -- [{PID, Order}], Movement_watcher_PID);
 
 

@@ -84,6 +84,7 @@ main_loop(Orders, Elevator_states) ->
         {mark_order_assigned, Hall_order, Node} ->
             case lists:member({Hall_order, Node}, Orders#orders.assigned_hall_orders) of
                 true ->
+                    io:format("~s~p\n", [color:greenb("mark_order_assigned: "), Orders]),
                     main_loop(Orders, Elevator_states);
                 false ->
                     Updated_assigned_hall_orders   = Orders#orders.assigned_hall_orders   ++ [{Hall_order, Node}],
@@ -124,10 +125,12 @@ main_loop(Orders, Elevator_states) ->
             main_loop(Updated_orders, Elevator_states);
 
         {remove_order, Hall_order} ->
+            io:format("~s~p\n", [color:cyanb("remove_order_before:"), Orders]),
             Updated_unassigned_hall_orders = Orders#orders.unassigned_hall_orders -- [Hall_order],
             Updated_assigned_hall_orders   = Orders#orders.assigned_hall_orders   -- [Hall_order],
             Updated_orders                 = Orders#orders{unassigned_hall_orders = Updated_unassigned_hall_orders,
                                                              assigned_hall_orders = Updated_assigned_hall_orders},
+            io:format("~s~p\n", [color:cyanb("remove_order_after:"), Updated_orders]),
             watchdog ! {stop_watching, Hall_order},
             fsm      ! {update_order_list, Orders#orders.cab_orders ++ Updated_unassigned_hall_orders},
             main_loop(Updated_orders, Elevator_states);
