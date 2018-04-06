@@ -7,15 +7,16 @@ start() ->
     main_loop([], no_pid).
 
 main_loop(Watch_list, Movement_watcher_PID) -> %watch_list er en liste av ordre med tilhørende PID for prosess som timer den, altå [{PID, Order}, ...]
-    io:format("~s~p\n", [color:greenb("Watch_list: "), Watch_list]),
     receive
 
         {start_watching, Order} -> % endre til start_watching_order
+            io:format("~s~p\n", [color:greenb("Start_watching_order, Watch_list: "), Watch_list]),
             PID = spawn(fun() -> watchdog_timer(assigned_hall_order, Order) end),
             main_loop(Watch_list ++ [{PID, Order}], Movement_watcher_PID);
 
 
         {stop_watching, Order} -> % tenker denne skal kalles når en ordre blir utført, uavhengig om den watches eller ikke. cab og hall sendes hver for seg, som 2 kall
+            io:format("~s~p\n", [color:greenb("Stop_watching_order, Watch_list: "), Watch_list]),
             case lists:keyfind(Order, 2, Watch_list) of
                 false ->
                     main_loop(Watch_list, Movement_watcher_PID);
