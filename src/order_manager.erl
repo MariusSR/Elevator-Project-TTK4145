@@ -118,7 +118,6 @@ main_loop(Orders, Elevator_states) ->
         % Removes an order from 'Orders'.
         %----------------------------------------------------------------------------------------------
         {remove_order, {cab_button, Floor}} ->
-            io:format("~s\n", [color:redb("AAAAAA ")]),
             Updated_cab_orders = Orders#orders.cab_orders -- [{cab_button, Floor}],
             Updated_orders     = Orders#orders{cab_orders = Updated_cab_orders},
             fsm ! {update_order_list, Updated_cab_orders ++ Updated_orders#orders.unassigned_hall_orders},
@@ -126,13 +125,11 @@ main_loop(Orders, Elevator_states) ->
             main_loop(Updated_orders, Elevator_states);
 
         {remove_order, Hall_order} ->
-            io:format("~s\n", [color:redb("BBBBBB ")]),
-            io:format("~s~p\n", [color:cyanb("remove_order_before:"), Orders]),
+            Should_keep_order_in_list      = fun(Assigned_hall_order) -> element(1, Assigned_hall_order) /= Hall_order end,
             Updated_unassigned_hall_orders = Orders#orders.unassigned_hall_orders -- [Hall_order],
-            Updated_assigned_hall_orders   = lists:filter(fun({Assigned_hall_order, _Node}) -> Assigned_hall_order /= Hall_order end, Orders#orders.assigned_hall_orders),
+            Updated_assigned_hall_orders   = lists:filter(Should_keep_order_in_list, Orders#orders.assigned_hall_orders),
             Updated_orders                 = Orders#orders{unassigned_hall_orders = Updated_unassigned_hall_orders,
                                                              assigned_hall_orders = Updated_assigned_hall_orders},
-            io:format("~s~p\n", [color:cyanb("remove_order_after:"), Updated_orders]),
             watchdog ! {stop_watching, Hall_order},
             fsm      ! {update_order_list, Orders#orders.cab_orders ++ Updated_unassigned_hall_orders},
             main_loop(Updated_orders, Elevator_states);
@@ -157,7 +154,6 @@ main_loop(Orders, Elevator_states) ->
         % Moves orders assigned to 'Node' to the the front of the list of unassigend orders of 'Orders'
         %----------------------------------------------------------------------------------------------
         {node_down, Node} ->
-            io:format("Eller her?\n"),
             Orders_assigned_to_offline_node = lists:filter(fun({_Order, Assigned_node}) -> Assigned_node == Node end, Orders#orders.assigned_hall_orders),
             Hall_orders_extracted           = lists:map(fun({Order, _Node}) -> Order end, Orders_assigned_to_offline_node),
             Updated_assigned_hall_orders    = Orders#orders.assigned_hall_orders -- Hall_orders_extracted,
