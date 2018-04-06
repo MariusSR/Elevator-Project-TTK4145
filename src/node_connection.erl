@@ -70,7 +70,7 @@ broadcast_self() ->
 	broadcast_self(Broadcast_socket).
 
 broadcast_self(Broadcast_socket) ->
-	receive suspend -> timer:sleep(?OFFLINE_SLEEP) after ?BROADCAST_SLEEP -> continue end,
+	receive suspend -> timer:sleep(?OFFLINE_SLEEP) after ?BROADCAST_SLEEP -> resume end,
 	gen_udp:send(Broadcast_socket, {255, 255, 255, 255}, ?RECEIVE_PORT, atom_to_list(node())),
 	broadcast_self(Broadcast_socket).
 
@@ -84,7 +84,7 @@ listen_for_nodes() ->
 	listen_for_nodes(Receive_socket).
 
 listen_for_nodes(Receive_socket) ->
-	receive suspend -> timer:sleep(?OFFLINE_SLEEP) after 50 -> continue end,
+	receive suspend -> timer:sleep(?OFFLINE_SLEEP) after 50 -> resume end,
 
 	case gen_udp:recv(Receive_socket, 0, ?LISTEN_TIMEOUT) of
 		{ok, {_Address, _Port, Node_name}} ->
