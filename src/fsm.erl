@@ -4,14 +4,14 @@
 -include("parameters.hrl").
 -define(DOOR_OPEN_TIME, 2000).
 -define(FLOOR_SENSOR_SLEEP_BETWEEN_FLOORS, 100).
--define(DISCONNECTED_TIME, 10000).
+-define(DISCONNECTED_TIME, 5000).
 
 -record(state, {movement, floor}).
 
 % Kontroller watchdog
 
 start() ->
-    timer:sleep(10),
+    timer:sleep(100),
     io:format("~s Uninitialized\n", [color:yellow("FSM state:")]),
     watchdog ! start_watching_movement,
     fsm_loop(uninitialized, undefined, stop_dir, none, []).
