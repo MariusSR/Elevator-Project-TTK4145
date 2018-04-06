@@ -13,7 +13,7 @@
 %%%%%%%%%%% KAN IKKE HETE ORDER MANAGER DA DEN OGSÅ HAR STATES
 
 start() ->
-    timer:sleep(200),
+    %timer:sleep(200),
     Existing_cab_orders = get_existing_cab_orders(),
     fsm ! {update_order_list, Existing_cab_orders#orders.cab_orders},
     main_loop(Existing_cab_orders, dict:new()).
@@ -90,8 +90,8 @@ main_loop(Orders, Elevator_states) ->
                     Updated_unassigned_hall_orders = Orders#orders.unassigned_hall_orders -- [{Hall_order, Node}],
                     Updated_orders                 = Orders#orders{unassigned_hall_orders = Updated_unassigned_hall_orders,
                                                                      assigned_hall_orders = Updated_assigned_hall_orders},
-                    fsm      ! {update_order_list, Orders#orders.cab_orders ++ Updated_unassigned_hall_orders},
                     watchdog ! {start_watching, Hall_order},
+                    fsm      ! {update_order_list, Orders#orders.cab_orders ++ Updated_unassigned_hall_orders},
                     main_loop(Updated_orders, Elevator_states)
             end;
         
@@ -101,12 +101,14 @@ main_loop(Orders, Elevator_states) ->
         % Move 'Hall_order' from being assigned back to the list of unassigned 'Orders'.
         %----------------------------------------------------------------------------------------------
         {unmark_order_assigned, Hall_order} ->
+            io:format("Skjer ddet her?\n"),
             Should_keep_order_in_list      = fun(Assigned_hall_order) -> element(1, Assigned_hall_order) /= Hall_order end,
             Updated_assigned_hall_orders   = lists:filter(Should_keep_order_in_list, Orders#orders.assigned_hall_orders),
             Updated_unassigned_hall_orders = [Hall_order] ++ Orders#orders.unassigned_hall_orders,
             Updated_orders                 = Orders#orders{unassigned_hall_orders = Updated_unassigned_hall_orders,
                                                              assigned_hall_orders = Updated_assigned_hall_orders},
-            fsm ! {update_order_list, Orders#orders.cab_orders ++ Updated_unassigned_hall_orders},
+            watchdog ! {stop_watching, Hall_order},                                                             
+            fsm      ! {update_order_list, Orders#orders.cab_orders ++ Updated_unassigned_hall_orders},
             main_loop(Updated_orders, Elevator_states);
 
 
@@ -126,8 +128,8 @@ main_loop(Orders, Elevator_states) ->
             Updated_assigned_hall_orders   = Orders#orders.assigned_hall_orders   -- [Hall_order],
             Updated_orders                 = Orders#orders{unassigned_hall_orders = Updated_unassigned_hall_orders,
                                                              assigned_hall_orders = Updated_assigned_hall_orders},
-            fsm      ! {update_order_list, Orders#orders.cab_orders ++ Updated_unassigned_hall_orders},
             watchdog ! {stop_watching, Hall_order},
+            fsm      ! {update_order_list, Orders#orders.cab_orders ++ Updated_unassigned_hall_orders},
             main_loop(Updated_orders, Elevator_states);
 
 
@@ -150,12 +152,14 @@ main_loop(Orders, Elevator_states) ->
         % Moves orders assigned to 'Node' to the the front of the list of unassigend orders of 'Orders'
         %----------------------------------------------------------------------------------------------
         {node_down, Node} ->
+            io:format("Eller her?\n"),
             Orders_assigned_to_offline_node = lists:filter(fun({_Order, Assigned_node}) -> Assigned_node == Node end, Orders#orders.assigned_hall_orders),
             Hall_orders_extracted           = lists:map(fun({Order, _Node}) -> Order end, Orders_assigned_to_offline_node),
             Updated_assigned_hall_orders    = Orders#orders.assigned_hall_orders -- Hall_orders_extracted,
             Updated_unassigned_hall_orders  = Hall_orders_extracted ++ Orders#orders.unassigned_hall_orders,
             Updated_orders                  = Orders#orders{unassigned_hall_orders = Updated_unassigned_hall_orders,
                                                               assigned_hall_orders = Updated_assigned_hall_orders},
+            lists:foreach(fun(Hall_order) -> watchdog ! {stop_watching, Hall_order} end, Hall_orders_extracted),
             fsm ! {update_order_list, Orders#orders.cab_orders ++ Updated_unassigned_hall_orders},
             main_loop(Updated_orders, Elevator_states);
         
@@ -170,6 +174,7 @@ main_loop(Orders, Elevator_states) ->
 
         {existing_hall_orders_and_states, Updated_assigned_hall_orders, Updated_unassigned_hall_orders, Updated_elevator_states} ->
             Updated_orders = Orders#orders{assigned_hall_orders = Updated_assigned_hall_orders, unassigned_hall_orders = Updated_unassigned_hall_orders},
+            lists:foreach(fun(Hall_order) -> watchdog ! {start_watching, Hall_order} end, Updated_assigned_hall_orders),
             fsm ! {update_order_list, Orders#orders.cab_orders ++ Updated_unassigned_hall_orders},
             main_loop(Updated_orders, Updated_elevator_states);
 
