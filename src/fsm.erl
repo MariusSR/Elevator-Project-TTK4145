@@ -78,18 +78,17 @@ fsm_loop(State, Latest_floor, Moving_dir, Assigned_order, Unassigned_order_list)
                 {door_open, _}           -> ok;
 
                 {moving, Latest_floor}   ->
-                    % case should_elevator_stop(Latest_floor, Moving_dir, Assigned_order, Unassigned_order_list) of
-                    %     true  -> 
-                    %         driver   ! {set_motor_dir, stop_dir},
-                    %         watchdog ! stop_watching_movement,
-                    %         driver   ! {set_door_open_LED, on},
-                    %         spawn(fun() -> timer:sleep(?DOOR_OPEN_TIME), fsm ! close_door end),
-                    %         io:format("~s Door open\n", [color:yellow("FSM state:")]),
-                    %         fsm_loop(door_open, Read_floor, stop_dir, {cab_button, Read_floor}, Unassigned_order_list);
-                    %     false -> 
-                    %         ok
-                    % end;
-                    ok;
+                    case should_elevator_stop(Latest_floor, Moving_dir, Assigned_order, Unassigned_order_list) of
+                        true  -> 
+                            driver   ! {set_motor_dir, stop_dir},
+                            watchdog ! stop_watching_movement,
+                            driver   ! {set_door_open_LED, on},
+                            spawn(fun() -> timer:sleep(?DOOR_OPEN_TIME), fsm ! close_door end),
+                            io:format("~s Door open\n", [color:yellow("FSM state:")]),
+                            fsm_loop(door_open, Read_floor, stop_dir, {cab_button, Read_floor}, Unassigned_order_list);
+                        false -> 
+                            ok
+                    end;
 
                 {moving, between_floors} -> ok;
                 
