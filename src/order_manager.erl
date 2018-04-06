@@ -12,16 +12,13 @@
 
 %%%%%%%%%%% KAN IKKE HETE ORDER MANAGER DA DEN OGSÅ HAR STATES
 
-%% TODO: Kan vi bare bruke -- istedet for filter; er jo aldri duplikater der, og hvis det er det er det sikekrt en god grunn til det :P
-%% kanskje i stedet bare ha en periodisk fjern-duplikater-funksjon?
-% Har allerede begynt å endre til -- så smått. OG DER VAR ALLE OPPDATERT TIL ++/--, de som går an i hvert fall
-
 start() ->
     Existing_cab_orders = get_existing_cab_orders(),
+    fsm ! {update_order_list, Existing_cab_orders#orders.cab_orders},
     main_loop(Existing_cab_orders, dict:new()).
 
 main_loop(Orders, Elevator_states) ->
-    io:format("Assigned:     ~p\nUnassigned:  ~p\nCab orders:   ~p\n\n", [Orders#orders.assigned_hall_orders, Orders#orders.unassigned_hall_orders, Orders#orders.cab_orders]),
+    io:format("Assigned: ~p      Unassigned: ~p      Cab orders: ~p\n\n", [Orders#orders.assigned_hall_orders, Orders#orders.unassigned_hall_orders, Orders#orders.cab_orders]),
     receive
 
         %----------------------------------------------------------------------------------------------
@@ -64,15 +61,17 @@ main_loop(Orders, Elevator_states) ->
         %----------------------------------------------------------------------------------------------
         assign_order_to_fsm ->
             case Orders#orders.cab_orders of
-                [Cab_order|_Remaining_orders] ->
-                    fsm ! {assigned_order, Cab_order};
+                [Cab_order|Remaining_cab_orders] ->
+                    io:format("NU RETURNERAR EGEEGEGEGEG\n\n"),
+                    fsm ! {assigned_order, Cab_order, Remaining_cab_orders ++ Orders#orders.unassigned_hall_orders};
                 [] ->
                     case scheduler:get_most_efficient_order(Orders#orders.unassigned_hall_orders, Elevator_states) of
                         no_orders_available ->
                             spawn(fun() -> timer:sleep(?RETRY_ASSIGNING_PERIOD), order_manager ! assign_order_to_fsm end);
                         Hall_order ->
                             node_communicator ! {new_order_assigned, Hall_order},
-                            fsm               ! Hall_order
+                            fsm               ! {assigned_order, Hall_order, Orders#orders.cab_orders ++
+                                                Orders#orders.unassigned_hall_orders -- Hall_order}
                     end
             end,
             main_loop(Orders, Elevator_states);

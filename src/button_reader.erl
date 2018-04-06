@@ -8,14 +8,14 @@
 -export([start/0]).
 
 -include("parameters.hrl").
+-define(RECEIVE_TIMEOUT, 200).
 -define(READ_BUTTON_SAMPLING_SLEEP, 100).
--define(RECEIVE_TIMEOUT, 100).
--define(READ_FLOOR_SENSOR_INTERVAL, 200).
+-define(READ_FLOOR_SENSOR_INTERVAL, 100).
 
 start() ->
     Button_reader_PID = spawn(fun()-> read_button_loop(1) end),
     io:format("~s~p\n", [color:cyan("Button_reader PID:       "), Button_reader_PID]),
-
+    
     Floor_sensor_reader_PID = spawn(fun()-> read_floor_sensor_loop() end),
     io:format("~s~p\n", [color:cyan("Floor_sensor_reader PID: "), Floor_sensor_reader_PID]).
 

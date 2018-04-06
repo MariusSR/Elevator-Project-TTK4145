@@ -30,22 +30,22 @@ main_loop() ->
         % is added locally and a 'set_order_button_LED' 'on' message is sent to all nodes.
         %--------------------------------------------------------------------------------------------------
         {new_order, {cab_button, Floor}} ->
-            node_communicator ! {add_order, {cab_button, Floor}};
+            order_manager ! {add_order, {cab_button, Floor}};
 
-        {new_order, Order} when is_tuple(Order) ->
+        {new_order, Order} ->
             lists:foreach(fun(Node) -> {node_communicator, Node} ! {add_order, Order, node()} end, nodes());
 
-        {add_order, Order, From_node} when is_tuple(Order) andalso is_atom(From_node) ->
+        {add_order, Order, From_node} ->
             order_manager ! {add_order, Order, From_node};
 
-        {order_added, Order, From_node} when is_tuple(Order) andalso is_atom(From_node)  ->
+        {order_added, Order, From_node} ->
             {node_communicator, From_node} ! {ack_order, Order};
         
         {ack_order, {cab_button, Floor}} ->
             order_manager     ! {add_order, {cab_button, Floor}, node()},
             node_communicator ! {set_order_button_LED, on, {cab_button, Floor}};
 
-        {ack_order, Order} when is_tuple(Order) ->
+        {ack_order, Order} ->
             order_manager ! {add_order, Order, node()},
             lists:foreach(fun(Node) -> {node_communicator, Node} ! {set_order_button_LED, on, Order} end, [node()|nodes()]);
         
