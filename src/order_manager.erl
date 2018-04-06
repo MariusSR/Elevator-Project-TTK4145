@@ -13,6 +13,7 @@
 %%%%%%%%%%% KAN IKKE HETE ORDER MANAGER DA DEN OGSÅ HAR STATES
 
 start() ->
+    timer:sleep(200),
     Existing_cab_orders = get_existing_cab_orders(),
     fsm ! {update_order_list, Existing_cab_orders#orders.cab_orders},
     main_loop(Existing_cab_orders, dict:new()).
@@ -62,7 +63,6 @@ main_loop(Orders, Elevator_states) ->
         assign_order_to_fsm ->
             case Orders#orders.cab_orders of
                 [Cab_order|Remaining_cab_orders] ->
-                    io:format("NU RETURNERAR EGEEGEGEGEG\n\n"),
                     fsm ! {assigned_order, Cab_order, Remaining_cab_orders ++ Orders#orders.unassigned_hall_orders};
                 [] ->
                     case scheduler:get_most_efficient_order(Orders#orders.unassigned_hall_orders, Elevator_states) of
@@ -71,7 +71,7 @@ main_loop(Orders, Elevator_states) ->
                         Hall_order ->
                             node_communicator ! {new_order_assigned, Hall_order},
                             fsm               ! {assigned_order, Hall_order, Orders#orders.cab_orders ++
-                                                Orders#orders.unassigned_hall_orders -- Hall_order}
+                                                Orders#orders.unassigned_hall_orders -- [Hall_order]}
                     end
             end,
             main_loop(Orders, Elevator_states);

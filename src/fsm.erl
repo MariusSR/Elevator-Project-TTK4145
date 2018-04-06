@@ -11,14 +11,14 @@
 % Kontroller watchdog
 
 start() ->
-    timer:sleep(100),
+    timer:sleep(1000),
     io:format("~s Uninitialized\n", [color:yellow("FSM state:")]),
     watchdog ! start_watching_movement,
     fsm_loop(uninitialized, undefined, stop_dir, none, []).
 
 
 fsm_loop(State, Latest_floor, Moving_dir, Assigned_order, Unassigned_order_list) ->
-    %io:format("~s: ~p         ~p\n", [color:red("----"), Unassigned_order_list, Assigned_order]),
+    %io:format("~s: ~p       ~p\n", [color:red("fsm_loop"), Unassigned_order_list, Assigned_order]),
     receive
         
         %----------------------------------------------------------------------------------------------
@@ -44,7 +44,7 @@ fsm_loop(State, Latest_floor, Moving_dir, Assigned_order, Unassigned_order_list)
         % Receives and updates the list of unassigned orders
         %----------------------------------------------------------------------------------------------
         {update_order_list, Updated_unassigned_order_list} ->
-            io:format("~s: ~p\n", [color:red("AAAA"), Updated_unassigned_order_list]),
+            %io:format("~s: ~p\n", [color:red("Update_order_list"), Updated_unassigned_order_list]),
             % HER MÅ VI HUSKE Å SEND OGSÅ NÅR NOE ASSIGNES (dvs da endre jo unassigned-listen, og det må fsm få vite)
             fsm_loop(State, Latest_floor, Moving_dir, Assigned_order, Updated_unassigned_order_list);
 
