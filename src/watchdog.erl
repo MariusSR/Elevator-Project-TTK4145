@@ -72,13 +72,13 @@ main_loop(Watch_list, Movement_watcher_PID) ->
         % Handles timeouts and updates, respectively, 'Watch_list' and 'Movement_watcher_PID'.
         %--------------------------------------------------------------------------------------------------
         {order_timed_out, PID, Order} ->
-            io:format("~s\n", [color:redb("Order_timed_out")]),     % Debug
+            io:format("~s~p.\n", [color:redb("Watchdog: The following order timed out:"), Order]),     % Debug
             order_manager ! {unmark_order_assigned, Order},
             main_loop(Watch_list -- [{PID, Order}], Movement_watcher_PID);
 
 
         movement_timed_out ->
-            io:format("~s\n", [color:red("Watchdog: Movement between floors timed out")]),
+            io:format("~s\n", [color:redb("Watchdog: Movement between floors timed out")]),
             fsm ! timeout_movement,
             main_loop(Watch_list, no_pid);
         
@@ -97,7 +97,6 @@ watchdog_timer(assigned_hall_order, Order) ->
     receive order_finished ->
         ok
     after ?TIME_LIMIT_ORDER ->
-        io:format("Order timed out!\n"),
         watchdog ! {order_timed_out, self(), Order}
     end.
         
@@ -105,6 +104,5 @@ watchdog_timer(between_floor) ->
     receive reached_floor ->
         ok
     after ?TIME_LIMIT_MOVING_BETWEEN_FLOORS ->
-        io:format("Used too much time moving between floors!\n"),
         watchdog ! movement_timed_out
     end.
