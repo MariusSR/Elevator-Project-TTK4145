@@ -132,11 +132,10 @@ fsm_loop(State, Latest_floor, Moving_dir, Assigned_order, Unassigned_order_list)
             clear_orders(Latest_floor, Assigned_order),
 
             case Assigned_order == none of
-                true -> 
-                    fsm_loop(idle, Latest_floor, stop_dir, none, Unassigned_order_list);
-                false ->
-                    continue
+                true -> fsm_loop(idle, Latest_floor, stop_dir, none, Unassigned_order_list);
+                false -> continue
             end,
+            
             case Latest_floor == element(2, Assigned_order) of 
                 true ->            
                     node_communicator ! {reached_new_state, #state{movement = stop_dir, floor = Latest_floor}},
