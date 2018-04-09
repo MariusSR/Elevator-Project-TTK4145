@@ -132,6 +132,7 @@ main_loop(Orders, Elevator_states) ->
             main_loop(Updated_orders, Elevator_states);
 
         {remove_order, Hall_order} ->
+            cancel_order_if_assigned_to_local_node(Hall_order, Orders), % Notifies fsm that the 'Hall_order' is served by perhaps another node
             Should_keep_order_in_list      = fun(Assigned_hall_order) -> element(1, Assigned_hall_order) /= Hall_order end,
             Updated_assigned_hall_orders   = lists:filter(Should_keep_order_in_list, Orders#orders.assigned_hall_orders),
             Updated_unassigned_hall_orders = Orders#orders.unassigned_hall_orders -- [Hall_order],
@@ -204,6 +205,8 @@ get_existing_cab_orders() ->
     lists:foreach(fun(Cab_order) -> node_communicator ! {set_order_button_LED, on, Cab_order} end, Cab_orders),
     #orders{cab_orders = Cab_orders}.
 
+
+
 get_existing_cab_orders_from_file() ->
     File_name = list_to_atom("elevator@" ++ node_connection:get_IP()),
     dets:open_file(File_name, [{type, bag}]),
@@ -211,14 +214,32 @@ get_existing_cab_orders_from_file() ->
     dets:close(File_name),
     Cab_orders.
 
+
+
 write_cab_order_to_file(Floor) ->
     File_name = node(),
     dets:open_file(File_name, [{type, bag}]),
     dets:insert(File_name, {cab_button, Floor}),
     dets:close(File_name).
 
+
+
 remove_cab_order_from_file(Floor) ->
     File_name = node(),
     dets:open_file(File_name, [{type, bag}]),
     dets:delete_object(File_name, {cab_button, Floor}),
     dets:close(File_name).
+
+
+
+%----------------------------------------------------------------------------------------------
+% If 'Hall_order' is assigned to the local node, fsm is notified that the order is served in
+% case of another node being the elevator who served the order, canceling fsms destination.
+%----------------------------------------------------------------------------------------------
+cancel_order_if_assigned_to_local_node(Hall_order, Orders) ->
+    Orders_assigned_to_local_node  = lists:filter(fun({_Order, Assigned_node}) -> Assigned_node == node() end, Orders#orders.assigned_hall_orders),
+    Assigned_hall_orders_extracted = lists:map(fun({Order, _Node}) -> Order end, Orders_assigned_to_local_node),
+    case lists:member(Hall_order, Assigned_hall_orders_extracted) of
+        true  -> fsm ! cancel_assigned_order;
+        false -> ignore
+    end.    
