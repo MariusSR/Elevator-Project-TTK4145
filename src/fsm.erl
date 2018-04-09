@@ -38,7 +38,8 @@ fsm_loop(State, Latest_floor, Moving_dir, Assigned_order, Unassigned_order_list)
                     watchdog ! start_watching_movement,
                     fsm_loop(moving, Latest_floor, Direction_headed, New_assigned_order, Updated_unassigned_order_list)
             end;
-
+        
+        cancel_assigned_order when Assigned_order == none -> ok;
         cancel_assigned_order ->
             fsm_loop(cancel_assigned_order, Latest_floor, Moving_dir, none, Unassigned_order_list);
         
