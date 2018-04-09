@@ -45,6 +45,8 @@ main_loop(Orders, Elevator_states) ->
 
             All_hall_orders = Orders#orders.unassigned_hall_orders ++
                               lists:map(fun({Assigned_order, _Node}) -> Assigned_order end, Orders#orders.assigned_hall_orders),
+            
+            io:format("________________________ALLE ORDRE ER: ~p", [All_hall_orders]).
 
             case lists:member(Hall_order, All_hall_orders) of
                 true ->
@@ -155,7 +157,7 @@ main_loop(Orders, Elevator_states) ->
         {node_down, Node} ->
             Orders_assigned_to_offline_node = lists:filter(fun({_Order, Assigned_node}) -> Assigned_node == Node end, Orders#orders.assigned_hall_orders),
             Hall_orders_extracted           = lists:map(fun({Order, _Node}) -> Order end, Orders_assigned_to_offline_node),
-            Updated_assigned_hall_orders    = Orders#orders.assigned_hall_orders -- Hall_orders_extracted,
+            Updated_assigned_hall_orders    = Orders#orders.assigned_hall_orders -- Orders_assigned_to_offline_node,
             Updated_unassigned_hall_orders  = Hall_orders_extracted ++ Orders#orders.unassigned_hall_orders,
             Updated_orders                  = Orders#orders{unassigned_hall_orders = Updated_unassigned_hall_orders,
                                                               assigned_hall_orders = Updated_assigned_hall_orders},
