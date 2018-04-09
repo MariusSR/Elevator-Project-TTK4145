@@ -50,7 +50,7 @@ get_optmial_elevator_for_order([Node|Remaining_nodes_to_evaluate], Order, Elevat
 %-------------------------------------------------------------------------------------------------
 calculate_FS({Button_type, Floor}, State_of_elevator) -> 
     Distance = abs(Floor - State_of_elevator#state.floor),
-    case (Floor == State_of_elevator#state.floor) and (State_of_elevator#state.movement == stop_dir) of
+    case (Floor == State_of_elevator#state.floor) of %and (State_of_elevator#state.movement == stop_dir) of
         true ->
             _FS = ?NUMBER_OF_FLOORS + 2;
             

@@ -133,8 +133,8 @@ main_loop(Orders, Elevator_states) ->
 
         {remove_order, Hall_order} ->
             Should_keep_order_in_list      = fun(Assigned_hall_order) -> element(1, Assigned_hall_order) /= Hall_order end,
-            Updated_unassigned_hall_orders = Orders#orders.unassigned_hall_orders -- [Hall_order],
             Updated_assigned_hall_orders   = lists:filter(Should_keep_order_in_list, Orders#orders.assigned_hall_orders),
+            Updated_unassigned_hall_orders = Orders#orders.unassigned_hall_orders -- [Hall_order],
             Updated_orders                 = Orders#orders{unassigned_hall_orders = Updated_unassigned_hall_orders,
                                                              assigned_hall_orders = Updated_assigned_hall_orders},
             watchdog ! {stop_watching_order, Hall_order},
