@@ -228,5 +228,13 @@ clear_orders(?NUMBER_OF_FLOORS, _Assigned_order) ->
     node_communicator ! {order_finished, {down_button, ?NUMBER_OF_FLOORS}};
 
 clear_orders(Floor, Assigned_order) ->
+    case element(2, Assigned_order) of
+        1 ->
+            node_communicator ! {order_finished, {down_button, Floor}};
+        ?NUMBER_OF_FLOORS ->
+            node_communicator ! {order_finished, {up_button, Floor}};
+        _Else ->
+            continue
+    end,
     node_communicator ! {order_finished, {cab_button, Floor}},
     node_communicator ! {order_finished, {element(1, Assigned_order), Floor}}.
