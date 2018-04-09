@@ -39,6 +39,8 @@ fsm_loop(State, Latest_floor, Moving_dir, Assigned_order, Unassigned_order_list)
                     fsm_loop(moving, Latest_floor, Direction_headed, New_assigned_order, Updated_unassigned_order_list)
             end;
 
+        cancel_assigned_order ->
+            fsm_loop(cancel_assigned_order, Latest_floor, Moving_dir, none, Unassigned_order_list);
         
         %----------------------------------------------------------------------------------------------
         % Receives and updates the list of unassigned orders
@@ -48,7 +50,7 @@ fsm_loop(State, Latest_floor, Moving_dir, Assigned_order, Unassigned_order_list)
             % HER MÅ VI HUSKE Å SEND OGSÅ NÅR NOE ASSIGNES (dvs da endre jo unassigned-listen, og det må fsm få vite)
             fsm_loop(State, Latest_floor, Moving_dir, Assigned_order, Updated_unassigned_order_list);
 
-        
+
         %----------------------------------------------------------------------------------------------
         % Elevator reched a (potentially new) floor
         %----------------------------------------------------------------------------------------------
@@ -73,9 +75,16 @@ fsm_loop(State, Latest_floor, Moving_dir, Assigned_order, Unassigned_order_list)
                             io:format("~s Idle\n", [color:yellow("FSM state:")]),
                             fsm_loop(idle, Read_floor, stop_dir, none, Unassigned_order_list)
                     end;
-                    
-                {idle, _}                -> ok;
-                {door_open, _}           -> ok;
+
+                {idle, _}                               -> ok;
+                {door_open, _}                          -> ok;
+                {cancel_assigned_order, between_floors} -> ok;
+                
+                {cancel_assigned_order, _} -> 
+                    driver   ! {set_motor_dir, stop_dir},
+                    watchdog ! stop_watching_movement,
+                    fsm_loop(idle, Read_floor, stop_dir, none, Unassigned_order_list); 
+
 
                 {moving, Latest_floor}   ->
                     case should_elevator_stop(Latest_floor, Moving_dir, Assigned_order, Unassigned_order_list) of
@@ -194,28 +203,27 @@ sleep_loop() ->
 %----------------------------------------------------------------------------------------------
 % Checks is the elevator should stop at 'Floor' when moving in the specified direction
 %----------------------------------------------------------------------------------------------
-should_elevator_stop(Floor, Moving_dir, {Button_type, 1}, Orders) ->
-    io:format("~s  ~p  ~p  ~p  ~p\n", [color:redb("A1"), Floor, Moving_dir, Button_type, Orders]),
-    lists:member({cab_button, Floor}, Orders) or
-    lists:member({down_button, Floor}, Orders) or
-    (Floor == 1) or
+
+should_elevator_stop(Floor, Moving_dir, {_Button_type, 1}, Orders) ->
+    lists:member({cab_button, Floor}, Orders)                           or
+    lists:member({down_button, Floor}, Orders)                          or
+    (Floor == 1)                                                        or
   ((Floor == ?NUMBER_OF_FLOORS) andalso (Moving_dir == up_dir));
 
-should_elevator_stop(Floor, Moving_dir, {Button_type, ?NUMBER_OF_FLOORS}, Orders) ->
-    io:format("~s  ~p  ~p  ~p  ~p\n", [color:redb("A2"), Floor, Moving_dir, Button_type, Orders]),
+should_elevator_stop(Floor, Moving_dir, {_Button_type, ?NUMBER_OF_FLOORS}, Orders) ->
     lists:member({cab_button, Floor}, Orders)                           or
     lists:member({up_button, Floor}, Orders)                            or
-   ((Floor == 1) andalso (Moving_dir == down_dir))                          or
+   ((Floor == 1) andalso (Moving_dir == down_dir))                      or
     (Floor == ?NUMBER_OF_FLOORS);
 
 should_elevator_stop(Floor, Moving_dir, Assigned_order, Orders) ->
-    io:format("~s  ~p  ~p  ~p  ~p\n", [color:redb("A3"), Floor, Moving_dir, Assigned_order, Orders]),
     lists:member({cab_button, Floor}, Orders)                           or
    (lists:member({convert_to_button_type(Moving_dir), Floor}, Orders)   and
    (convert_to_button_type(Moving_dir) == element(1, Assigned_order)))  or
    (Floor == element(2, Assigned_order))                                or
-   ((Floor == 1) andalso (Moving_dir == down_dir))                          or 
+   ((Floor == 1) andalso (Moving_dir == down_dir))                      or 
    ((Floor == ?NUMBER_OF_FLOORS) andalso (Moving_dir == up_dir)).
+
 
 
 
