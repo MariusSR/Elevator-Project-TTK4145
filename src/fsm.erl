@@ -228,6 +228,9 @@ should_elevator_stop(Floor, Moving_dir, Assigned_order, Orders) ->
 
 
 
+clear_orders(Floor, none) ->
+    node_communicator ! {order_finished, {cab_button, Floor}};
+
 clear_orders(1, _Assigned_order) ->
     node_communicator ! {order_finished, {cab_button, 1}},
     node_communicator ! {order_finished, {up_button, 1}};
