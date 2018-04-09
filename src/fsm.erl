@@ -195,11 +195,11 @@ sleep_loop() ->
 % Checks is the elevator should stop at 'Floor' when moving in the specified direction
 %----------------------------------------------------------------------------------------------
 should_elevator_stop(Floor, Moving_dir, Assigned_order, Orders) ->
-    lists:member({cab_button, Floor}, Orders)                         or
-   (lists:member({convert_to_button_type(Moving_dir), Floor}, Orders) and
-    convert_to_button_type(Moving_dir) == element(1, Assigned_order)) or
-    (Floor == element(2, Assigned_order))                             or
-    (Floor == 1 andalso Moving_dir == down_dir)                       or 
+    lists:member({cab_button, Floor}, Orders)                           or
+   (lists:member({convert_to_button_type(Moving_dir), Floor}, Orders)   and
+    (convert_to_button_type(Moving_dir) == element(1, Assigned_order))) or
+    (Floor == element(2, Assigned_order))                               or
+    (Floor == 1 andalso Moving_dir == down_dir)                         or 
     (Floor == ?NUMBER_OF_FLOORS andalso Moving_dir == up_dir).
 
 
