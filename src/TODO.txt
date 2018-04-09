@@ -14,3 +14,4 @@
 11) Dobbelsjekk at sleep i begynnelsen av order_manager og fsm ikke fucker opp noe.
 12) Når simulatoren avslutttes først spammes terimalen med feilmeldinger. DFette kan jo faktisk skje i virkeligheten og burde catches, eller?
 13) Tenk på pattern matches som funksjonsnavn; er de egentlig bra nok da?
+14) Kanskje fikse at når knapp holdes inne blir det sendt maaaaange mld? En tråd per kknapp, kanskje?

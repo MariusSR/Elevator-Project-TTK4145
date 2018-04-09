@@ -63,6 +63,15 @@ main_loop(Orders, Elevator_states) ->
         % Assigns an order to 'fsm'. If none orders are available it tries again periodically.
         %----------------------------------------------------------------------------------------------
         assign_order_to_fsm ->
+            case lists:keyfind(node(), 2, Orders#orders.assigned_hall_orders) of
+                {Already_assigned_hall_order, _Node} ->
+                    fsm ! {assigned_order, Already_assigned_hall_order, Orders#orders.cab_orders ++
+                                           Orders#orders.unassigned_hall_orders};
+                    main_loop(Orders, Elevator_states);
+                    false ->
+                        continue
+                end,
+
             case Orders#orders.cab_orders of
                 [Cab_order|Remaining_cab_orders] ->
                     fsm ! {assigned_order, Cab_order, Remaining_cab_orders ++ Orders#orders.unassigned_hall_orders};
@@ -103,7 +112,6 @@ main_loop(Orders, Elevator_states) ->
         % Move 'Hall_order' from being assigned back to the list of unassigned 'Orders'.
         %----------------------------------------------------------------------------------------------
         {unmark_order_assigned, Hall_order} ->
-            io:format("Skjer ddet her?\n"),
             Should_keep_order_in_list      = fun(Assigned_hall_order) -> element(1, Assigned_hall_order) /= Hall_order end,
             Updated_assigned_hall_orders   = lists:filter(Should_keep_order_in_list, Orders#orders.assigned_hall_orders),
             Updated_unassigned_hall_orders = [Hall_order] ++ Orders#orders.unassigned_hall_orders,

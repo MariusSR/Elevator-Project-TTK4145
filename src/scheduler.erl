@@ -49,7 +49,6 @@ get_optmial_elevator_for_order([Node|Remaining_nodes_to_evaluate], Order, Elevat
 %   - moving away from the order:                             FS = 1
 %-------------------------------------------------------------------------------------------------
 calculate_FS({Button_type, Floor}, State_of_elevator) -> 
-    io:format("~s,   ~p,   ~p,   ~p\n", [color:magenta("ABCD Button_type, floor, state_of_elevator"), Button_type, Floor, State_of_elevator]),
     Distance = abs(Floor - State_of_elevator#state.floor),
     case (Floor == State_of_elevator#state.floor) and (State_of_elevator#state.movement == stop_dir) of
         true ->
