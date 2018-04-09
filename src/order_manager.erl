@@ -46,7 +46,7 @@ main_loop(Orders, Elevator_states) ->
             All_hall_orders = Orders#orders.unassigned_hall_orders ++
                               lists:map(fun({Assigned_order, _Node}) -> Assigned_order end, Orders#orders.assigned_hall_orders),
             
-            io:format("________________________ALLE ORDRE ER: ~p", [All_hall_orders]).
+            io:format("________________________ALLE ORDRE ER: ~p", [All_hall_orders]),
 
             case lists:member(Hall_order, All_hall_orders) of
                 true ->
