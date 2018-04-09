@@ -119,9 +119,7 @@ fsm_loop(State, Latest_floor, Moving_dir, Assigned_order, Unassigned_order_list)
         close_door ->
             io:format("~s Closing door\n", [color:yellow("FSM:")]),
             driver ! {set_door_open_LED, off},
-            Direction_headed = choose_direction(Assigned_order, Latest_floor),
-            node_communicator ! {order_finished, {cab_button, Latest_floor}},
-            node_communicator ! {order_finished, {element(1, Assigned_order), Latest_floor}},
+            clear_orders(Latest_floor, Assigned_order),
 
             case Latest_floor == element(2, Assigned_order) of 
                 true ->            
@@ -129,6 +127,7 @@ fsm_loop(State, Latest_floor, Moving_dir, Assigned_order, Unassigned_order_list)
                     io:format("~s Idle\n", [color:yellow("FSM state:")]),
                     fsm_loop(idle, Latest_floor, stop_dir, none, Unassigned_order_list);
                 false ->
+                    Direction_headed = choose_direction(Assigned_order, Latest_floor),
                     driver ! {set_motor_dir, Direction_headed},
                     io:format("~s Moving\n", [color:yellow("FSM state:")]),
                     watchdog ! start_watching_movement,
@@ -197,7 +196,22 @@ sleep_loop() ->
 %----------------------------------------------------------------------------------------------
 should_elevator_stop(Floor, Moving_dir, Assigned_order, Orders) ->
     lists:member({cab_button, Floor}, Orders)                         or
-    lists:member({convert_to_button_type(Moving_dir), Floor}, Orders) or
+   (lists:member({convert_to_button_type(Moving_dir), Floor}, Orders) and
+    convert_to_button_type(Moving_dir) == element(1, Assigned_order)) or
     (Floor == element(2, Assigned_order))                             or
     (Floor == 1 andalso Moving_dir == down_dir)                       or 
     (Floor == ?NUMBER_OF_FLOORS andalso Moving_dir == up_dir).
+
+
+
+clear_orders(1, _Assigned_order) ->
+    node_communicator ! {order_finished, {cab_button, 1}},
+    node_communicator ! {order_finished, {up_button, 1}};
+
+clear_orders(?NUMBER_OF_FLOORS, _Assigned_order) ->
+    node_communicator ! {order_finished, {cab_button, ?NUMBER_OF_FLOORS}},
+    node_communicator ! {order_finished, {down_button, ?NUMBER_OF_FLOORS}};
+
+clear_orders(Floor, Assigned_order) ->
+    node_communicator ! {order_finished, {cab_button, Floor}},
+    node_communicator ! {order_finished, {element(1, Assigned_order), Floor}}.
