@@ -66,7 +66,7 @@ main_loop(Orders, Elevator_states) ->
             case lists:keyfind(node(), 2, Orders#orders.assigned_hall_orders) of
                 {Already_assigned_hall_order, _Node} ->
                     fsm ! {assigned_order, Already_assigned_hall_order, Orders#orders.cab_orders ++
-                                           Orders#orders.unassigned_hall_orders};
+                                           Orders#orders.unassigned_hall_orders},
                     main_loop(Orders, Elevator_states);
                     false ->
                         continue
