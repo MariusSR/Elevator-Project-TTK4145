@@ -194,25 +194,28 @@ sleep_loop() ->
 %----------------------------------------------------------------------------------------------
 % Checks is the elevator should stop at 'Floor' when moving in the specified direction
 %----------------------------------------------------------------------------------------------
-should_elevator_stop(Floor, Moving_dir, {_Button_type, 1}, Orders) ->
-    lists:member({cab_button, Floor}, Orders)                           or
-    lists:member({down_button, Floor}, Orders)                           or
-    Floor == 1                                                          or
-   (Floor == ?NUMBER_OF_FLOORS andalso Moving_dir == up_dir);
+should_elevator_stop(Floor, Moving_dir, {Button_type, 1}, Orders) ->
+    io:format("~s  ~p  ~p  ~p  ~p\n", [color:redb("A1"), Floor, Moving_dir, Button_type, Orders]),
+    lists:member({cab_button, Floor}, Orders) or
+    lists:member({down_button, Floor}, Orders) or
+    (Floor == 1) or
+  ((Floor == ?NUMBER_OF_FLOORS) andalso (Moving_dir == up_dir));
 
-should_elevator_stop(Floor, Moving_dir, {_Button_type, ?NUMBER_OF_FLOORS}, Orders) ->
+should_elevator_stop(Floor, Moving_dir, {Button_type, ?NUMBER_OF_FLOORS}, Orders) ->
+    io:format("~s  ~p  ~p  ~p  ~p\n", [color:redb("A2"), Floor, Moving_dir, Button_type, Orders]),
     lists:member({cab_button, Floor}, Orders)                           or
-    lists:member({up_button, Floor}, Orders)                             or
-   (Floor == 1 andalso Moving_dir == down_dir)                          or
-    Floor == ?NUMBER_OF_FLOORS;
+    lists:member({up_button, Floor}, Orders)                            or
+   ((Floor == 1) andalso (Moving_dir == down_dir))                          or
+    (Floor == ?NUMBER_OF_FLOORS);
 
 should_elevator_stop(Floor, Moving_dir, Assigned_order, Orders) ->
+    io:format("~s  ~p  ~p  ~p  ~p\n", [color:redb("A3"), Floor, Moving_dir, Assigned_order, Orders]),
     lists:member({cab_button, Floor}, Orders)                           or
    (lists:member({convert_to_button_type(Moving_dir), Floor}, Orders)   and
    (convert_to_button_type(Moving_dir) == element(1, Assigned_order)))  or
    (Floor == element(2, Assigned_order))                                or
-   (Floor == 1 andalso Moving_dir == down_dir)                          or 
-   (Floor == ?NUMBER_OF_FLOORS andalso Moving_dir == up_dir).
+   ((Floor == 1) andalso (Moving_dir == down_dir))                          or 
+   ((Floor == ?NUMBER_OF_FLOORS) andalso (Moving_dir == up_dir)).
 
 
 
