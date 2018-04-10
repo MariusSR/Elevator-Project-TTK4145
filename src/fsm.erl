@@ -267,10 +267,10 @@ clear_orders(Floor, {Assigned_order_button_type, Assigned_order_floor}) ->
             io:format("DDDDDDDDDDDDDDDDDDDDDD\n"),
             case Assigned_order_floor > Floor of
                 true when Assigned_order_button_type == up_button ->
-                    node_communicator ! {order_finished, Assigned_order_button_type, Enellerannenfloor};
+                    node_communicator ! {order_finished, {up_button, Enellerannenfloor}};
 
                 false when Assigned_order_button_type == down_button ->
-                    node_communicator ! {order_finished, Assigned_order_button_type, Enellerannenfloor};
+                    node_communicator ! {order_finished, {down_button, Enellerannenfloor}};
                 
                 _Else ->
                     io:format("EEEEEEEEEEEEEEEEEEE\n"),
