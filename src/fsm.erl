@@ -60,7 +60,6 @@ fsm_loop(State, Latest_floor, Moving_dir, Assigned_order, Unassigned_order_list)
             case {State, Read_floor} of 
                 {uninitialized, between_floors} ->
                     driver   ! {set_motor_dir, down_dir},
-                    watchdog ! start_watching_movement,
                     fsm_loop(uninitialized, undefined, down_dir, none, Unassigned_order_list);
 
                 {uninitialized, Read_floor} ->
@@ -158,17 +157,17 @@ fsm_loop(State, Latest_floor, Moving_dir, Assigned_order, Unassigned_order_list)
 
         Timeout when (Timeout == timeout_movement) or (Timeout == timeout_order) ->
             io:format("~s ~s\n", [color:yellow("FSM:"), Timeout]),
-            watchdog ! stop_watching_movement,
             driver   ! {set_motor_dir, stop_dir},            
             disconnect_node_and_sleep(),
             io:format("~s Uninitialized\n", [color:yellow("FSM state:")]),
+            watchdog ! start_watching_movement,
             fsm_loop(uninitialized, undefined, stop_dir, none, []);
 
         Unexpected ->
             io:format("~s error in fsm main recv: ~p\n", [color:red("Unexpected:"), Unexpected])
             
     end,
-    
+
 fsm_loop(State, Latest_floor, Moving_dir, Assigned_order, Unassigned_order_list).
                                 
                        
