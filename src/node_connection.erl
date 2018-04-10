@@ -27,6 +27,8 @@ start() ->
 	Monitoring_PID = spawn(fun() -> start_node_monitoring() end),
 	loop([Broadcast_PID, Listen_PID, Monitoring_PID]).
 
+
+
 loop(PIDs) ->
 	receive
 		disconnect_node ->
@@ -56,8 +58,12 @@ init_node_cluster() ->
 % Get local IP address on format 123.456.789.012.
 %--------------------------------------------------------------------------------------------------
 get_IP() ->
-	{ok, Addresses} = inet:getif(), 			   % Undocumented function returning all local IPs
-	inet_parse:ntoa(element(1, hd(Addresses))).    % Chooses the first IP and parses it to a string
+	%{ok, Addresses} = inet:getif(), 			   % Undocumented function returning all local IPs
+	%inet_parse:ntoa(element(1, hd(Addresses))).    % Chooses the first IP and parses it to a string
+	{ok, Network_interfaces} = inet:getifaddrs(),
+	Interface                = proplists:get_value("eno1", Network_interfaces, proplists:get_value("en0", Network_interfaces)),
+	IP_address               = proplists:get_value(addr, Interface),
+	inet_parse:ntoa(IP_address).
 
 
 
