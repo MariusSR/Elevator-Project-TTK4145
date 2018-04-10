@@ -235,7 +235,9 @@ should_elevator_stop(Floor, Moving_dir, Assigned_order, Orders) ->
    ((Floor == ?NUMBER_OF_FLOORS) andalso (Moving_dir == up_dir)).
 
 
-
+%----------------------------------------------------------------------------------------------
+% SKRIV KOMENTAR HER !!!!!!
+%----------------------------------------------------------------------------------------------
 
 clear_orders(Floor, none) ->
     node_communicator ! {order_finished, {cab_button, Floor}};
@@ -248,14 +250,15 @@ clear_orders(?NUMBER_OF_FLOORS, _Assigned_order) ->
     node_communicator ! {order_finished, {cab_button, ?NUMBER_OF_FLOORS}},
     node_communicator ! {order_finished, {down_button, ?NUMBER_OF_FLOORS}};
 
-clear_orders(Floor, Assigned_order) ->
-    case element(2, Assigned_order) of
+clear_orders(Floor, {Assigned_order_button_type, Assigned_order_floor}) ->
+    case Assigned_order_floor of
         1 ->
             node_communicator ! {order_finished, {down_button, Floor}};
         ?NUMBER_OF_FLOORS ->
             node_communicator ! {order_finished, {up_button, Floor}};
+        Floor ->
+            node_communicator ! {order_finished, {Assigned_order_button_type, Floor}};
         _Else ->
             continue
     end,
-    node_communicator ! {order_finished, {cab_button, Floor}},
-    node_communicator ! {order_finished, {element(1, Assigned_order), Floor}}.
+    node_communicator ! {order_finished, {cab_button, Floor}}.
