@@ -58,16 +58,13 @@ init_node_cluster() ->
 % Get local IP address on format 123.456.789.012.
 %--------------------------------------------------------------------------------------------------
 get_IP() ->
-	%{ok, Addresses} = inet:getif(), 			   % Undocumented function returning all local IPs
-	%inet_parse:ntoa(element(1, hd(Addresses))).    % Chooses the first IP and parses it to a string
 	{ok, Network_interfaces} = inet:getifaddrs(),
 	case proplists:get_value("eno1", Network_interfaces, undefined) of
-		undefined ->  % macOS (personal computers)
-			Interface_macOS = proplists:get_value("en0", Network_interfaces),
-			IP_address      = proplists:get_value(addr, Interface_mac),
-			inet_parse:ntoa(IP_address);
+		undefined ->  % non-Linux (personal computers)
+			{ok, Addresses} = inet:getif(), 			   % Undocumented function returning all local IPs
+			inet_parse:ntoa(element(1, hd(Addresses))).    % Chooses the first IP and parses it to a string
 
-		Interface ->  % Linux (realtime lab computer)
+		Interface ->  % Linux (at realtime lab computer)
 			IP_address = proplists:get_value(addr, Interface),
 			inet_parse:ntoa(IP_address)
 	end.
