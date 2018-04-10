@@ -36,7 +36,8 @@ get_optmial_elevator_for_order([Node|Remaining_nodes_to_evaluate], Order, Elevat
             end;
         
         error ->
-            io:format("Error in scheduler: states for ~p not present in Elevator_states", [Node]) % gjør denne printen rød!
+            io:format("~s states for ~p not present in Elevator_states", [color:redb("Error in scheduler:"), Node]),
+            get_optmial_elevator_for_order(Remaining_nodes_to_evaluate, Order, Elevator_states, Best)
     end.
 
 
