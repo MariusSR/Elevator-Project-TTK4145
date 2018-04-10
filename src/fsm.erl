@@ -42,6 +42,7 @@ fsm_loop(State, Latest_floor, Moving_dir, Assigned_order, Unassigned_order_list)
         cancel_assigned_order when Assigned_order == none -> ok;
         cancel_assigned_order ->
             fsm_loop(cancel_assigned_order, Latest_floor, Moving_dir, none, Unassigned_order_list);
+
         
         %----------------------------------------------------------------------------------------------
         % Receives and updates the list of unassigned orders
@@ -81,7 +82,7 @@ fsm_loop(State, Latest_floor, Moving_dir, Assigned_order, Unassigned_order_list)
                 {door_open, _}                          -> ok;
                 {cancel_assigned_order, between_floors} -> ok;
                 
-                {cancel_assigned_order, _} -> 
+                {cancel_assigned_order, Read_floor} -> 
                     driver   ! {set_motor_dir, stop_dir},
                     watchdog ! stop_watching_movement,
                     fsm_loop(idle, Read_floor, stop_dir, none, Unassigned_order_list); 
@@ -153,8 +154,9 @@ fsm_loop(State, Latest_floor, Moving_dir, Assigned_order, Unassigned_order_list)
         %----------------------------------------------------------------------------------------------
         % Elevator movement to next floor timed out, disconnecting the node and restarts FSM
         %----------------------------------------------------------------------------------------------
-        timeout_movement ->
-            io:format("~s timeout_movement\n", [color:yellow("FSM:")]),
+
+        Timeout when (Timeout == timeout_movement) or (Timeout == timeout_order) ->
+            io:format("~s ~s\n", [color:yellow("FSM:"), Timeout]),
             driver ! {set_motor_dir, stop_dir},            
             disconnect_node_and_sleep(),
             io:format("~s Uninitialized\n", [color:yellow("FSM state:")]),

@@ -116,7 +116,7 @@ main_loop(Orders, Elevator_states) ->
             Updated_orders                 = Orders#orders{unassigned_hall_orders = Updated_unassigned_hall_orders,
                                                              assigned_hall_orders = Updated_assigned_hall_orders},
             watchdog ! {stop_watching_order, Hall_order},                                                             
-            fsm      ! {update_order_list, Orders#orders.cab_orders ++ Updated_unassigned_hall_orders},
+            suspend_fsm_if_assigned_order_timed_out(Hall_order, Orders, Updated_orders),
             main_loop(Updated_orders, Elevator_states);
 
 
@@ -242,4 +242,13 @@ cancel_order_if_assigned_to_local_node(Hall_order, Orders) ->
     case lists:member(Hall_order, Assigned_hall_orders_extracted) of
         true  -> fsm ! cancel_assigned_order;
         false -> ignore
+    end.
+
+
+suspend_fsm_if_assigned_order_timed_out(Hall_order, Orders, Updated_orders) ->
+    Orders_assigned_to_local_node  = lists:filter(fun({_Order, Assigned_node}) -> Assigned_node == node() end, Orders#orders.assigned_hall_orders),
+    Assigned_hall_orders_extracted = lists:map(fun({Order, _Node}) -> Order end, Orders_assigned_to_local_node),
+    case lists:member(Hall_order, Assigned_hall_orders_extracted) of
+        true  -> fsm ! timeout_order;
+        false -> fsm ! {update_order_list, Updated_orders#orders.cab_orders ++ Updated_orders#orders.unassigned_hall_orders}
     end.    
