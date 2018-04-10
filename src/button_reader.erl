@@ -31,6 +31,9 @@ read_floor_sensor_loop() ->
             fsm !  {floor_sensor, between_floors} ;
         {floor, Read_floor} ->
             fsm !  {floor_sensor, Read_floor};
+        {error, Reason} ->
+            io:format("ERROR: receiving floor status failed due to: ~s~n", [Reason]),
+            timer:sleep(1000);
         Unexpected ->
             io:format("Unexpected msg in read_floor_sensor: ~p\n", [Unexpected])
     after
@@ -72,7 +75,8 @@ send_new_order_to_ordermanager(Button_type, Floor) ->
         {order_button_status, _Button_type, _Floor, 0} ->
             ok;
         {error, Reason} ->
-            io:format("ERROR: receiving button status for button type ~p on floor ~p failed due to: ~s~n", [Button_type, Floor, Reason]);
+            io:format("ERROR: receiving button status for button type ~p on floor ~p failed due to: ~s~n", [Button_type, Floor, Reason]),
+            timer:sleep(1000);
         Unexpected ->
             io:format("Unexpexted message received for button type ~p on floor ~p in the button_reader module: ~p\n", [Button_type, Floor, Unexpected])
     after
