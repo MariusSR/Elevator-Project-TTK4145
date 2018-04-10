@@ -85,6 +85,8 @@ fsm_loop(State, Latest_floor, Moving_dir, Assigned_order, Unassigned_order_list)
                     io:format("~s cancel_assigned_order\n", [color:yellow("FSM:")]),
                     driver   ! {set_motor_dir, stop_dir},
                     watchdog ! stop_watching_movement,
+                    node_communicator ! {reached_new_state, #state{movement = stop_dir, floor = Read_floor}},
+                    io:format("~s Idle\n", [color:yellow("FSM state:")]),
                     fsm_loop(idle, Read_floor, stop_dir, none, Unassigned_order_list); 
 
 
