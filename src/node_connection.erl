@@ -62,7 +62,7 @@ get_IP() ->
 	case proplists:get_value("eno1", Network_interfaces, undefined) of
 		undefined ->  % non-Linux (personal computers)
 			{ok, Addresses} = inet:getif(), 			   % Undocumented function returning all local IPs
-			inet_parse:ntoa(element(1, hd(Addresses))).    % Chooses the first IP and parses it to a string
+			inet_parse:ntoa(element(1, hd(Addresses)));    % Chooses the first IP and parses it to a string
 
 		Interface ->  % Linux (at realtime lab computer)
 			IP_address = proplists:get_value(addr, Interface),
