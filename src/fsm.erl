@@ -18,8 +18,8 @@ start() ->
 
 
 fsm_loop(State, Latest_floor, Moving_dir, Assigned_order, Unassigned_order_list) ->
-    io:format("~s ~p\n", [color:greenb("Assigned_order"), Assigned_order]),
-    %io:format("~s: ~p       ~p\n", [color:red("fsm_loop"), Unassigned_order_list, Assigned_order]),
+    io:format("~s   S ~p    Lf ~p     Md ~p    Ao ~p    Uo ~p\n", [color:greenb("Assigned_order"), State, Latest_floor, Moving_dir, Assigned_order, Unassigned_order_list]),
+
     receive
         
         %----------------------------------------------------------------------------------------------
@@ -81,7 +81,8 @@ fsm_loop(State, Latest_floor, Moving_dir, Assigned_order, Unassigned_order_list)
                 {door_open, _}                          -> ok;
                 {cancel_assigned_order, between_floors} -> ok;
 
-                {cancel_assigned_order, Read_floor} -> 
+                {cancel_assigned_order, Read_floor} ->
+                    io:format("~s cancel_assigned_order\n", [color:yellow("FSM:")]),
                     driver   ! {set_motor_dir, stop_dir},
                     watchdog ! stop_watching_movement,
                     fsm_loop(idle, Read_floor, stop_dir, none, Unassigned_order_list); 
@@ -105,7 +106,7 @@ fsm_loop(State, Latest_floor, Moving_dir, Assigned_order, Unassigned_order_list)
                 {moving, Read_floor} ->
                     driver ! {set_floor_LED, Read_floor},
                     node_communicator ! {reached_new_state, #state{movement = Moving_dir, floor = Read_floor}},
-                    watchdog ! stop_watching_movement,                                                              %%Fiks dette
+                    watchdog ! stop_watching_movement,                                                              
                     case should_elevator_stop(Read_floor, Moving_dir, Assigned_order, Unassigned_order_list) of
                         true ->
                             driver ! {set_motor_dir, stop_dir},
@@ -214,6 +215,9 @@ sleep_loop() ->
 %----------------------------------------------------------------------------------------------
 % Checks is the elevator should stop at 'Floor' when moving in the specified direction
 %----------------------------------------------------------------------------------------------
+
+should_elevator_stop(_Floor, _Moving_dir, none, _Orders) ->
+    io:format("~s SHOULD NOT HAPPEN\n", [color:redb("should_elevator_stop")]),
 
 should_elevator_stop(Floor, Moving_dir, {_Button_type, 1}, Orders) ->
     lists:member({cab_button, Floor}, Orders)                           or
