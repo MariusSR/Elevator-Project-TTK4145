@@ -79,7 +79,7 @@ fsm_loop(State, Latest_floor, Moving_dir, Assigned_order, Unassigned_order_list)
                 {idle, _}                               -> ok;
                 {door_open, _}                          -> ok;
                 {cancel_assigned_order, between_floors} -> ok;
-                
+
                 {cancel_assigned_order, Read_floor} -> 
                     driver   ! {set_motor_dir, stop_dir},
                     watchdog ! stop_watching_movement,
@@ -217,20 +217,20 @@ sleep_loop() ->
 should_elevator_stop(Floor, Moving_dir, {_Button_type, 1}, Orders) ->
     lists:member({cab_button, Floor}, Orders)                           or
     lists:member({down_button, Floor}, Orders)                          or
-    (Floor == 1)                                                        or
-  ((Floor == ?NUMBER_OF_FLOORS) andalso (Moving_dir == up_dir));
+    (Floor  == 1)                                                       or
+    ((Floor == ?NUMBER_OF_FLOORS) andalso (Moving_dir == up_dir));
 
 should_elevator_stop(Floor, Moving_dir, {_Button_type, ?NUMBER_OF_FLOORS}, Orders) ->
     lists:member({cab_button, Floor}, Orders)                           or
     lists:member({up_button, Floor}, Orders)                            or
-   ((Floor == 1) andalso (Moving_dir == down_dir))                      or
-    (Floor == ?NUMBER_OF_FLOORS);
+    (Floor  == ?NUMBER_OF_FLOORS)                                       or
+    ((Floor == 1) andalso (Moving_dir == down_dir));
 
-should_elevator_stop(Floor, Moving_dir, Assigned_order, Orders) ->
+should_elevator_stop(Floor, Moving_dir, {Assigned_order_button_type, Assigned_order_floor}, Orders) ->
     lists:member({cab_button, Floor}, Orders)                           or
    (lists:member({convert_to_button_type(Moving_dir), Floor}, Orders)   and
-   (convert_to_button_type(Moving_dir) == element(1, Assigned_order)))  or
-   (Floor == element(2, Assigned_order))                                or
+   (convert_to_button_type(Moving_dir) == Assigned_order_button_type))  or
+   (Floor  == Assigned_order_floor)                                     or
    ((Floor == 1) andalso (Moving_dir == down_dir))                      or 
    ((Floor == ?NUMBER_OF_FLOORS) andalso (Moving_dir == up_dir)).
 
@@ -258,6 +258,15 @@ clear_orders(Floor, {Assigned_order_button_type, Assigned_order_floor}) ->
             node_communicator ! {order_finished, {up_button, Floor}};
         Floor ->
             node_communicator ! {order_finished, {Assigned_order_button_type, Floor}};
+        Enellerannenfloor ->
+            case Assigned_order_floor > Order of
+                true when Assigned_order_button_type == up_button ->
+                    node_communicator ! {order_finished, Assigned_order_button_type, Enellerannenfloor};
+
+                false when Assigned_order_button_type == down_button ->
+                    node_communicator ! {order_finished, Assigned_order_button_type, Enellerannenfloor}
+            end;
+
         _Else ->
             continue
     end,
