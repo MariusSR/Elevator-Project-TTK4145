@@ -218,6 +218,7 @@ sleep_loop() ->
 
 should_elevator_stop(_Floor, _Moving_dir, none, _Orders) ->
     io:format("~s SHOULD NOT HAPPEN\n", [color:redb("should_elevator_stop")]),
+    true;
 
 should_elevator_stop(Floor, Moving_dir, {_Button_type, 1}, Orders) ->
     lists:member({cab_button, Floor}, Orders)                           or
