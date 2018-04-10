@@ -62,11 +62,12 @@ get_IP() ->
 	%inet_parse:ntoa(element(1, hd(Addresses))).    % Chooses the first IP and parses it to a string
 	{ok, Network_interfaces} = inet:getifaddrs(),
 	case proplists:get_value("eno1", Network_interfaces, undefined) of
-		Interface ->  % Realtime lab
-			IP_address = proplists:get_value(addr, Interface),
-			inet_parse:ntoa(IP_address);
-		undefined ->  % Personal computer running macOS
+		undefined ->  % macOS (personal computers)
 			Interface_macOS = proplists:get_value("en0", Network_interfaces),
+			IP_address      = proplists:get_value(addr, Interface_mac),
+			inet_parse:ntoa(IP_address);
+
+		Interface ->  % Linux (realtime lab computer)
 			IP_address = proplists:get_value(addr, Interface),
 			inet_parse:ntoa(IP_address)
 	end.
