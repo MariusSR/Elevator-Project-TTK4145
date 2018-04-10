@@ -48,8 +48,6 @@ fsm_loop(State, Latest_floor, Moving_dir, Assigned_order, Unassigned_order_list)
         % Receives and updates the list of unassigned orders
         %----------------------------------------------------------------------------------------------
         {update_order_list, Updated_unassigned_order_list} ->
-            %io:format("~s: ~p\n", [color:red("Update_order_list"), Updated_unassigned_order_list]),
-            % HER MÅ VI HUSKE Å SEND OGSÅ NÅR NOE ASSIGNES (dvs da endre jo unassigned-listen, og det må fsm få vite)
             fsm_loop(State, Latest_floor, Moving_dir, Assigned_order, Updated_unassigned_order_list);
 
 

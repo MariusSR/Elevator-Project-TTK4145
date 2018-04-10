@@ -5,7 +5,7 @@ start() ->
     timer:sleep(100),
     register(driver, spawn(fun() -> driver_interface:start() end)),
     io:format("\n~s~p\n", [color:cyan("Driver PID:              "), whereis(driver)]),
-    timer:sleep(100), % wait for driver to finish its initialization
+    timer:sleep(100), % Wait for driver to finish its initialization
 
     register(fsm, spawn(fun()-> fsm:start() end)),
     io:format("~s~p\n", [color:cyan("FSM PID:                 "), whereis(fsm)]),
@@ -21,7 +21,7 @@ start() ->
 
     register(node_connection, spawn(fun() -> node_connection:start() end)),
     io:format("~s~p\n", [color:cyan("Node_connection PID:     "), whereis(node_connection)]),
-    timer:sleep(100), % wait for node cluster to be started on this node
+    timer:sleep(100), % Wait for node cluster to be started on this node
 
     button_reader:start(),
 
