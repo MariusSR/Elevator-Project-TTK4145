@@ -16,3 +16,4 @@
 13) Tenk på pattern matches som funksjonsnavn; er de egentlig bra nok da?
 14) Kanskje fikse at når knapp holdes inne blir det sendt maaaaange mld? En tråd per kknapp, kanskje?
 16) Spør kjetil studass om super-hrl-fil.
+17) Skal vi ta uninen av states og ordre ved oppstart?

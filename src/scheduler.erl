@@ -83,7 +83,7 @@ is_elevator_moving_towards_order(Order_floor, State_of_elevator) ->
 %-------------------------------------------------------------------------------------------------
 % Returns true if the order and elevator is in the same direction.
 %-------------------------------------------------------------------------------------------------
-is_order_in_same_direction_as_elevator_is_moving(Floor, Buton_type, State_of_elevator) when State_of_elevator#state.movement == stop_dir ->
+is_order_in_same_direction_as_elevator_is_moving(_Floor, _Buton_type, State_of_elevator) when State_of_elevator#state.movement == stop_dir ->
     true;
 
 is_order_in_same_direction_as_elevator_is_moving(1, up_button, _State_of_elevator) ->
