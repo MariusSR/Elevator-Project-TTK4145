@@ -251,23 +251,29 @@ clear_orders(?NUMBER_OF_FLOORS, _Assigned_order) ->
     node_communicator ! {order_finished, {down_button, ?NUMBER_OF_FLOORS}};
 
 clear_orders(Floor, {Assigned_order_button_type, Assigned_order_floor}) ->
+    io:format("\n\nFloor = ~p,   Order = ~p\n\n", [Floor, {Assigned_order_button_type, Assigned_order_floor}]),
     case Assigned_order_floor of
         1 ->
+            io:format("AAAAAAAAAAAAAAAAAAAAAAAAA\n"),
             node_communicator ! {order_finished, {down_button, Floor}};
         ?NUMBER_OF_FLOORS ->
+            io:format("BBBBBBBBBBBBBBBBBBBBBBB\n"),
             node_communicator ! {order_finished, {up_button, Floor}};
         Floor ->
+            io:format("CCCCCCCCCCCCCCCCCCCCCC\n"),
             node_communicator ! {order_finished, {Assigned_order_button_type, Floor}};
         Enellerannenfloor ->
+            io:format("DDDDDDDDDDDDDDDDDDDDDD\n"),
             case Assigned_order_floor > Floor of
                 true when Assigned_order_button_type == up_button ->
                     node_communicator ! {order_finished, Assigned_order_button_type, Enellerannenfloor};
 
                 false when Assigned_order_button_type == down_button ->
-                    node_communicator ! {order_finished, Assigned_order_button_type, Enellerannenfloor}
-            end;
-
-        _Else ->
-            continue
+                    node_communicator ! {order_finished, Assigned_order_button_type, Enellerannenfloor};
+                
+                _Else ->
+                    io:format("EEEEEEEEEEEEEEEEEEE\n"),
+                    continue
+            end
     end,
     node_communicator ! {order_finished, {cab_button, Floor}}.
