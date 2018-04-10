@@ -15,3 +15,4 @@
 12) Når simulatoren avslutttes først spammes terimalen med feilmeldinger. DFette kan jo faktisk skje i virkeligheten og burde catches, eller?
 13) Tenk på pattern matches som funksjonsnavn; er de egentlig bra nok da?
 14) Kanskje fikse at når knapp holdes inne blir det sendt maaaaange mld? En tråd per kknapp, kanskje?
+16) Spør kjetil studass om super-hrl-fil.
