@@ -72,7 +72,7 @@ fsm_loop(State, Latest_floor, Moving_dir, Assigned_order, Unassigned_order_list)
                             io:format("~s Door open\n", [color:yellow("FSM state:")]),
                             fsm_loop(door_open, Read_floor, stop_dir, {cab_button, Read_floor}, Unassigned_order_list);
                         false -> 
-                            communicator ! {reached_new_state, #state{movement = stop_dir, floor = Read_floor}},
+                            communicator ! {reached_new_state, #state{movement = idle, floor = Read_floor}},
                             io:format("~s Idle\n", [color:yellow("FSM state:")]),
                             fsm_loop(idle, Read_floor, stop_dir, none, Unassigned_order_list)
                     end;
@@ -85,12 +85,12 @@ fsm_loop(State, Latest_floor, Moving_dir, Assigned_order, Unassigned_order_list)
                     io:format("~s cancel_assigned_order\n", [color:yellow("FSM:")]),
                     driver   ! {set_motor_dir, stop_dir},
                     watchdog ! stop_watching_movement,
-                    communicator ! {reached_new_state, #state{movement = stop_dir, floor = Read_floor}},
+                    communicator ! {reached_new_state, #state{movement = idle, floor = Read_floor}},
                     io:format("~s Idle\n", [color:yellow("FSM state:")]),
                     fsm_loop(idle, Read_floor, stop_dir, none, Unassigned_order_list); 
 
 
-                {moving, Latest_floor}   ->
+                {moving, Latest_floor} -> % Still at the same floor
                     case should_elevator_stop(Latest_floor, Moving_dir, Assigned_order, Unassigned_order_list) of
                         true  -> 
                             driver   ! {set_motor_dir, stop_dir},
@@ -137,7 +137,7 @@ fsm_loop(State, Latest_floor, Moving_dir, Assigned_order, Unassigned_order_list)
             case Assigned_order == none of
                 true ->
                     io:format("~s Idle YOLOOOOO\n", [color:yellow("FSM state:")]), 
-                    communicator ! {reached_new_state, #state{movement = stop_dir, floor = Latest_floor}},
+                    communicator ! {reached_new_state, #state{movement = idle, floor = Latest_floor}},
                     fsm_loop(idle, Latest_floor, stop_dir, none, Unassigned_order_list);
                 false -> 
                     continue
@@ -145,7 +145,7 @@ fsm_loop(State, Latest_floor, Moving_dir, Assigned_order, Unassigned_order_list)
             
             case Latest_floor == element(2, Assigned_order) of 
                 true ->            
-                    communicator ! {reached_new_state, #state{movement = stop_dir, floor = Latest_floor}},
+                    communicator ! {reached_new_state, #state{movement = idle, floor = Latest_floor}},
                     io:format("~s Idle\n", [color:yellow("FSM state:")]),
                     fsm_loop(idle, Latest_floor, stop_dir, none, Unassigned_order_list);
                 false ->
