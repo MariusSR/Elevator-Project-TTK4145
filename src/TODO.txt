@@ -9,4 +9,6 @@
 18) Revurder om kanskje cab skal tas i en bedre rekkefølge ...
 19) Pakketap funk i linux
 20) Gå gjennom alle filer og se om noen steder går vi ikke videre (f.eks pga unexpected som ikke gjør rekursivt kall).
-12) Sjekk om propertylists get_keys kan brukes om flatter av order,node
+21) Sjekk om propertylists get_keys kan brukes om flatter av order,node
+
+22) Kanskje det skal cleanes flere ordre enn det stoppes for? Typ hvis A får assigned x, men B stopper (pga cab order) i etg til x før A når dit; da burde kanskje B ta den hvis den ikke har annet å gjøre? Kanskje vansjkelig å ta høyde for og lite gain på bare 4 etg ...?
