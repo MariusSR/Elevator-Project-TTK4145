@@ -10,11 +10,11 @@ start() ->
     register(fsm, spawn(fun()-> fsm:start() end)),
     io:format("~s~p\n", [color:cyan("FSM PID:                 "), whereis(fsm)]),
 
-    register(node_communicator, spawn(fun()-> node_communicator:start() end)),
-    io:format("~s~p\n", [color:cyan("Node_communicator PID:   "), whereis(node_communicator)]),
+    register(communicator, spawn(fun()-> communication_interface:start() end)),
+    io:format("~s~p\n", [color:cyan("communicator PID:   "), whereis(communicator)]),
 
-    register(order_manager, spawn(fun() -> order_manager:start() end)),
-    io:format("~s~p\n", [color:cyan("Ordermanager PID:        "), whereis(order_manager)]),
+    register(data_manager, spawn(fun() -> orders_and_states:start() end)),
+    io:format("~s~p\n", [color:cyan("Ordermanager PID:        "), whereis(data_manager)]),
 
     register(watchdog, spawn(fun() -> watchdog:start() end)),
     io:format("~s~p\n", [color:cyan("Watchdog PID:            "), whereis(watchdog)]),
@@ -23,6 +23,6 @@ start() ->
     io:format("~s~p\n", [color:cyan("Node_connection PID:     "), whereis(node_connection)]),
     timer:sleep(100), % Wait for node cluster to be started on this node
 
-    button_reader:start(),
+    hardware_reader:start(),
 
     io:format("\n\n").

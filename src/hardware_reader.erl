@@ -1,10 +1,10 @@
 %%=================================================================================================
 %% This module periodically
 %%     - samples the floor sensor and sends the result to 'fsm' and
-%%     - checks if any button is pressed and sends the result to 'order_manager'.
+%%     - checks if any button is pressed and sends the result to 'data_manager'.
 %%=================================================================================================
 
--module(button_reader).
+-module(hardware_reader).
 -export([start/0]).
 
 -include("parameters.hrl").
@@ -22,7 +22,7 @@ start() ->
 
 
 %--------------------------------------------------------------------------------------------------
-% Loop periodically sampling the floor sensor and sends its response to 'fsm'
+% Loop periodically sampling the floor sensor and sends its response to 'fsm'.
 %--------------------------------------------------------------------------------------------------
 read_floor_sensor_loop() ->
     driver ! {get_floor_status, self()},
@@ -47,7 +47,7 @@ read_floor_sensor_loop() ->
 
 
 %--------------------------------------------------------------------------------------------------
-% Loop iterating over all order buttons, periodically sampling/checking for new orders
+% Loop iterating over all order buttons, periodically sampling/checking for new orders.
 %--------------------------------------------------------------------------------------------------
 read_button_loop(1) ->
     timer:sleep(?READ_BUTTON_SAMPLING_SLEEP),
@@ -58,20 +58,20 @@ read_button_loop(?NUMBER_OF_FLOORS) ->
     lists:foreach(fun(Button_type) -> send_new_order_to_ordermanager(Button_type, ?NUMBER_OF_FLOORS) end, [down_button, cab_button]),
     read_button_loop(1);
 
-read_button_loop(Floor) when is_integer(Floor) andalso Floor > 1 andalso Floor < ?NUMBER_OF_FLOORS ->
+read_button_loop(Floor) ->
     lists:foreach(fun(Button_type) -> send_new_order_to_ordermanager(Button_type, Floor) end, [up_button, down_button, cab_button]),
     read_button_loop(Floor + 1).
 
 
 
 %--------------------------------------------------------------------------------------------------
-% Checks if 'Button_type' at 'Floor' is pressed. If pressed, sends order to 'order_manager'
+% Checks if 'Button_type' at 'Floor' is pressed. If pressed, sends order to 'data_manager'.
 %--------------------------------------------------------------------------------------------------
 send_new_order_to_ordermanager(Button_type, Floor) ->
     driver ! {get_order_button_status, Button_type, Floor, self()},
     receive
         {order_button_status, Button_type, Floor, 1} ->
-            node_communicator ! {new_order, {Button_type, Floor}};
+            communicator ! {new_order, {Button_type, Floor}};
         {order_button_status, _Button_type, _Floor, 0} ->
             ok;
         {error, Reason} ->

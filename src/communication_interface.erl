@@ -1,10 +1,10 @@
 %%=================================================================================================
 %% This module is responsable for communication accross different nodes. Other modules interface
-%% this module by messages received in 'main_loop'. Data received is routed to 'node_communicator'
-%% on one or multiple other nodes, or locally to either 'order_manager' or 'driver'.
+%% this module by messages received in 'main_loop'. Data received is routed to 'communicator'
+%% on one or multiple other nodes, or locally to either 'data_manager' or 'driver'.
 %%=================================================================================================
 
--module(node_communicator).
+-module(communication_interface).
 -export([start/0]).
 
 -include("parameters.hrl").
@@ -30,24 +30,24 @@ main_loop() ->
         % is added locally and a 'set_order_button_LED' 'on' message is sent to all nodes.
         %--------------------------------------------------------------------------------------------------
         {new_order, {cab_button, Floor}} ->
-            order_manager ! {add_order, {cab_button, Floor}};
+            data_manager ! {add_order, {cab_button, Floor}};
 
         {new_order, Order} ->
-            lists:foreach(fun(Node) -> {node_communicator, Node} ! {add_order, Order, node()} end, nodes());
+            lists:foreach(fun(Node) -> {communicator, Node} ! {add_order, Order, node()} end, nodes());
 
         {add_order, Order, From_node} ->
-            order_manager ! {add_order, Order, From_node};
+            data_manager ! {add_order, Order, From_node};
 
         {order_added, Order, From_node} ->
-            {node_communicator, From_node} ! {ack_order, Order};
+            {communicator, From_node} ! {ack_order, Order};
         
         {ack_order, {cab_button, Floor}} ->
-            order_manager     ! {add_order, {cab_button, Floor}, node()},
-            node_communicator ! {set_order_button_LED, on, {cab_button, Floor}};
+            data_manager     ! {add_order, {cab_button, Floor}, node()},
+            communicator ! {set_order_button_LED, on, {cab_button, Floor}};
 
         {ack_order, Order} ->
-            order_manager ! {add_order, Order, node()},
-            lists:foreach(fun(Node) -> {node_communicator, Node} ! {set_order_button_LED, on, Order} end, [node()|nodes()]);
+            data_manager ! {add_order, Order, node()},
+            lists:foreach(fun(Node) -> {communicator, Node} ! {set_order_button_LED, on, Order} end, [node()|nodes()]);
         
 
 
@@ -55,10 +55,10 @@ main_loop() ->
         % When an order is assigned to an elevator, all nodes are notified and their order list updated.
         %--------------------------------------------------------------------------------------------------
         {new_order_assigned, Order} ->
-            lists:foreach(fun(Node) -> {node_communicator, Node} ! {mark_order_assigned, Order, node()} end, [node()|nodes()]);
+            lists:foreach(fun(Node) -> {communicator, Node} ! {mark_order_assigned, Order, node()} end, [node()|nodes()]);
 
         {mark_order_assigned, Order, Node} ->
-            order_manager ! {mark_order_assigned, Order, Node};
+            data_manager ! {mark_order_assigned, Order, Node};
 
         
 
@@ -67,10 +67,10 @@ main_loop() ->
         % all nodes. Each node locally and independently then updates their order list.
         %--------------------------------------------------------------------------------------------------
         {order_finished, Order} ->
-            lists:foreach(fun(Node) -> {node_communicator, Node} ! {clear_order, Order} end, [node()|nodes()]);
+            lists:foreach(fun(Node) -> {communicator, Node} ! {clear_order, Order} end, [node()|nodes()]);
 
         {clear_order, {Button_type, Floor}} ->
-            order_manager ! {remove_order, {Button_type, Floor}},
+            data_manager ! {remove_order, {Button_type, Floor}},
             driver        ! {set_order_button_LED, Button_type, Floor, off};
 
 
@@ -91,10 +91,10 @@ main_loop() ->
         % all nodes. Each node locally and independently then updates their list of states.
         %--------------------------------------------------------------------------------------------------      
         {reached_new_state, State} ->
-            lists:foreach(fun(Node) -> {node_communicator, Node} ! {update_state, node(), State} end, [node()|nodes()]);
+            lists:foreach(fun(Node) -> {communicator, Node} ! {update_state, node(), State} end, [node()|nodes()]);
 
         {update_state, Node, New_state} ->
-            order_manager ! {update_state, Node, New_state};
+            data_manager ! {update_state, Node, New_state};
 
 
 
@@ -103,19 +103,19 @@ main_loop() ->
         % and states to the new node. LEDs on the new node is then reset and set accordingly.
         %--------------------------------------------------------------------------------------------------
         {sync_hall_orders_and_states, New_node, Assigned_hall_orders, Unassigned_hall_orders, Elevator_states} ->
-            {node_communicator, New_node} ! {existing_hall_orders_and_states, Assigned_hall_orders, Unassigned_hall_orders, Elevator_states};
+            {communicator, New_node} ! {existing_hall_orders_and_states, Assigned_hall_orders, Unassigned_hall_orders, Elevator_states};
         
         {existing_hall_orders_and_states, Assigned_hall_orders, Unassigned_hall_orders, Elevator_states} ->
             driver ! turn_off_all_leds,
-            order_manager ! {existing_hall_orders_and_states, Assigned_hall_orders, Unassigned_hall_orders, Elevator_states},
-            timer:sleep(5),  % Sleep to ensure proper initialization of driver and order_manager
+            data_manager ! {existing_hall_orders_and_states, Assigned_hall_orders, Unassigned_hall_orders, Elevator_states},
+            timer:sleep(5),  % Sleep to ensure proper initialization of 'driver' and 'data_manager'
             Existing_orders = lists:map(fun({Assigned_order, _Node}) -> Assigned_order end, Assigned_hall_orders) ++ Unassigned_hall_orders,
             lists:foreach(fun({Button_type, Floor}) -> driver ! {set_order_button_LED, Button_type, Floor, on} end, Existing_orders);
 
 
 
         Unexpected ->
-            io:format("Unexpected message in node_communicator: ~p~n", [Unexpected])
+            io:format("Unexpected message in communicator: ~p~n", [Unexpected])
 
     end,
 

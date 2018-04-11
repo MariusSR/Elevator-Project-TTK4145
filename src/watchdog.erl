@@ -73,7 +73,7 @@ main_loop(Watch_list, Movement_watcher_PID) ->
         %--------------------------------------------------------------------------------------------------
         {order_timed_out, PID, Order} ->
             io:format("~s~p.\n", [color:redb("Watchdog: The following order timed out:"), Order]),     % Debug
-            order_manager ! {unmark_order_assigned, Order},
+            data_manager ! {unmark_order_assigned, Order},
             main_loop(Watch_list -- [{PID, Order}], Movement_watcher_PID);
 
 

@@ -1,6 +1,6 @@
 9)  Rename button-reader til noe som sier at den også leser etg.
 10) Starte watchdog på ny ordre som kommer inn i systemet? ved timeout kan den bare legge den til en gang til. Ekstra sikekrhet, er det ikke? Må være lang timeout da
-11) Dobbelsjekk at sleep i begynnelsen av order_manager og fsm ikke fucker opp noe.
+11) Dobbelsjekk at sleep i begynnelsen av data_manager og fsm ikke fucker opp noe.
 12) Når simulatoren avsluttes først spammes terimalen med feilmeldinger. Dette kan jo faktisk skje i virkeligheten og burde catches, eller?
 13) Tenk på pattern matches som funksjonsnavn; er de egentlig bra nok da?
 14) Kanskje fikse at når knapp holdes inne blir det sendt maaaaange mld? En tråd per knapp, kanskje?
