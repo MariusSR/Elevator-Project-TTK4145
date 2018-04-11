@@ -132,7 +132,7 @@ main_loop(Orders, Elevator_states) ->
             main_loop(Updated_orders, Elevator_states);
 
         {remove_order, Hall_order} ->
-            cancel_order_if_assigned_to_local_node(Hall_order, Orders), % Notifies fsm that the 'Hall_order' is served by perhaps another node
+            cancel_order_if_assigned_to_local_node(Hall_order, Orders), % Notifies 'fsm' that the 'Hall_order' is served by perhaps another node
             Should_keep_order_in_list      = fun(Assigned_hall_order) -> element(1, Assigned_hall_order) /= Hall_order end,
             Updated_assigned_hall_orders   = lists:filter(Should_keep_order_in_list, Orders#orders.assigned_hall_orders),
             Updated_unassigned_hall_orders = Orders#orders.unassigned_hall_orders -- [Hall_order],
@@ -233,8 +233,8 @@ remove_cab_order_from_file(Floor) ->
 
 
 %----------------------------------------------------------------------------------------------
-% If 'Hall_order' is assigned to the local node, fsm is notified that the order is served in
-% case of another node being the elevator who served the order, canceling fsms destination.
+% If 'Hall_order' is assigned to the local node, 'fsm' is notified that the order is served in
+% case of another node being the elevator who served the order, canceling 'fsms' destination.
 %----------------------------------------------------------------------------------------------
 cancel_order_if_assigned_to_local_node(Hall_order, Orders) ->
     Orders_assigned_to_local_node  = lists:filter(fun({_Order, Assigned_node}) -> Assigned_node == node() end, Orders#orders.assigned_hall_orders),
