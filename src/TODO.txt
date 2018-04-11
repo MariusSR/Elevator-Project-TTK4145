@@ -1,13 +1,12 @@
-
-1) Skal vi ha med missing_orders? I så fall må en del endres i order_manager og node_communication
-2) Må assigning av en order ackes? Altså når den flyttes fra unass til ass.
-3) Sjekk om det faktsik går å sende til
-4) Cab orders må ikke måtte kreve ack for å utføre dem! Skal lamper også dennes? Vil anta det.
-5) Husk å lagre hvilken heis som har assignet en ordre, typ bruk den 'Node'-parameteren vi sender til noe fornuftig
-6) Vi må bestemme rekkefølgen på cab_orders. Nå blir disse prioritert over å ta nye bestillinger, men den første
-   cabentrykket utføres først, altså ikke den nærmeste eller den i "samme retning". Sistnevnte er vanskelig å
-   implementere siden retningen lagret i staten er stop-dir ...
-7) Endre navn på turn_off_leds_at_floor i driver_comm til å gjenspeile at den slukker ALLE LEDS
-8) Fix at LED ikke tennes ved innhopp i cluster
-9) Kanskje endre hvordan slukk-alle-led-funksjonen fungerer, slik at sleepen i node_communicators existing... ikke trengs
-10) Endre til at states som order_man vet om uttrykkes som idle, ikke stop dir 
+9)  Rename button-reader til noe som sier at den også leser etg.
+10) Starte watchdog på ny ordre som kommer inn i systemet? ved timeout kan den bare legge den til en gang til. Ekstra sikekrhet, er det ikke? Må være lang timeout da
+11) Dobbelsjekk at sleep i begynnelsen av order_manager og fsm ikke fucker opp noe.
+12) Når simulatoren avsluttes først spammes terimalen med feilmeldinger. Dette kan jo faktisk skje i virkeligheten og burde catches, eller?
+13) Tenk på pattern matches som funksjonsnavn; er de egentlig bra nok da?
+14) Kanskje fikse at når knapp holdes inne blir det sendt maaaaange mld? En tråd per knapp, kanskje?
+16) Spør kjetil studass om super-hrl-fil.
+17) Skal vi ta unionen av states og ordre ved oppstart?
+18) Revurder om kanskje cab skal tas i en bedre rekkefølge ...
+19) Pakketap funk i linux
+20) Gå gjennom alle filer og se om noen steder går vi ikke videre (f.eks pga unexpected som ikke gjør rekursivt kall).
+12) Sjekk om propertylists get_keys kan brukes om flatter av order,node
