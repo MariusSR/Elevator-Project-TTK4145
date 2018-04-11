@@ -14,7 +14,7 @@
 
 start() ->
     timer:sleep(200),
-    Existing_cab_orders = get_existing_cab_orders(),
+    Existing_cab_orders = recover_cab_orders(),
     fsm ! {update_order_list, Existing_cab_orders#orders.cab_orders},
     main_loop(Existing_cab_orders, dict:new()).
 
@@ -147,7 +147,7 @@ main_loop(Orders, Elevator_states) ->
         %----------------------------------------------------------------------------------------------
         % Updates state of 'Node' in 'Elevator_states', adding it if not already present.
         %----------------------------------------------------------------------------------------------
-        {update_state, Node, New_state} when Node == node() andalso New_state#state.movement == stop_dir ->
+        {update_state, Node, New_state} when Node == node() andalso New_state#state.movement == idle ->
             Updated_states = dict:store(Node, New_state, Elevator_states),
             data_manager ! assign_order_to_fsm,
             main_loop(Orders, Updated_states);
@@ -200,7 +200,7 @@ main_loop(Orders, Elevator_states) ->
 %----------------------------------------------------------------------------------------------
 % File I/O functions storing/reading local cab orders to a dets file
 %----------------------------------------------------------------------------------------------
-get_existing_cab_orders() ->
+recover_cab_orders() ->
     Cab_orders = get_existing_cab_orders_from_file(),
     lists:foreach(fun(Cab_order) -> communicator ! {set_order_button_LED, on, Cab_order} end, Cab_orders),
     #orders{cab_orders = Cab_orders}.
