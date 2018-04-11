@@ -45,10 +45,10 @@ get_optmial_elevator_for_order([Node|Remaining_nodes_to_evaluate], Order, Elevat
 
 %-------------------------------------------------------------------------------------------------
 % Caclulates the FS value for an elevator. If the elevator is
-%   - idle at the same floor as the order:                    FS = Number of floors + 2
-%   - moving towards an order in the same direction:          FS = Number of floors - distance + 1
-%   - moving towards an order in the opposite direction:      FS = Number of floors - Distance
-%   - moving away from the order:                             FS = 1
+%   - idle at the same floor as the order:                    FS = number of floors + 2
+%   - moving towards an order in the same direction:          FS = number of floors - distance + 1
+%   - moving towards an order in the opposite direction:      FS = number of floors - distance
+%   - moving away from the order:                             FS = 1 - distance
 %-------------------------------------------------------------------------------------------------
 calculate_FS({Button_type, Floor}, State_of_elevator) -> 
     Distance = abs(Floor - State_of_elevator#state.floor),
