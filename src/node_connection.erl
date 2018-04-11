@@ -115,7 +115,7 @@ listen_for_nodes(Receive_socket) ->
 
 
 %--------------------------------------------------------------------------------------------------
-% Start monitoring of node cluster. Notifies 'order_manager' whenever a node connects/disconnects.
+% Start monitoring of node cluster. Notifies 'data_manager' whenever a node connects/disconnects.
 %--------------------------------------------------------------------------------------------------
 start_node_monitoring() ->
 	timer:sleep(500), 				    % Prevent this node discovering existing nodes as new nodes
@@ -126,11 +126,11 @@ node_monitoring_loop() ->
 	receive
 		{nodeup, New_node} ->
 			io:format("New node connected: ~p\n", [New_node]),
-			order_manager ! {node_up, New_node};
+			data_manager ! {node_up, New_node};
 
 		{nodedown, Node} ->
 			io:format("Node disconnected: ~p\n", [Node]),
-			order_manager ! {node_down, Node};
+			data_manager ! {node_down, Node};
 		
 		suspend ->
 			net_kernel:monitor_nodes(false),

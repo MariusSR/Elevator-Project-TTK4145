@@ -2,11 +2,11 @@
 %% This module stores and maintains known orders and states.
 %%=================================================================================================
 
--module(order_manager).
+-module(orders_and_states).
 -export([start/0]).
 -include("parameters.hrl").
 
--define(RETRY_ASSIGNING_PERIOD, 300). % GI BEDRE NAVN OG TUNE
+-define(RETRY_ASSIGNING_PERIOD, 300).
 -record(orders, {assigned_hall_orders = [], unassigned_hall_orders = [], cab_orders = []}).
 -record(state,  {movement, floor}).
 
@@ -32,7 +32,7 @@ main_loop(Orders, Elevator_states) ->
                 false ->
                     Updated_orders = Orders#orders{cab_orders = Orders#orders.cab_orders ++ [{cab_button, Floor}]},
                     fsm ! {update_order_list, Updated_orders#orders.cab_orders ++ Updated_orders#orders.unassigned_hall_orders},
-                    node_communicator ! {set_order_button_LED, on, {cab_button, Floor}},
+                    communicator ! {set_order_button_LED, on, {cab_button, Floor}},
                     write_cab_order_to_file(Floor),
                     main_loop(Updated_orders, Elevator_states)
             end;
@@ -40,7 +40,7 @@ main_loop(Orders, Elevator_states) ->
         {add_order, Hall_order, From_node} ->
             case From_node == node() of
                 true  -> no_ack;    % Should not send acknowledge as it is to be added locally only
-                false -> node_communicator ! {order_added, Hall_order, From_node}
+                false -> communicator ! {order_added, Hall_order, From_node}
             end,
 
             All_hall_orders = Orders#orders.unassigned_hall_orders ++
@@ -76,10 +76,10 @@ main_loop(Orders, Elevator_states) ->
                 [] ->
                     case scheduler:get_most_efficient_order(Orders#orders.unassigned_hall_orders, Elevator_states) of
                         no_orders_available ->
-                            spawn(fun() -> timer:sleep(?RETRY_ASSIGNING_PERIOD), order_manager ! assign_order_to_fsm end);
+                            spawn(fun() -> timer:sleep(?RETRY_ASSIGNING_PERIOD), data_manager ! assign_order_to_fsm end);
                         Hall_order ->
-                            node_communicator ! {new_order_assigned, Hall_order},
-                            fsm               ! {assigned_order, Hall_order, Orders#orders.cab_orders ++
+                            communicator ! {new_order_assigned, Hall_order},
+                            fsm          ! {assigned_order, Hall_order, Orders#orders.cab_orders ++
                                                 Orders#orders.unassigned_hall_orders -- [Hall_order]}
                     end
             end,
@@ -149,7 +149,7 @@ main_loop(Orders, Elevator_states) ->
         %----------------------------------------------------------------------------------------------
         {update_state, Node, New_state} when Node == node() andalso New_state#state.movement == stop_dir ->
             Updated_states = dict:store(Node, New_state, Elevator_states),
-            order_manager ! assign_order_to_fsm,
+            data_manager ! assign_order_to_fsm,
             main_loop(Orders, Updated_states);
 
         {update_state, Node, New_state} ->
@@ -178,7 +178,7 @@ main_loop(Orders, Elevator_states) ->
         % Sends (and receives) a copy of existing hall orders and current states to the newly connected
         %----------------------------------------------------------------------------------------------
         {node_up, New_node} ->
-            node_communicator ! {sync_hall_orders_and_states, New_node, Orders#orders.assigned_hall_orders, Orders#orders.unassigned_hall_orders, Elevator_states},
+            communicator ! {sync_hall_orders_and_states, New_node, Orders#orders.assigned_hall_orders, Orders#orders.unassigned_hall_orders, Elevator_states},
             main_loop(Orders, Elevator_states);
 
         {existing_hall_orders_and_states, Updated_assigned_hall_orders, Updated_unassigned_hall_orders, Updated_elevator_states} ->
@@ -190,7 +190,7 @@ main_loop(Orders, Elevator_states) ->
 
 
         Unexpected ->
-            io:format("Unexpected message in order_manager: ~p~n", [Unexpected]),
+            io:format("Unexpected message in data_manager: ~p~n", [Unexpected]),
             main_loop(Orders, Elevator_states)
 
     end.
@@ -202,7 +202,7 @@ main_loop(Orders, Elevator_states) ->
 %----------------------------------------------------------------------------------------------
 get_existing_cab_orders() ->
     Cab_orders = get_existing_cab_orders_from_file(),
-    lists:foreach(fun(Cab_order) -> node_communicator ! {set_order_button_LED, on, Cab_order} end, Cab_orders),
+    lists:foreach(fun(Cab_order) -> communicator ! {set_order_button_LED, on, Cab_order} end, Cab_orders),
     #orders{cab_orders = Cab_orders}.
 
 
