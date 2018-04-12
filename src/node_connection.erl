@@ -127,7 +127,7 @@ node_monitoring_loop() ->
 			data_manager ! {node_up, New_node};
 
 		{nodedown, Node} ->
-			io:format("~s ~p.\n", [color:green("Node disconnected:"), Node]),
+			io:format("~s ~p.\n", [color:magenta("Node disconnected:"), Node]),
 			data_manager ! {node_down, Node};
 		
 		suspend ->
