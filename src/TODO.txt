@@ -12,3 +12,5 @@
 21) Sjekk om propertylists get_keys kan brukes om flatter av order,node
 
 22) Kanskje det skal cleanes flere ordre enn det opprinnelig stoppes for? Typ hvis A får assigned x, men B stopper (pga cab order) i etg til x før A når dit; da burde kanskje B ta den hvis den ikke har annet å gjøre? Kanskje vansjkelig å ta høyde for og lite gain på bare 4 etg ...?
+
+iptables -A INPUT -i eno1 -m statistic --mode random --probability 0.15 -j DROP
