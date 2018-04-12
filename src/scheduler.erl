@@ -93,7 +93,7 @@ is_elevator_moving_towards_order(Order_floor, State_of_elevator) ->
 %     true;
 
 is_order_in_same_direction_as_elevator_is_moving(Floor, up_button, State_of_elevator) ->
-    (State_of_elevator#state.movement == up_dir   or (Floor == 1 and State_of_elevator#state.movement == down_dir));
+    (State_of_elevator#state.movement == up_dir)   or ((Floor == 1) and (State_of_elevator#state.movement == down_dir));
 
-is_order_in_same_direction_as_elevator_is_moving(_Floor, down_button, State_of_elevator) ->
-    (State_of_elevator#state.movement == down_dir or (Floor == ?NUMBER_OF_FLOORS and State_of_elevator#state.movement == up_dir)).
+is_order_in_same_direction_as_elevator_is_moving(Floor, down_button, State_of_elevator) ->
+    (State_of_elevator#state.movement == down_dir) or ((Floor == ?NUMBER_OF_FLOORS) and (State_of_elevator#state.movement == up_dir)).
