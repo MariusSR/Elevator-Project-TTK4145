@@ -21,6 +21,7 @@
 %%      - Cyan    prints indicate PIDs of processes spawn from this module
 %%      - Green   prints indicate a node connecting or disconnecting
 %%      - Magenta prints indicate timeouts
+%%      - Yellow  prints indicate change of state in fsm
 %%=================================================================================================
 
 -module(init_node).
