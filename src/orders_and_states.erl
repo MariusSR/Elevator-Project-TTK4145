@@ -8,7 +8,7 @@
 
 -define(RETRY_ASSIGNING_PERIOD, 300).
 -record(orders, {assigned_hall_orders = [], unassigned_hall_orders = [], cab_orders = []}).
--record(state,  {movement, floor}).
+-record(state,  {movement, floor, assigned_order}).
 
 %% Vi kan lage en prosess som sender mld til odata_mgr om å printe ordrelisten, typ en gang i sekudnet elns? Eller vil vi det?
 
@@ -72,7 +72,8 @@ main_loop(Orders, Elevator_states) ->
 
             case Orders#orders.cab_orders of
                 [Cab_order|Remaining_cab_orders] ->  % Prioritize cab orders
-                    fsm ! {assigned_order, Cab_order, Remaining_cab_orders ++ Orders#orders.unassigned_hall_orders};
+                    communicator ! {new_order_assigned, Cab_order},
+                    fsm          ! {assigned_order, Cab_order, Remaining_cab_orders ++ Orders#orders.unassigned_hall_orders};
                 [] ->  % No cab orders available
                     case scheduler:get_most_efficient_order(Orders#orders.unassigned_hall_orders, Elevator_states) of
                         no_orders_available ->
@@ -88,20 +89,27 @@ main_loop(Orders, Elevator_states) ->
 
 
         %----------------------------------------------------------------------------------------------
-        % Mark 'Hall_order' as assigned, moving it from unassigned to assigned of 'Orders'.
+        % Mark order as assigned, moving it from unassigned to assigned of 'Orders'.
         %----------------------------------------------------------------------------------------------
-        {mark_order_assigned, Hall_order, Node} ->
-            case lists:member({Hall_order, Node}, Orders#orders.assigned_hall_orders) of
+        {mark_order_assigned, Order, Node} ->
+            Updated_elevator_states = dict:update(Node, fun(_Old) -> Order end, Elevator_states),
+
+            case element(1, Order) of
+                cab_button  -> main_loop(Orders, Updated_elevator_states);
+                _Hall_button -> continue
+            end,
+
+            case lists:member({Order, Node}, Orders#orders.assigned_hall_orders) of
                 true ->  % Order aldready assigned to some node
                     main_loop(Orders, Elevator_states);
                 false ->
-                    Updated_assigned_hall_orders   = Orders#orders.assigned_hall_orders   ++ [{Hall_order, Node}],
-                    Updated_unassigned_hall_orders = Orders#orders.unassigned_hall_orders -- [Hall_order],
+                    Updated_assigned_hall_orders   = Orders#orders.assigned_hall_orders   ++ [{Order, Node}],
+                    Updated_unassigned_hall_orders = Orders#orders.unassigned_hall_orders -- [Order],
                     Updated_orders                 = Orders#orders{unassigned_hall_orders =  Updated_unassigned_hall_orders,
                                                                      assigned_hall_orders =  Updated_assigned_hall_orders},
-                    watchdog ! {start_watching_order, Hall_order},
+                    watchdog ! {start_watching_order, Order},
                     fsm      ! {update_order_list, Orders#orders.cab_orders ++ Updated_unassigned_hall_orders},
-                    main_loop(Updated_orders, Elevator_states)
+                    main_loop(Updated_orders, Updated_elevator_states)
             end;
         
 
