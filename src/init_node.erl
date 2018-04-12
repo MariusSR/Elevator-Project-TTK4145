@@ -15,7 +15,12 @@
 %%                            :  and wathcdog.
 %%   watchdog                 :  Communcates with orders_and_states and fsm.
 %% ________________________________________________________________________________________________
-%% The color module is forked from [INSERT SOURCE] and used extensively in most moduels in prints.
+%%
+%% The color module is forked from [INSERT SOURCE] and used extensively in most moduels in prints:
+%%      - Red     prints indicate an error or an unexpected message
+%%      - Cyan    prints indicate PIDs of processes spawn from this module
+%%      - Green   pritns indicate a node connecting or disconnecting
+%%      - Magenta pritns indicate timeouts
 %%=================================================================================================
 
 -module(init_node).
