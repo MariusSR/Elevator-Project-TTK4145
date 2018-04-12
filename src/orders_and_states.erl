@@ -8,7 +8,7 @@
 
 -define(RETRY_ASSIGNING_PERIOD, 300).
 -record(orders, {assigned_hall_orders = [], unassigned_hall_orders = [], cab_orders = []}).
--record(state,  {movement, floor, assigned_order}).
+-record(state,  {movement, floor, assigned_order = none}).
 
 %% Vi kan lage en prosess som sender mld til odata_mgr om å printe ordrelisten, typ en gang i sekudnet elns? Eller vil vi det?
 
@@ -19,7 +19,8 @@ start() ->
     main_loop(Existing_cab_orders, dict:new()).
 
 main_loop(Orders, Elevator_states) ->
-    io:format("Assigned: ~p          Unassigned: ~p          Cab orders: ~p\n", [Orders#orders.assigned_hall_orders, Orders#orders.unassigned_hall_orders, Orders#orders.cab_orders]),
+    %io:format("Assigned: ~p          Unassigned: ~p          Cab orders: ~p\n", [Orders#orders.assigned_hall_orders, Orders#orders.unassigned_hall_orders, Orders#orders.cab_orders]),
+    io:format("ELEVATOR STATES: ~p\n\n", [Elevator_states]),
     receive
 
         %----------------------------------------------------------------------------------------------
@@ -92,7 +93,7 @@ main_loop(Orders, Elevator_states) ->
         % Mark order as assigned, moving it from unassigned to assigned of 'Orders'.
         %----------------------------------------------------------------------------------------------
         {mark_order_assigned, Order, Node} ->
-            Updated_elevator_states = dict:update(Node, fun(_Old) -> Order end, Elevator_states),
+            Updated_elevator_states = dict:update(Node, fun(Old_state) -> Old_state#state{assigned_order = Order} end, Elevator_states),
 
             case element(1, Order) of
                 cab_button  -> main_loop(Orders, Updated_elevator_states);
