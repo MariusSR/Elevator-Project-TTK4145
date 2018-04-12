@@ -80,7 +80,7 @@ main_loop(Watch_list, Movement_watcher_PID) ->
         movement_timed_out ->
             io:format("~s\n", [color:redb("Watchdog: Movement between floors timed out")]),
             fsm ! timeout_movement,
-            main_loop(Watch_list, no_pid);
+            main_loop(Watch_list, no_pid)
 
     end.
 
