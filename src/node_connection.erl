@@ -4,7 +4,6 @@
 %%=================================================================================================
 
 
-%%%%%%% TODO: endre rekkefølgen på funksjonene, typ skal get_IP nederst?
 %%%%%%% Fjerne dissconect-print?
 %%%%%%% Måten vi suspender på; kan ikke den nå be om suspende, derettter kople fra,
 %%%%%%% mmen før suspendmeldingen trer i kraft receives en mld og node koples til på ny? I mena; LISTEN_TIMEPUT er drøy ...
@@ -37,7 +36,7 @@ loop(PIDs) ->
 			loop(PIDs);
 
 		Unexpected ->
-			io:format("Unexpected message in node_connection loop: ~p~n", [Unexpected]),
+			io:format("~s Unexpected message in loop: ~p.\n", [color:red("Node_connection:"), Unexpected]),
 			loop(PIDs)
 	end.
 
@@ -47,7 +46,7 @@ loop(PIDs) ->
 % Start node cluster with node name 'elevator@ip_adress'.
 %--------------------------------------------------------------------------------------------------
 init_node_cluster() ->
-	os:cmd("epmd -daemon"),				% Spawns the the name server required by distributed Erlang
+	os:cmd("epmd -daemon"),  % Spawns the the name server required by distributed Erlang
 	Node_name  = list_to_atom("elevator@" ++ get_IP()),
 	{ok, _Pid} = net_kernel:start([Node_name, longnames, ?TICKTIME]),
 	erlang:set_cookie(Node_name, ?COOKIE).
@@ -61,8 +60,8 @@ get_IP() ->
 	{ok, Network_interfaces} = inet:getifaddrs(),
 	case proplists:get_value("eno1", Network_interfaces, undefined) of
 		undefined ->  % Non-Linux (personal computers)
-			{ok, Addresses} = inet:getif(), 			   % Undocumented function returning all local IPs
-			inet_parse:ntoa(element(1, hd(Addresses)));    % Chooses the first IP and parses it to a string
+			{ok, Addresses} = inet:getif(), 			 % Undocumented function returning all local IPs
+			inet_parse:ntoa(element(1, hd(Addresses)));  % Chooses the first IP and parses it to a string
 
 		Interface ->  % Linux (at realtime lab computers)
 			IP_address = proplists:get_value(addr, Interface),
@@ -105,9 +104,9 @@ listen_for_nodes(Receive_socket) ->
 			end;
 
 		{error, timeout} -> ok;
-		{error, Reason}  -> io:format("ERROR: receiving node failed due to: ~s~n", [Reason]);
+		{error, Reason}  -> io:format("~s Error in listen_for_nodes: ~p.\n", [color:red("Node_connection:"), Reason]),
 
-		Unexpected -> io:format("Unexpected message in listen for nodes: ~p~n", [Unexpected])
+		io:format("~s Unexpected message in listen_for_nodes: ~p.\n", [color:red("Node_connection:"), Unexpected]),
 	end,
 
 	listen_for_nodes(Receive_socket).
@@ -118,18 +117,18 @@ listen_for_nodes(Receive_socket) ->
 % Start monitoring of node cluster. Notifies 'data_manager' whenever a node connects/disconnects.
 %--------------------------------------------------------------------------------------------------
 start_node_monitoring() ->
-	timer:sleep(500), 				    % Prevent this node discovering existing nodes as new nodes
-	net_kernel:monitor_nodes(true),	    % Enable monitoring of other nodes on this node
+	timer:sleep(500), 				 % Prevent this node discovering existing nodes as new nodes
+	net_kernel:monitor_nodes(true),  % Enable monitoring of other nodes on this node
 	node_monitoring_loop().
 
 node_monitoring_loop() ->
 	receive
 		{nodeup, New_node} ->
-			io:format("New node connected: ~p\n", [New_node]),
+			io:format("~s ~p.\n", [color:green("New node connected:"), New_node]),
 			data_manager ! {node_up, New_node};
 
 		{nodedown, Node} ->
-			io:format("Node disconnected: ~p\n", [Node]),
+			io:format("~s ~p.\n", [color:green("Node disconnected:"), New_node]),
 			data_manager ! {node_down, Node};
 		
 		suspend ->
@@ -138,6 +137,6 @@ node_monitoring_loop() ->
 			start_node_monitoring();
 		
 		Unexpected ->
-			io:format("Unexpected message in node_monitoring_loop: ~p~n", [Unexpected])
+			io:format("~s Unexpected message in node_monitoring: ~p.\n", [color:red("Node_connection:"), Unexpected])
 	end,
 	node_monitoring_loop().

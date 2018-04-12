@@ -42,7 +42,7 @@ main_loop() ->
             {communicator, From_node} ! {ack_order, Order};
         
         {ack_order, {cab_button, Floor}} ->
-            data_manager     ! {add_order, {cab_button, Floor}, node()},
+            data_manager ! {add_order, {cab_button, Floor}, node()},
             communicator ! {set_order_button_LED, on, {cab_button, Floor}};
 
         {ack_order, Order} ->
@@ -71,7 +71,7 @@ main_loop() ->
 
         {clear_order, {Button_type, Floor}} ->
             data_manager ! {remove_order, {Button_type, Floor}},
-            driver        ! {set_order_button_LED, Button_type, Floor, off};
+            driver       ! {set_order_button_LED, Button_type, Floor, off};
 
 
         
@@ -106,7 +106,7 @@ main_loop() ->
             {communicator, New_node} ! {existing_hall_orders_and_states, Assigned_hall_orders, Unassigned_hall_orders, Elevator_states};
         
         {existing_hall_orders_and_states, Assigned_hall_orders, Unassigned_hall_orders, Elevator_states} ->
-            driver ! turn_off_all_leds,
+            driver       ! turn_off_all_leds,
             data_manager ! {existing_hall_orders_and_states, Assigned_hall_orders, Unassigned_hall_orders, Elevator_states},
             timer:sleep(5),  % Sleep to ensure proper initialization of 'driver' and 'data_manager'
             Existing_orders = lists:map(fun({Assigned_order, _Node}) -> Assigned_order end, Assigned_hall_orders) ++ Unassigned_hall_orders,

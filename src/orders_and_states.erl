@@ -10,10 +10,10 @@
 -record(orders, {assigned_hall_orders = [], unassigned_hall_orders = [], cab_orders = []}).
 -record(state,  {movement, floor}).
 
-%%%%%%%%%%% KAN IKKE HETE ORDER MANAGER DA DEN OGSÅ HAR STATES
+%% Vi kan lage en prosess som sender mld til odata_mgr om å printe ordrelisten, typ en gang i sekudnet elns? Eller vil vi det?
 
 start() ->
-    timer:sleep(200), % FORKLAR DENNE KOMMENTAREN
+    timer:sleep(200), % Sleep to better align PID prints at start up. None other uses and can thus be safely removed.
     Existing_cab_orders = recover_cab_orders(),
     fsm ! {update_order_list, Existing_cab_orders#orders.cab_orders},
     main_loop(Existing_cab_orders, dict:new()).
@@ -27,9 +27,9 @@ main_loop(Orders, Elevator_states) ->
         %----------------------------------------------------------------------------------------------
         {add_order, {cab_button, Floor}} ->
             case lists:member({cab_button, Floor}, Orders#orders.cab_orders) of
-                true ->
+                true  ->  % Already existing cab order
                     main_loop(Orders, Elevator_states);
-                false ->
+                false ->  % New cab order
                     Updated_orders = Orders#orders{cab_orders = Orders#orders.cab_orders ++ [{cab_button, Floor}]},
                     fsm ! {update_order_list, Updated_orders#orders.cab_orders ++ Updated_orders#orders.unassigned_hall_orders},
                     communicator ! {set_order_button_LED, on, {cab_button, Floor}},
@@ -39,7 +39,7 @@ main_loop(Orders, Elevator_states) ->
 
         {add_order, Hall_order, From_node} ->
             case From_node == node() of
-                true  -> no_ack;    % Should not send acknowledge as it is to be added locally only
+                true  -> no_ack;  % Does not send acknowledge when it is to be added locally only
                 false -> communicator ! {order_added, Hall_order, From_node}
             end,
 
@@ -47,9 +47,9 @@ main_loop(Orders, Elevator_states) ->
                               lists:map(fun({Assigned_order, _Node}) -> Assigned_order end, Orders#orders.assigned_hall_orders),
 
             case lists:member(Hall_order, All_hall_orders) of
-                true ->
+                true  ->  % Already existing hall order, either assigned or unassigned
                     main_loop(Orders, Elevator_states);
-                false ->
+                false ->  % New hall order
                     Updated_orders = Orders#orders{unassigned_hall_orders = Orders#orders.unassigned_hall_orders ++ [Hall_order]},
                     fsm ! {update_order_list, Updated_orders#orders.cab_orders ++ Updated_orders#orders.unassigned_hall_orders},
                     main_loop(Updated_orders, Elevator_states)
@@ -62,7 +62,7 @@ main_loop(Orders, Elevator_states) ->
         %----------------------------------------------------------------------------------------------
         assign_order_to_fsm ->
             case lists:keyfind(node(), 2, Orders#orders.assigned_hall_orders) of
-                {Already_assigned_hall_order, _Node} ->
+                {Already_assigned_hall_order, _Node} ->  % Order already assigned to this node
                     fsm ! {assigned_order, Already_assigned_hall_order, Orders#orders.cab_orders ++
                                            Orders#orders.unassigned_hall_orders},
                     main_loop(Orders, Elevator_states);
@@ -71,16 +71,16 @@ main_loop(Orders, Elevator_states) ->
                 end,
 
             case Orders#orders.cab_orders of
-                [Cab_order|Remaining_cab_orders] ->
+                [Cab_order|Remaining_cab_orders] ->  % Prioritize cab orders
                     fsm ! {assigned_order, Cab_order, Remaining_cab_orders ++ Orders#orders.unassigned_hall_orders};
-                [] ->
+                [] ->  % No cab orders available
                     case scheduler:get_most_efficient_order(Orders#orders.unassigned_hall_orders, Elevator_states) of
                         no_orders_available ->
                             spawn(fun() -> timer:sleep(?RETRY_ASSIGNING_PERIOD), data_manager ! assign_order_to_fsm end);
                         Hall_order ->
                             communicator ! {new_order_assigned, Hall_order},
                             fsm          ! {assigned_order, Hall_order, Orders#orders.cab_orders ++
-                                                Orders#orders.unassigned_hall_orders -- [Hall_order]}
+                                            Orders#orders.unassigned_hall_orders -- [Hall_order]}
                     end
             end,
             main_loop(Orders, Elevator_states);
@@ -92,13 +92,13 @@ main_loop(Orders, Elevator_states) ->
         %----------------------------------------------------------------------------------------------
         {mark_order_assigned, Hall_order, Node} ->
             case lists:member({Hall_order, Node}, Orders#orders.assigned_hall_orders) of
-                true ->
+                true ->  % Order aldready assigned to some node
                     main_loop(Orders, Elevator_states);
                 false ->
                     Updated_assigned_hall_orders   = Orders#orders.assigned_hall_orders   ++ [{Hall_order, Node}],
                     Updated_unassigned_hall_orders = Orders#orders.unassigned_hall_orders -- [Hall_order],
-                    Updated_orders                 = Orders#orders{unassigned_hall_orders = Updated_unassigned_hall_orders,
-                                                                     assigned_hall_orders = Updated_assigned_hall_orders},
+                    Updated_orders                 = Orders#orders{unassigned_hall_orders =  Updated_unassigned_hall_orders,
+                                                                     assigned_hall_orders =  Updated_assigned_hall_orders},
                     watchdog ! {start_watching_order, Hall_order},
                     fsm      ! {update_order_list, Orders#orders.cab_orders ++ Updated_unassigned_hall_orders},
                     main_loop(Updated_orders, Elevator_states)
@@ -109,14 +109,14 @@ main_loop(Orders, Elevator_states) ->
         %----------------------------------------------------------------------------------------------
         % Move 'Hall_order' from being assigned back to the list of unassigned 'Orders'.
         %----------------------------------------------------------------------------------------------
-        {unmark_order_assigned, Hall_order} ->
+        {unmark_order_assigned, Hall_order} -> % Happens when an assigned order timed out
             Should_keep_order_in_list      = fun(Assigned_hall_order) -> element(1, Assigned_hall_order) /= Hall_order end,
             Updated_assigned_hall_orders   = lists:filter(Should_keep_order_in_list, Orders#orders.assigned_hall_orders),
             Updated_unassigned_hall_orders = [Hall_order] ++ Orders#orders.unassigned_hall_orders,
             Updated_orders                 = Orders#orders{unassigned_hall_orders = Updated_unassigned_hall_orders,
                                                              assigned_hall_orders = Updated_assigned_hall_orders},
             watchdog ! {stop_watching_order, Hall_order},                                                             
-            suspend_fsm_if_assigned_order_timed_out(Hall_order, Orders, Updated_orders),
+            suspend_fsm_if_order_was_locally_assigned(Hall_order, Orders, Updated_orders),
             main_loop(Updated_orders, Elevator_states);
 
 
@@ -126,18 +126,18 @@ main_loop(Orders, Elevator_states) ->
         %----------------------------------------------------------------------------------------------
         {remove_order, {cab_button, Floor}} ->
             Updated_cab_orders = Orders#orders.cab_orders -- [{cab_button, Floor}],
-            Updated_orders     = Orders#orders{cab_orders = Updated_cab_orders},
-            fsm ! {update_order_list, Updated_cab_orders ++ Updated_orders#orders.unassigned_hall_orders},
+            Updated_orders     = Orders#orders{cab_orders =  Updated_cab_orders},
+            fsm ! {update_order_list, Updated_cab_orders  ++ Updated_orders#orders.unassigned_hall_orders},
             remove_cab_order_from_file(Floor),
             main_loop(Updated_orders, Elevator_states);
 
         {remove_order, Hall_order} ->
-            cancel_order_if_assigned_to_local_node(Hall_order, Orders), % Notifies 'fsm' that the 'Hall_order' is served by perhaps another node
+            cancel_order_if_assigned_locally(Hall_order, Orders), % Notifies 'fsm' that the 'Hall_order' is served by perhaps another node
             Should_keep_order_in_list      = fun(Assigned_hall_order) -> element(1, Assigned_hall_order) /= Hall_order end,
             Updated_assigned_hall_orders   = lists:filter(Should_keep_order_in_list, Orders#orders.assigned_hall_orders),
             Updated_unassigned_hall_orders = Orders#orders.unassigned_hall_orders -- [Hall_order],
-            Updated_orders                 = Orders#orders{unassigned_hall_orders = Updated_unassigned_hall_orders,
-                                                             assigned_hall_orders = Updated_assigned_hall_orders},
+            Updated_orders                 = Orders#orders{unassigned_hall_orders =  Updated_unassigned_hall_orders,
+                                                             assigned_hall_orders =  Updated_assigned_hall_orders},
             watchdog ! {stop_watching_order, Hall_order},
             fsm      ! {update_order_list, Orders#orders.cab_orders ++ Updated_unassigned_hall_orders},
             main_loop(Updated_orders, Elevator_states);
@@ -175,7 +175,7 @@ main_loop(Orders, Elevator_states) ->
 
 
         %----------------------------------------------------------------------------------------------
-        % Sends (and receives) a copy of existing hall orders and current states to the newly connected
+        % Sends/receives a copy of existing hall orders and current states to the newly connected node.
         %----------------------------------------------------------------------------------------------
         {node_up, New_node} ->
             communicator ! {sync_hall_orders_and_states, New_node, Orders#orders.assigned_hall_orders, Orders#orders.unassigned_hall_orders, Elevator_states},
@@ -185,14 +185,14 @@ main_loop(Orders, Elevator_states) ->
             Updated_orders = Orders#orders{assigned_hall_orders = Updated_assigned_hall_orders, unassigned_hall_orders = Updated_unassigned_hall_orders},
             lists:foreach(fun({Hall_order, _Node}) -> watchdog ! {start_watching_order, Hall_order} end, Updated_assigned_hall_orders),
             fsm ! {update_order_list, Orders#orders.cab_orders ++ Updated_unassigned_hall_orders},
-            Collision_handler = fun(_Node, State1, _State2) -> State1 end,
+            Collision_handler = fun(_Node, State1, _State2) -> State1 end,  % If a key-value pair is present in both dicts, choose the former
             Merged_states = dict:merge(Collision_handler, Elevator_states, Updated_elevator_states),
             main_loop(Updated_orders, Merged_states);
 
 
 
         Unexpected ->
-            io:format("Unexpected message in data_manager: ~p~n", [Unexpected]),
+            io:format("~s Unexpected message: ~p.\n", [color:red("Orders_and_states:"), Unexpected]),
             main_loop(Orders, Elevator_states)
 
     end.
@@ -200,7 +200,7 @@ main_loop(Orders, Elevator_states) ->
 
 
 %----------------------------------------------------------------------------------------------
-% File I/O functions storing/reading local cab orders to a dets file
+% File I/O functions storing/reading local cab orders to a dets file.
 %----------------------------------------------------------------------------------------------
 recover_cab_orders() ->
     Cab_orders = get_existing_cab_orders_from_file(),
@@ -238,7 +238,7 @@ remove_cab_order_from_file(Floor) ->
 % If 'Hall_order' is assigned to the local node, 'fsm' is notified that the order is served in
 % case of another node being the elevator who served the order, canceling 'fsms' destination.
 %----------------------------------------------------------------------------------------------
-cancel_order_if_assigned_to_local_node(Hall_order, Orders) ->
+cancel_order_if_assigned_locally(Hall_order, Orders) ->
     Orders_assigned_to_local_node  = lists:filter(fun({_Order, Assigned_node}) -> Assigned_node == node() end, Orders#orders.assigned_hall_orders),
     Assigned_hall_orders_extracted = lists:map(fun({Order, _Node}) -> Order end, Orders_assigned_to_local_node),
     case lists:member(Hall_order, Assigned_hall_orders_extracted) of
@@ -247,7 +247,7 @@ cancel_order_if_assigned_to_local_node(Hall_order, Orders) ->
     end.
 
 
-suspend_fsm_if_assigned_order_timed_out(Hall_order, Orders, Updated_orders) ->
+suspend_fsm_if_order_was_locally_assigned(Hall_order, Orders, Updated_orders) ->
     Orders_assigned_to_local_node  = lists:filter(fun({_Order, Assigned_node}) -> Assigned_node == node() end, Orders#orders.assigned_hall_orders),
     Assigned_hall_orders_extracted = lists:map(fun({Order, _Node}) -> Order end, Orders_assigned_to_local_node),
     case lists:member(Hall_order, Assigned_hall_orders_extracted) of
