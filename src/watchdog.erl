@@ -21,7 +21,6 @@ main_loop(Watch_list, Movement_watcher_PID) ->
         % Starts watching 'Hall_order'. A timer is spawned whos PID is stored in 'Watch_list'.
         %--------------------------------------------------------------------------------------------------
         {start_watching_order, Hall_order} ->
-            %io:format("~s~p\n", [color:greenb("Start_watching_order, Watch_list: "), Watch_list]),
             PID = spawn(fun() -> watchdog_timer(assigned_hall_order, Hall_order) end),
             main_loop(Watch_list ++ [{PID, Hall_order}], Movement_watcher_PID);
 
@@ -32,7 +31,6 @@ main_loop(Watch_list, Movement_watcher_PID) ->
         % 'Watch_list'. 
         %--------------------------------------------------------------------------------------------------
         {stop_watching_order, Hall_order} ->
-            %io:format("~s~p\n", [color:greenb("Stop_watching_order, Watch_list: "), Watch_list]),
             case lists:keyfind(Hall_order, 2, Watch_list) of
                 {PID, Hall_order} when is_pid(PID) ->
                     PID ! order_finished,
@@ -48,7 +46,6 @@ main_loop(Watch_list, Movement_watcher_PID) ->
         % stored in 'Movement_watcher_PID'.
         %--------------------------------------------------------------------------------------------------
         start_watching_movement ->
-            %io:format("~s\n", [color:green("Start_watching_movement")]),               % Debug
             PID = spawn(fun() -> watchdog_timer(between_floor) end),
             main_loop(Watch_list, PID);
 
@@ -59,11 +56,10 @@ main_loop(Watch_list, Movement_watcher_PID) ->
         %--------------------------------------------------------------------------------------------------
         stop_watching_movement when is_pid(Movement_watcher_PID)->
             Movement_watcher_PID ! reached_floor,
-            %io:format("~s\n", [color:green("Stop_watching_movement_with_pid")]),       % Debug
             main_loop(Watch_list, no_pid);
 
         stop_watching_movement -> % Unexpected behaviour
-            io:format("~s\n", [color:red("Watchdog: Stopped watching movement when no watching had started.")]),  %debug
+            io:format("~s\n", [color:red("Watchdog: Unexpected behaviour, stopped watching movement when no watching had started.")]),
             main_loop(Watch_list, no_pid);
 
 
@@ -72,7 +68,7 @@ main_loop(Watch_list, Movement_watcher_PID) ->
         % Handles timeouts and updates, respectively, 'Watch_list' and 'Movement_watcher_PID'.
         %--------------------------------------------------------------------------------------------------
         {order_timed_out, PID, Order} ->
-            io:format("~s~p.\n", [color:redb("Watchdog: The following order timed out:"), Order]),     % Debug
+            io:format("~s~p.\n", [color:redb("Watchdog: The following order timed out:"), Order]),
             data_manager ! {unmark_order_assigned, Order},
             main_loop(Watch_list -- [{PID, Order}], Movement_watcher_PID);
 
