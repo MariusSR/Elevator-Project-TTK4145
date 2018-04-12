@@ -52,7 +52,7 @@ get_optmial_elevator_for_order([Node|Remaining_nodes_to_evaluate], Order, Elevat
 %-------------------------------------------------------------------------------------------------
 calculate_FS({Button_type, Floor}, State_of_elevator) -> 
     case abs(Floor - State_of_elevator#state.floor) of     % Calculates the distance between an order and an eevator
-        0 ->%when State_of_elevator#state.movement == idle -> % Idle elevator at the same floor as the order
+        0 when State_of_elevator#state.movement == idle -> % Idle elevator at the same floor as the order
             _FS = ?NUMBER_OF_FLOORS + 2;
 
         Distance ->
@@ -74,8 +74,8 @@ calculate_FS({Button_type, Floor}, State_of_elevator) ->
 % Returns true if the elevator is moving towards the order or is idle, else false.
 %-------------------------------------------------------------------------------------------------
 is_elevator_moving_towards_order(Order_floor, State_of_elevator) ->
-    (State_of_elevator#state.movement == up_dir)   and (Order_floor > State_of_elevator#state.floor) or
-    (State_of_elevator#state.movement == down_dir) and (Order_floor < State_of_elevator#state.floor) or
+    (State_of_elevator#state.movement == up_dir)   and (Order_floor >= State_of_elevator#state.floor) or
+    (State_of_elevator#state.movement == down_dir) and (Order_floor =< State_of_elevator#state.floor) or
     (State_of_elevator#state.movement == idle).
 
 
