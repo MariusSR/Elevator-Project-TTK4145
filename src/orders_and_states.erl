@@ -13,7 +13,7 @@
 %%%%%%%%%%% KAN IKKE HETE ORDER MANAGER DA DEN OGSÅ HAR STATES
 
 start() ->
-    timer:sleep(200),
+    timer:sleep(200), % FORKLAR DENNE KOMMENTAREN
     Existing_cab_orders = recover_cab_orders(),
     fsm ! {update_order_list, Existing_cab_orders#orders.cab_orders},
     main_loop(Existing_cab_orders, dict:new()).
