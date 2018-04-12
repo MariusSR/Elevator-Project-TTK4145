@@ -57,7 +57,7 @@ calculate_FS({Button_type, Floor}, State_of_elevator) ->
             _FS = ?NUMBER_OF_FLOORS + 2;
         
         _Distance when (element(2, State_of_elevator#state.assigned_order) == Floor) and
-                      ((Floor == 1) or (Floor == ?NUMBER_OF_FLOORS) or (element(1, State_of_elevator#state.assigned_order) == Button_type)) ->
+                      ((Floor == 1) or (Floor == ?NUMBER_OF_FLOORS) or (element(1, State_of_elevator#state.assigned_order) == cab_button)) ->
             _FS = ?NUMBER_OF_FLOORS + 1;
 
         Distance ->
