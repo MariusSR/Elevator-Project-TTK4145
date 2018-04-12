@@ -91,13 +91,9 @@ main_loop() ->
         % all nodes. Each node locally and independently then updates their list of states.
         %--------------------------------------------------------------------------------------------------      
         {reached_new_state, State} ->
-            io:format("Hei\n"),
-            io:format("~p\n", [color:redb("Heo")]),
-            io:format("             ~s ~p\n", [color:redb("DEM NEW STATE IZ0"), State]),
             lists:foreach(fun(Node) -> {communicator, Node} ! {update_state, node(), State} end, [node()|nodes()]);
 
         {update_state, Node, New_state} ->
-            io:format("             ~s ~s ~p\n", [color:redb("DEM NEW STATE IZ1"), Node, New_state]),
             data_manager ! {update_state, Node, New_state};
 
 

@@ -7,8 +7,7 @@
 -export([start/0, start/1]).
 
 -include("parameters.hrl").
-%-define(TIMEOUT, 2000).
--define(TIMEOUT, 5000).
+-define(TIMEOUT, 2000).
 -define(MSG_LENGTH, 4).
 
 start() ->

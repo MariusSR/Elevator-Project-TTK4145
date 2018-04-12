@@ -9,8 +9,8 @@
 
 -include("parameters.hrl").
 -define(RECEIVE_TIMEOUT, 200).
--define(READ_BUTTON_SAMPLING_SLEEP, 100).
 -define(READ_FLOOR_SENSOR_INTERVAL, 100).
+-define(SLEEP_TIME_BETWEEN_BUTTON_READ, 20).
 
 start() ->
     Button_reader_PID = spawn(fun()-> read_button_loop(1) end),
@@ -50,16 +50,15 @@ read_floor_sensor_loop() ->
 % Loop iterating over all order buttons, periodically sampling/checking for new orders.
 %--------------------------------------------------------------------------------------------------
 read_button_loop(1) ->
-    timer:sleep(?READ_BUTTON_SAMPLING_SLEEP),
-    lists:foreach(fun(Button_type) -> send_new_order_to_ordermanager(Button_type, 1) end, [up_button, cab_button]),
+    lists:foreach(fun(Button_type) -> timer:sleep(?SLEEP_TIME_BETWEEN_BUTTON_READ), send_new_order_to_ordermanager(Button_type, 1) end, [up_button, cab_button]),
     read_button_loop(2);
 
 read_button_loop(?NUMBER_OF_FLOORS) -> 
-    lists:foreach(fun(Button_type) -> send_new_order_to_ordermanager(Button_type, ?NUMBER_OF_FLOORS) end, [down_button, cab_button]),
+    lists:foreach(fun(Button_type) -> timer:sleep(?SLEEP_TIME_BETWEEN_BUTTON_READ), send_new_order_to_ordermanager(Button_type, ?NUMBER_OF_FLOORS) end, [down_button, cab_button]),
     read_button_loop(1);
 
 read_button_loop(Floor) ->
-    lists:foreach(fun(Button_type) -> send_new_order_to_ordermanager(Button_type, Floor) end, [up_button, down_button, cab_button]),
+    lists:foreach(fun(Button_type) -> timer:sleep(?SLEEP_TIME_BETWEEN_BUTTON_READ), send_new_order_to_ordermanager(Button_type, Floor) end, [up_button, down_button, cab_button]),
     read_button_loop(Floor + 1).
 
 
@@ -70,9 +69,9 @@ read_button_loop(Floor) ->
 send_new_order_to_ordermanager(Button_type, Floor) ->
     driver ! {get_order_button_status, Button_type, Floor, self()},
     receive
-        {order_button_status, Button_type, Floor, 1} ->
+        {order_button_status, Button_type, Floor , 1} ->
             communicator ! {new_order, {Button_type, Floor}};
-        {order_button_status, _Button_type, _Floor, 0} ->
+        {order_button_status, _Receive_Button_type, _Receive_Floor, 0} ->
             ok;
         {error, Reason} ->
             io:format("ERROR: receiving button status for button type ~p on floor ~p failed due to: ~s~n", [Button_type, Floor, Reason]),
