@@ -331,7 +331,7 @@ clear_orders(Current_floor, {Assigned_order_button_type, Assigned_order_floor}) 
     case Assigned_order_floor of
         1                 -> communicator ! {order_finished, {down_button, Current_floor}};
         ?NUMBER_OF_FLOORS -> communicator ! {order_finished, {up_button, Current_floor}};
-        Current_floor     -> communicator ! {order_finished, {Assigned_order_button_type, Floor}};
+        Current_floor     -> communicator ! {order_finished, {Assigned_order_button_type, Current_floor}};
         _Destination      ->
             case Assigned_order_floor > Current_floor of
                 true  when Assigned_order_button_type == up_button ->
