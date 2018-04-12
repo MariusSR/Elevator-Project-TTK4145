@@ -185,7 +185,9 @@ main_loop(Orders, Elevator_states) ->
             Updated_orders = Orders#orders{assigned_hall_orders = Updated_assigned_hall_orders, unassigned_hall_orders = Updated_unassigned_hall_orders},
             lists:foreach(fun({Hall_order, _Node}) -> watchdog ! {start_watching_order, Hall_order} end, Updated_assigned_hall_orders),
             fsm ! {update_order_list, Orders#orders.cab_orders ++ Updated_unassigned_hall_orders},
-            main_loop(Updated_orders, Updated_elevator_states);
+            Collision_handler = fun(_Node, State1, _State2) -> State1 end,
+            Merged_states = dict:merge(Collision_handler, Elevator_states, Updated_elevator_states),
+            main_loop(Updated_orders, Merged_states);
 
 
 
