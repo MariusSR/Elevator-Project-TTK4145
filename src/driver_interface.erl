@@ -7,7 +7,8 @@
 -export([start/0, start/1]).
 
 -include("parameters.hrl").
--define(TIMEOUT, 2000).
+%-define(TIMEOUT, 2000).
+-define(TIMEOUT, 5000).
 -define(MSG_LENGTH, 4).
 
 start() ->
@@ -55,7 +56,7 @@ main_loop(Socket) ->
 
 		turn_off_all_leds -> turn_off_all_order_LEDs(1);
 		
-		Unexpected -> io:format("Unexpected message in main_loop of driver module: ~p~n", [Unexpected])
+		Unexpected -> io:format("~s message in main_loop of driver module: ~p~n", [color:red("Unexpected:"), Unexpected])
 
 	end, 
 	main_loop(Socket).
@@ -73,7 +74,9 @@ return_order_button_status(Socket, PID, Button_type, Floor) ->
 				Button_type_atom = element(Button_type + 1, {up_button, down_button, cab_button}),
 				PID ! {order_button_status, Button_type_atom, Floor + 1, Is_pressed};
 			{error, Reason} ->
-				PID ! {error, Reason}
+				PID ! {error, Reason};
+			Unexpected ->
+                    io:format("~s pattern match in driver, return_order_button_status: ~p\n", [color:red("Unexpected:"), Unexpected])
 		end.
 
 
@@ -89,7 +92,9 @@ return_floor_status(Socket, PID) ->
 			{ok, [7, 1, Latest_floor, 0]} ->
 				PID ! {floor, Latest_floor + 1};
 			{error, Reason} ->
-				PID ! {error, Reason}
+				PID ! {error, Reason};
+			Unexpected ->
+                    io:format("~s pattern match in driver, return_floor_status: ~p\n", [color:red("Unexpected:"), Unexpected])
 		end.
 
 
