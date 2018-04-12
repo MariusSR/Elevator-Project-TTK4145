@@ -36,27 +36,26 @@ get_optmial_elevator_for_order([Node|Remaining_nodes_to_evaluate], Order, Elevat
             end;
         
         error ->
-            io:format("~s states for ~p not present in Elevator_states\n", [color:redb("Error in scheduler:"), Node]),
-            io:format("    -> Node, Remaining_nodes, Order, Elevator_stat, Best:  ~p,   ~p,   ~p,   ~p,   ~p\n", [Node, Remaining_nodes_to_evaluate, Order, Elevator_states, Best]),
+            io:format("~s States for ~p not present in Elevator_states.\n", [color:red("Scheduler:"), Node]),
+            io:format("    -> Node, Remaining_nodes, Order, Elevator_stat, Best:  ~p,   ~p,   ~p,   ~p,   ~p\n", [Node, Remaining_nodes_to_evaluate, Order, Elevator_states, Best]), %REMOVE THIS BEFORE DELIVERY
             get_optmial_elevator_for_order(Remaining_nodes_to_evaluate, Order, Elevator_states, Best)
     end.
 
 
 
 %-------------------------------------------------------------------------------------------------
-% Caclulates the FS value for an elevator. If the elevator is
+% Caclulates the FS value (a meassure of gain) for an elevator. If the elevator is
 %   - idle at the same floor as the order:                    FS = number of floors + 2
 %   - moving towards an order in the same direction:          FS = number of floors - distance + 1
 %   - moving towards an order in the opposite direction:      FS = number of floors - distance
 %   - moving away from the order:                             FS = 1 - distance
 %-------------------------------------------------------------------------------------------------
 calculate_FS({Button_type, Floor}, State_of_elevator) -> 
-    Distance = abs(Floor - State_of_elevator#state.floor),
-    case (Floor == State_of_elevator#state.floor) of %and (State_of_elevator#state.movement == idle) of % REMOVE THIS??
-        true ->
+    case abs(Floor - State_of_elevator#state.floor) of
+        0 -> % Zero distance - order and elevator at same floor,
             _FS = ?NUMBER_OF_FLOORS + 2;
             
-        false ->
+        Distance ->
             case is_elevator_moving_towards_order(Floor, State_of_elevator) of
                 true ->
                     case is_order_in_same_direction_as_elevator_is_moving(Floor, Button_type, State_of_elevator) of

@@ -59,7 +59,7 @@ main_loop(Watch_list, Movement_watcher_PID) ->
             main_loop(Watch_list, no_pid);
 
         stop_watching_movement -> % Unexpected behaviour
-            io:format("~s\n", [color:red("Watchdog: Unexpected behaviour, stopped watching movement when no watching had started.")]),
+            io:format("~s Stopped watching movement when no watching had started.\n", [color:red("Watchdog:")]),
             main_loop(Watch_list, no_pid);
 
 
@@ -68,13 +68,13 @@ main_loop(Watch_list, Movement_watcher_PID) ->
         % Handles timeouts and updates, respectively, 'Watch_list' and 'Movement_watcher_PID'.
         %--------------------------------------------------------------------------------------------------
         {order_timed_out, PID, Order} ->
-            io:format("~s~p.\n", [color:redb("Watchdog: The following order timed out:"), Order]),
+            io:format("~s The following order timed out: ~p.\n", [color:magenta("Watchdog:"), Order]),
             data_manager ! {unmark_order_assigned, Order},
             main_loop(Watch_list -- [{PID, Order}], Movement_watcher_PID);
 
 
         movement_timed_out ->
-            io:format("~s\n", [color:redb("Watchdog: Movement between floors timed out")]),
+            io:format("~s Movement between floors timed out.\n", [color:magenta("Watchdog:")]),
             fsm ! timeout_movement,
             main_loop(Watch_list, no_pid)
 
