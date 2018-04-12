@@ -104,9 +104,8 @@ listen_for_nodes(Receive_socket) ->
 			end;
 
 		{error, timeout} -> ok;
-		{error, Reason}  -> io:format("~s Error in listen_for_nodes: ~p.\n", [color:red("Node_connection:"), Reason]),
-
-		io:format("~s Unexpected message in listen_for_nodes: ~p.\n", [color:red("Node_connection:"), Unexpected]),
+		{error, Reason}  -> io:format("~s Error in listen_for_nodes: ~p.\n", [color:red("Node_connection:"), Reason]);
+		Unexpected       -> io:format("~s Unexpected message in listen_for_nodes: ~p.\n", [color:red("Node_connection:"), Unexpected])
 	end,
 
 	listen_for_nodes(Receive_socket).
@@ -128,7 +127,7 @@ node_monitoring_loop() ->
 			data_manager ! {node_up, New_node};
 
 		{nodedown, Node} ->
-			io:format("~s ~p.\n", [color:green("Node disconnected:"), New_node]),
+			io:format("~s ~p.\n", [color:green("Node disconnected:"), Node]),
 			data_manager ! {node_down, Node};
 		
 		suspend ->
