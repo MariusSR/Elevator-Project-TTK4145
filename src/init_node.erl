@@ -19,8 +19,8 @@
 %% The color module is forked from [INSERT SOURCE] and used extensively in most moduels in prints:
 %%      - Red     prints indicate an error or an unexpected message
 %%      - Cyan    prints indicate PIDs of processes spawn from this module
-%%      - Green   pritns indicate a node connecting or disconnecting
-%%      - Magenta pritns indicate timeouts
+%%      - Green   prints indicate a node connecting or disconnecting
+%%      - Magenta prints indicate timeouts
 %%=================================================================================================
 
 -module(init_node).
