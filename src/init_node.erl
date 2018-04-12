@@ -11,7 +11,7 @@ start() ->
     io:format("~s~p\n", [color:cyan("FSM PID:                 "), whereis(fsm)]),
 
     register(communicator, spawn(fun()-> communication_interface:start() end)),
-    io:format("~s~p\n", [color:cyan("communicator PID:   "), whereis(communicator)]),
+    io:format("~s~p\n", [color:cyan("Communicator PID:        "), whereis(communicator)]),
 
     register(data_manager, spawn(fun() -> orders_and_states:start() end)),
     io:format("~s~p\n", [color:cyan("Ordermanager PID:        "), whereis(data_manager)]),
