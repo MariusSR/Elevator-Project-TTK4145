@@ -50,8 +50,9 @@ get_optmial_elevator_for_order([Node|Remaining_nodes_to_evaluate], Order, Elevat
 %   - moving towards an order in the opposite direction:      FS = number of floors - distance
 %   - moving away from the order:                             FS = 1 - distance
 %-------------------------------------------------------------------------------------------------
-calculate_FS({Button_type, Floor}, State_of_elevator) -> 
-    case abs(Floor - State_of_elevator#state.floor) of     % Calculates the distance between an order and an eevator
+calculate_FS({Button_type, Floor}, State_of_elevator) ->
+    io:format("~s Bt: ~p, Fl: ~p, SoE: ~p\n", [color:redb("CALCULATE_FS"), Button_type, Floor, State_of_elevator]),
+    case abs(Floor - State_of_elevator#state.floor) of         % Calculates the distance between an order and an eevator
         0 -> %when State_of_elevator#state.movement == idle -> % Idle elevator at the same floor as the order
             _FS = ?NUMBER_OF_FLOORS + 2;
 
