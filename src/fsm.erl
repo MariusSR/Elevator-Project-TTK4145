@@ -23,7 +23,7 @@ start() ->
 
 
 fsm_loop(State, Latest_floor, Moving_dir, Assigned_order, Unassigned_order_list) ->
-    %io:format("~s   S: ~p    Lf: ~p     Md: ~p    Ao: ~p    Uo: ~p\n", [color:greenb("FSM_loop arguments:"), State, Latest_floor, Moving_dir, Assigned_order, Unassigned_order_list]),
+    io:format("~s   S: ~p    Lf: ~p     Md: ~p    Ao: ~p    Uo: ~p\n", [color:greenb("FSM_loop arguments:"), State, Latest_floor, Moving_dir, Assigned_order, Unassigned_order_list]),
 
     receive
         
@@ -38,7 +38,7 @@ fsm_loop(State, Latest_floor, Moving_dir, Assigned_order, Unassigned_order_list)
                     fsm_loop(door_open, Latest_floor, stop_dir, New_assigned_order, Updated_unassigned_order_list);
                 
                 Direction_headed ->
-                    communicator ! {reached_new_state, #state{movement = Direction_headed, floor = Latest_floor}},
+                    communicator ! {reached_new_state, #state{movement = Direction_headed, floor = Latest_floor, assigned_order = New_assigned_order}},
                     driver       ! {set_motor_dir, Direction_headed},
                     watchdog     ! start_watching_movement,
                     io:format("~s Moving\n", [color:yellow("FSM state:")]),
@@ -117,7 +117,7 @@ fsm_loop(State, Latest_floor, Moving_dir, Assigned_order, Unassigned_order_list)
                     io:format("~s cancel_assigned_order\n", [color:yellow("FSM:")]),
                     driver       ! {set_motor_dir, stop_dir},
                     watchdog     ! stop_watching_movement,
-                    communicator ! {reached_new_state, #state{movement = idle, floor = Read_floor}},
+                    communicator ! {reached_new_state, #state{movement = idle, floor = Read_floor, assigned_order = none}},
                     io:format("~s Idle\n", [color:yellow("FSM state:")]),
                     fsm_loop(idle, Read_floor, stop_dir, none, Unassigned_order_list); 
 
@@ -147,7 +147,7 @@ fsm_loop(State, Latest_floor, Moving_dir, Assigned_order, Unassigned_order_list)
                 %----------------------------------------------------------------------------------------------
                 {moving, Read_floor} ->
                     driver           ! {set_floor_LED, Read_floor},
-                    communicator     ! {reached_new_state, #state{movement = Moving_dir, floor = Read_floor}},
+                    communicator     ! {reached_new_state, #state{movement = Moving_dir, floor = Read_floor, assigned_order = Assigned_order}},
                     watchdog         ! stop_watching_movement,                                                              
                     case should_elevator_stop(Read_floor, Moving_dir, Assigned_order, Unassigned_order_list) of
                         true ->
