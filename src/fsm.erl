@@ -207,6 +207,10 @@ fsm_loop(State, Latest_floor, Moving_dir, Assigned_order, Unassigned_orders) ->
         % 'DISCONNECTED_TIME' ms before it restarts 'fsm'. 'node_connection' then reconnects the node.
         %----------------------------------------------------------------------------------------------
         Timeout when (Timeout == timeout_movement) or (Timeout == timeout_order) ->
+            case Timeout of
+                timeout_order    -> watchdog ! stop_watching_movement;
+                timeout_movement -> continue
+            end,
             io:format("~s ~s\n", [color:yellow("FSM:"), Timeout]),
             driver   ! {set_motor_dir, stop_dir},            
             disconnect_node_and_sleep(),
