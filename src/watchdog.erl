@@ -15,6 +15,7 @@ start() ->
 
 
 main_loop(Watch_list, Movement_watcher_PID) ->
+    io:format("Watcherlist: ~p      MovementPID: ~p\n", [Watch_list, Movement_watcher_PID]),
     receive
 
         %--------------------------------------------------------------------------------------------------

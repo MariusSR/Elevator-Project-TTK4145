@@ -6,7 +6,7 @@
 -export([start/0]).
 
 -include("parameters.hrl").
--define(DOOR_OPEN_TIME, 2000).
+-define(DOOR_OPEN_TIME, 3000).
 -define(FLOOR_SENSOR_SLEEP_BETWEEN_FLOORS, 100).
 -define(DISCONNECTED_TIME, 5000).
 
