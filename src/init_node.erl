@@ -2,7 +2,7 @@
 %% This module spawns every other module and prints the corresponding PIDs. The depencies are as
 %% follows:
 %% 
-%% This module                 Communicates with these modules
+%%       This module                           Communicates with these modules
 %% ________________________________________________________________________________________________
 %%   init_node                :  N/A
 %%   driver_interface         :  Receives msgs from communication_interface and hardware_reader
@@ -17,7 +17,7 @@
 %% ________________________________________________________________________________________________
 %%
 %% The color module is forked from [INSERT SOURCE] and used extensively in most moduels in prints:
-%%      - Red     prints indicate an error or an unexpected message
+%%      - Red     prints indicate an error or an unexpected message/behaviour
 %%      - Cyan    prints indicate PIDs of processes spawn from this module
 %%      - Green   prints indicate a node connecting
 %%      - Magenta prints indicate timeouts and node disconnecting

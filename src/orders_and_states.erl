@@ -95,9 +95,9 @@ main_loop(Orders, Elevator_states) ->
         {mark_order_assigned, Order, Node} ->
             %{ok, Elevator_state} = dict:find(Node, Elevator_states),
             %Updated_elevator_states = dict:store(Node, Elevator_state#state{assigned_order = Order}),
-            io:format("HERERERERERERERERERERER ~p\n", [Elevator_states]),
+            io:format("###################################### ~p\n######################################\n", [Elevator_states]),
             Updated_elevator_states = dict:update(Node, fun(Old_state) -> Old_state#state{assigned_order = Order} end, Elevator_states),
-            io:format("DDERDERDERDERDDDDDDDDDD ~p\n", [Updated_elevator_states]),
+            io:format("###################################### ~p\n######################################\n", [Updated_elevator_states]),
             case element(1, Order) of
                 cab_button  -> main_loop(Orders, Updated_elevator_states);
                 _Hall_button -> continue
@@ -195,7 +195,7 @@ main_loop(Orders, Elevator_states) ->
 
         {existing_hall_orders_and_states, Updated_assigned_hall_orders, Updated_unassigned_hall_orders, Updated_elevator_states} ->
             fsm ! {update_order_list, Orders#orders.cab_orders ++ Updated_unassigned_hall_orders},
-            lists:foreach(fun({Hall_order, _Node}) -> watchdog ! {start_watching_order, Hall_order} end, Updated_assigned_hall_orders),
+            lists:foreach(fun({Hall_order, _Node})   -> watchdog     ! {start_watching_order, Hall_order} end, Updated_assigned_hall_orders),
 
             lists:foreach(fun(Cab_order)             -> communicator ! {set_order_button_LED, on, Cab_order}             end, Orders#orders.cab_orders),
             lists:foreach(fun(Assigned_hall_order)   -> communicator ! {set_order_button_LED, on, Assigned_hall_order}   end, Updated_assigned_hall_orders),
