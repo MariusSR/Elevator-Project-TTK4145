@@ -27,13 +27,13 @@ main_loop(Orders, Elevator_states) ->
         % Acknowledge the order and append it to correspoding list of 'Orders' if not already present.
         %----------------------------------------------------------------------------------------------
         {add_order, {cab_button, Floor}} ->
+            communicator ! {set_order_button_LED, on, {cab_button, Floor}},
             case lists:member({cab_button, Floor}, Orders#orders.cab_orders) of
                 true  ->  % Already existing cab order
                     main_loop(Orders, Elevator_states);
                 false ->  % New cab order
                     Updated_orders = Orders#orders{cab_orders = Orders#orders.cab_orders ++ [{cab_button, Floor}]},
                     fsm ! {update_order_list, Updated_orders#orders.cab_orders ++ Updated_orders#orders.unassigned_hall_orders},
-                    communicator ! {set_order_button_LED, on, {cab_button, Floor}},
                     write_cab_order_to_file(Floor),
                     main_loop(Updated_orders, Elevator_states)
             end;
@@ -93,8 +93,11 @@ main_loop(Orders, Elevator_states) ->
         % Mark order as assigned, moving it from unassigned to assigned of 'Orders'.
         %----------------------------------------------------------------------------------------------
         {mark_order_assigned, Order, Node} ->
+            %{ok, Elevator_state} = dict:find(Node, Elevator_states),
+            %Updated_elevator_states = dict:store(Node, Elevator_state#state{assigned_order = Order}),
+            io:format("HERERERERERERERERERERER ~p\n", [Elevator_states]),
             Updated_elevator_states = dict:update(Node, fun(Old_state) -> Old_state#state{assigned_order = Order} end, Elevator_states),
-
+            io:format("DDERDERDERDERDDDDDDDDDD ~p", [Updated_elevator_states]),
             case element(1, Order) of
                 cab_button  -> main_loop(Orders, Updated_elevator_states);
                 _Hall_button -> continue
@@ -119,6 +122,7 @@ main_loop(Orders, Elevator_states) ->
         % Move 'Hall_order' from being assigned back to the list of unassigned 'Orders'.
         %----------------------------------------------------------------------------------------------
         {unmark_order_assigned, Hall_order} -> % Happens when an assigned order timed out
+                true ->  % Order aldready assigned to some node
             Should_keep_order_in_list      = fun(Assigned_hall_order) -> element(1, Assigned_hall_order) /= Hall_order end,
             Updated_assigned_hall_orders   = lists:filter(Should_keep_order_in_list, Orders#orders.assigned_hall_orders),
             Updated_unassigned_hall_orders = [Hall_order] ++ Orders#orders.unassigned_hall_orders,

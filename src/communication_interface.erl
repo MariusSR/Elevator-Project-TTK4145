@@ -66,8 +66,11 @@ main_loop() ->
         % When a node serves an order, this module is notified by 'fsm' and send a 'clear_order' message to
         % all nodes. Each node locally and independently then updates their order list.
         %--------------------------------------------------------------------------------------------------
-        {order_finished, Order} ->
-            lists:foreach(fun(Node) -> {communicator, Node} ! {clear_order, Order} end, [node()|nodes()]);
+        {order_finished, {cab_button, Floor}} ->
+            communicator ! {clear_order, {cab_button, Floor}};
+        
+        {order_finished, {Hall_button, Floor}} ->
+            lists:foreach(fun(Node) -> {communicator, Node} ! {clear_order, {Hall_button, Floor}} end, [node()|nodes()]);
 
         {clear_order, {Button_type, Floor}} ->
             data_manager ! {remove_order, {Button_type, Floor}},

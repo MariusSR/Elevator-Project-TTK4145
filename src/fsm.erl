@@ -56,7 +56,7 @@ fsm_loop(State, Latest_floor, Moving_dir, Assigned_order, Unassigned_order_list)
 
 
 
-        %----------------------------------------------------------------------------------------------
+        %---------------------------------------------------------------------------------------------->
         % Receives and updates an updated list of unassigned orders (including cab orders).
         %----------------------------------------------------------------------------------------------
         {update_order_list, Updated_unassigned_order_list} ->
@@ -88,7 +88,7 @@ fsm_loop(State, Latest_floor, Moving_dir, Assigned_order, Unassigned_order_list)
                             driver ! {set_door_open_LED, on},
                             spawn(fun() -> timer:sleep(?DOOR_OPEN_TIME), fsm ! close_door end),
                             io:format("~s Door open\n", [color:yellow("FSM state:")]),
-                            fsm_loop(door_open, Read_floor, stop_dir, {cab_button, Read_floor}, Unassigned_order_list);
+                            fsm_loop(door_open, Read_floor, stop_dir, {cab_button, Read_floor}, Unassigned_order_lis>t);
                         false -> 
                             communicator ! {reached_new_state, #state{movement = idle, floor = Read_floor, assigned_order = none}},
                             io:format("~s Idle\n", [color:yellow("FSM state:")]),
@@ -278,7 +278,7 @@ convert_to_button_type(down_dir) -> down_button;
 convert_to_button_type(stop_dir) -> cab_button.
 
 
-
+>
 %----------------------------------------------------------------------------------------------
 % Checks is the elevator should stop at 'Floor' when moving in the specified direction.
 %----------------------------------------------------------------------------------------------
