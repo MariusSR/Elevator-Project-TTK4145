@@ -39,7 +39,7 @@ main_loop(Watch_list, Movement_watcher_PID) ->
         {stop_watching_order, Hall_order} ->
             case lists:keyfind(Hall_order, 2, Watch_list) of
                 {PID, Hall_order} when is_pid(PID) ->
-                    PID ! order_finished,
+                    PID ! order_served,
                     main_loop(Watch_list -- [{PID, Hall_order}], Movement_watcher_PID);
                 _Else ->
                     main_loop(Watch_list, Movement_watcher_PID)
@@ -81,7 +81,7 @@ main_loop(Watch_list, Movement_watcher_PID) ->
         movement_timed_out ->
             io:format("~s Movement between floors timed out.\n", [color:magenta("Watchdog:")]),
             fsm ! timeout_movement,
-            lists:foreach(fun({PID, _Order}) -> PID ! order_finished end, Watch_list),
+            lists:foreach(fun({PID, _Order}) -> PID ! order_served end, Watch_list),
             main_loop([], no_pid)
 
     end.
@@ -92,7 +92,7 @@ main_loop(Watch_list, Movement_watcher_PID) ->
 % Timers for completion of order and movement between floors.
 %--------------------------------------------------------------------------------------------------
 watchdog_timer(assigned_hall_order, Order) ->
-    receive order_finished ->
+    receive order_served ->
         ok
     after ?TIME_LIMIT_ORDER ->
         watchdog ! {order_timed_out, self(), Order}
