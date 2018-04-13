@@ -126,8 +126,7 @@ main_loop(Orders, Elevator_states) ->
             Updated_assigned_hall_orders   = lists:filter(Should_keep_order_in_list, Orders#orders.assigned_hall_orders),
             Updated_unassigned_hall_orders = [Hall_order] ++ Orders#orders.unassigned_hall_orders,
             Updated_orders                 = Orders#orders{unassigned_hall_orders = Updated_unassigned_hall_orders,
-                                                             assigned_hall_orders = Updated_assigned_hall_orders},
-            watchdog ! {stop_watching_order, Hall_order},                                                             
+                                                             assigned_hall_orders = Updated_assigned_hall_orders},                                                             
             suspend_fsm_if_order_was_locally_assigned(Hall_order, Orders, Updated_orders),
             main_loop(Updated_orders, Elevator_states);
 
@@ -197,8 +196,9 @@ main_loop(Orders, Elevator_states) ->
             fsm ! {update_order_list, Orders#orders.cab_orders ++ Updated_unassigned_hall_orders},
             lists:foreach(fun({Hall_order, _Node})   -> watchdog     ! {start_watching_order, Hall_order} end, Updated_assigned_hall_orders),
 
+            Assigned_hall_orders_extracted = lists:map(fun({Order, _Node}) -> Order end, Updated_assigned_hall_orders),
             lists:foreach(fun(Cab_order)             -> communicator ! {set_order_button_LED, on, Cab_order}             end, Orders#orders.cab_orders),
-            lists:foreach(fun(Assigned_hall_order)   -> communicator ! {set_order_button_LED, on, Assigned_hall_order}   end, Updated_assigned_hall_orders),
+            lists:foreach(fun(Assigned_hall_order)   -> communicator ! {set_order_button_LED, on, Assigned_hall_order}   end, Assigned_hall_orders_extracted),
             lists:foreach(fun(Unassigned_hall_order) -> communicator ! {set_order_button_LED, on, Unassigned_hall_order} end, Updated_unassigned_hall_orders),
             
             Collision_handler = fun(_Node, State1, _State2) -> State1 end,  % If a key-value pair is present in both dicts, choose the former
