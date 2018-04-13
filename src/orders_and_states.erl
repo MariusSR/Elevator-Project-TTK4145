@@ -191,7 +191,7 @@ main_loop(Orders, Elevator_states) ->
         %----------------------------------------------------------------------------------------------
         {node_up, New_node} ->
             communicator ! {sync_hall_orders_and_states, New_node, Orders#orders.assigned_hall_orders, Orders#orders.unassigned_hall_orders, Elevator_states},
-            Updated_elevator_states = dict:store(New_node, #state{movement = uninitialized, floor = undefined, assigned_order = none}),
+            Updated_elevator_states = dict:store(New_node, #state{movement = uninitialized, floor = undefined, assigned_order = none}, Elevator_states),
             main_loop(Orders, Updated_elevator_states);
 
         {existing_hall_orders_and_states, Updated_assigned_hall_orders, Updated_unassigned_hall_orders, Updated_elevator_states} ->
