@@ -88,7 +88,7 @@ fsm_loop(State, Latest_floor, Moving_dir, Assigned_order, Unassigned_order_list)
                             driver ! {set_door_open_LED, on},
                             spawn(fun() -> timer:sleep(?DOOR_OPEN_TIME), fsm ! close_door end),
                             io:format("~s Door open\n", [color:yellow("FSM state:")]),
-                            fsm_loop(door_open, Read_floor, stop_dir, {cab_button, Read_floor}, Unassigned_order_lis>t);
+                            fsm_loop(door_open, Read_floor, stop_dir, {cab_button, Read_floor}, Unassigned_order_list);
                         false -> 
                             communicator ! {reached_new_state, #state{movement = idle, floor = Read_floor, assigned_order = none}},
                             io:format("~s Idle\n", [color:yellow("FSM state:")]),
@@ -233,7 +233,7 @@ fsm_loop(State, Latest_floor, Moving_dir, Assigned_order, Unassigned_order_list)
 
 %----------------------------------------------------------------------------------------------
 % Tells 'node_connection' to disconnect this node. Then sleeps for 'DISCONNECTED_TIME' ms,
-% disregarding all (if any) received messages before it restarts the 'fsm'
+% disregarding all (if any) received messages before it restarts the 'fsm'si
 %----------------------------------------------------------------------------------------------
 disconnect_node_and_sleep() ->
     node_connection ! disconnect_node,
@@ -278,7 +278,7 @@ convert_to_button_type(down_dir) -> down_button;
 convert_to_button_type(stop_dir) -> cab_button.
 
 
->
+
 %----------------------------------------------------------------------------------------------
 % Checks is the elevator should stop at 'Floor' when moving in the specified direction.
 %----------------------------------------------------------------------------------------------
