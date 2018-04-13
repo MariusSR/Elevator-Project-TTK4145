@@ -13,7 +13,7 @@
 %% Vi kan lage en prosess som sender mld til odata_mgr om å printe ordrelisten, typ en gang i sekudnet elns? Eller vil vi det?
 
 start() ->
-    timer:sleep(200), % Sleep to better align PID prints at start up. None other uses and can thus be safely removed.
+    timer:sleep(200),  % Sleep to better align PID prints at start up. None other uses and can thus be safely removed.
     Existing_cab_orders = recover_cab_orders(),
     fsm ! {update_order_list, Existing_cab_orders#orders.cab_orders},
     main_loop(Existing_cab_orders, dict:new()).
@@ -271,6 +271,6 @@ suspend_fsm_if_order_was_locally_assigned(Hall_order, Orders, Updated_orders) ->
     Orders_assigned_to_local_node  = lists:filter(fun({_Order, Assigned_node}) -> Assigned_node == node() end, Orders#orders.assigned_hall_orders),
     Assigned_hall_orders_extracted = lists:map(fun({Order, _Node}) -> Order end, Orders_assigned_to_local_node),
     case lists:member(Hall_order, Assigned_hall_orders_extracted) of
-        true  -> fsm ! timeout_order;
+        true  -> fsm ! timeout_order, watchdog ! stop_watching_movement;
         false -> fsm ! {update_order_list, Updated_orders#orders.cab_orders ++ Updated_orders#orders.unassigned_hall_orders}
     end.    
