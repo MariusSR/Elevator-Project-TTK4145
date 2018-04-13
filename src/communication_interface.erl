@@ -8,12 +8,6 @@
 -export([start/0]).
 
 -include("parameters.hrl").
-%-record(state,  {movement, floor}).
-
-% TODO: spawn from gloabl spawner, remember there is only coments for LED now
-% TODO: remove unnecessary comments
-% endre rekkefølgen på receivene, samle alle med order feks
-% Sjekk at detvar trygt å kommentere ut staten over
 
 
 start() ->
@@ -25,15 +19,15 @@ main_loop() ->
     receive
 
         %--------------------------------------------------------------------------------------------------
-        % A new order registered on a node is first sent sent to all nodes. They add the order to their
-        % order list and sends an acknowledge message. Upon receive of the acknowledge message, the order
-        % is added locally and a 'set_order_button_LED' 'on' message is sent to all nodes.
+        % A new order registered on a node is first sent sent to all other nodes. They add the order to
+        % their order list and sends an acknowledge message. Upon receive of the acknowledge message, the
+        % order is added locally and a message to turn on corresponding LED is sent to all nodes.
         %--------------------------------------------------------------------------------------------------
         {new_order, {cab_button, Floor}} ->
             data_manager ! {add_order, {cab_button, Floor}};
 
-        {new_order, Order} ->
-            lists:foreach(fun(Node) -> {communicator, Node} ! {add_order, Order, node()} end, nodes());
+        {new_order, Hall_order} ->
+            lists:foreach(fun(Node) -> {communicator, Node} ! {add_order, Hall_order, node()} end, nodes());
 
         {add_order, Order, From_node} ->
             data_manager ! {add_order, Order, From_node};
@@ -45,9 +39,9 @@ main_loop() ->
             data_manager ! {add_order, {cab_button, Floor}, node()},
             communicator ! {set_order_button_LED, on, {cab_button, Floor}};
 
-        {ack_order, Order} ->
+        {ack_order, Hall_order} ->
             data_manager ! {add_order, Order, node()},
-            lists:foreach(fun(Node) -> {communicator, Node} ! {set_order_button_LED, on, Order} end, [node()|nodes()]);
+            lists:foreach(fun(Node) -> {communicator, Node} ! {set_order_button_LED, on, Hall_order} end, [node()|nodes()]);
         
 
 
@@ -63,13 +57,13 @@ main_loop() ->
         
 
         %--------------------------------------------------------------------------------------------------
-        % When a node serves an order, this module is notified by 'fsm' and send a 'clear_order' message to
-        % all nodes. Each node locally and independently then updates their order list.
+        % When a node serves an order, this module is notified by 'fsm' and sends a 'clear_order' message
+        % to all nodes. Each node locally and independently then updates their order list.
         %--------------------------------------------------------------------------------------------------
-        {order_finished, {cab_button, Floor}} ->
+        {order_served, {cab_button, Floor}} ->
             communicator ! {clear_order, {cab_button, Floor}};
         
-        {order_finished, {Hall_button, Floor}} ->
+        {order_served, {Hall_button, Floor}} ->
             lists:foreach(fun(Node) -> {communicator, Node} ! {clear_order, {Hall_button, Floor}} end, [node()|nodes()]);
 
         {clear_order, {Button_type, Floor}} ->
