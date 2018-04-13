@@ -13,4 +13,7 @@
 
 22) Kanskje det skal cleanes flere ordre enn det opprinnelig stoppes for? Typ hvis A får assigned x, men B stopper (pga cab order) i etg til x før A når dit; da burde kanskje B ta den hvis den ikke har annet å gjøre? Kanskje vansjkelig å ta høyde for og lite gain på bare 4 etg ...?
 
+
+Packet loss functions:
 iptables -A INPUT -i eno1 -m statistic --mode random --probability 0.15 -j DROP
+iptables -A OUTPUT -o eno1 -m statistic --mode random --probability 0.20 -j DROP
