@@ -32,12 +32,12 @@ main_loop(Socket) ->
 		{set_motor_dir, stop_dir} -> gen_tcp:send(Socket, [1, 0, 0, 0]);
 		{set_motor_dir, down_dir} -> gen_tcp:send(Socket, [1, 255, 0, 0]);
 		
-		{set_order_button_LED, up_button,   Floor, on}  -> gen_tcp:send(Socket, [2, 0, Floor - 1, 1]);
-		{set_order_button_LED, up_button,   Floor, off} -> gen_tcp:send(Socket, [2, 0, Floor - 1, 0]);
-		{set_order_button_LED, down_button, Floor, on}  -> gen_tcp:send(Socket, [2, 1, Floor - 1, 1]);
-		{set_order_button_LED, down_button, Floor, off} -> gen_tcp:send(Socket, [2, 1, Floor - 1, 0]);
-		{set_order_button_LED, cab_button,  Floor, on}  -> gen_tcp:send(Socket, [2, 2, Floor - 1, 1]);
-		{set_order_button_LED, cab_button,  Floor, off} -> gen_tcp:send(Socket, [2, 2, Floor - 1, 0]);
+		{set_order_button_LED, on,  {up_button,   Floor}} -> gen_tcp:send(Socket, [2, 0, Floor - 1, 1]);
+		{set_order_button_LED, off, {up_button,   Floor}} -> gen_tcp:send(Socket, [2, 0, Floor - 1, 0]);
+		{set_order_button_LED, on,  {down_button, Floor}} -> gen_tcp:send(Socket, [2, 1, Floor - 1, 1]);
+		{set_order_button_LED, off, {down_button, Floor}} -> gen_tcp:send(Socket, [2, 1, Floor - 1, 0]);
+		{set_order_button_LED, on,  {cab_button,  Floor}} -> gen_tcp:send(Socket, [2, 2, Floor - 1, 1]);
+		{set_order_button_LED, off, {cab_button,  Floor}} -> gen_tcp:send(Socket, [2, 2, Floor - 1, 0]);
 
 		{set_floor_LED, Floor} -> gen_tcp:send(Socket, [3, Floor - 1, 0, 0]);
 
@@ -47,9 +47,9 @@ main_loop(Socket) ->
 		{set_stop_button_LED, on}  -> gen_tcp:send(Socket, [5, 1, 0, 0]);
 		{set_stop_button_LED, off} -> gen_tcp:send(Socket, [5, 0, 0, 0]);
 
-		{get_order_button_status, up_button, Floor, PID}   when is_pid(PID) -> return_order_button_status(Socket, PID, 0, Floor - 1);
-		{get_order_button_status, down_button, Floor, PID} when is_pid(PID) -> return_order_button_status(Socket, PID, 1, Floor - 1);
-		{get_order_button_status, cab_button, Floor, PID}  when is_pid(PID) -> return_order_button_status(Socket, PID, 2, Floor - 1);
+		{get_order_button_status, {up_button,   Floor}, PID} when is_pid(PID) -> return_order_button_status(Socket, PID, 0, Floor - 1);
+		{get_order_button_status, {down_button, Floor}, PID} when is_pid(PID) -> return_order_button_status(Socket, PID, 1, Floor - 1);
+		{get_order_button_status, {cab_button,  Floor}, PID} when is_pid(PID) -> return_order_button_status(Socket, PID, 2, Floor - 1);
 
 		{get_floor_status, PID} when is_pid(PID) -> return_floor_status(Socket, PID);
 
@@ -65,15 +65,17 @@ main_loop(Socket) ->
 %--------------------------------------------------------------------------------------------------
 % Checks if the button 'Button_type' at floor 'Floor' is pressed and sends the response to 'PID'
 %--------------------------------------------------------------------------------------------------
-return_order_button_status(Socket, PID, Button_type, Floor) ->
-	gen_tcp:send(Socket, [6, Button_type, Floor, 0]),
+return_order_button_status(Socket, PID, Button_type_int, Floor) ->
+	gen_tcp:send(Socket, [6, Button_type_int, Floor, 0]),
 		case gen_tcp:recv(Socket, ?MSG_LENGTH, ?TIMEOUT) of
 			{ok, [6, Is_pressed, 0, 0]} ->
 				% Buttoon type must be converted from (zero-based) integer to atom used elsewhere
-				Button_type_atom = element(Button_type + 1, {up_button, down_button, cab_button}),
-				PID ! {order_button_status, Button_type_atom, Floor + 1, Is_pressed};
+				Button_type_atom = element(Button_type_int + 1, {up_button, down_button, cab_button}),
+				PID ! {order_button_status, {Button_type_atom, Floor + 1}, Is_pressed};
+
 			{error, Reason} ->
 				PID ! {error, Reason};
+				
 			Unexpected ->
                     io:format("~s pattern match in driver, return_order_button_status: ~p\n", [color:red("Unexpected:"), Unexpected])
 		end.
@@ -112,12 +114,12 @@ initialize_LED(Socket) ->
 % Turns off all order button LEDs
 %--------------------------------------------------------------------------------------------------
 turn_off_all_order_LEDs(1) ->
-    lists:foreach(fun(Button_type) -> driver ! {set_order_button_LED, Button_type, 1, off} end, [up_button, cab_button]),
+    lists:foreach(fun(Button_type) -> driver ! {set_order_button_LED, off, {Button_type, 1}} end, [up_button, cab_button]),
     turn_off_all_order_LEDs(2);
 
 turn_off_all_order_LEDs(?NUMBER_OF_FLOORS) -> 
-    lists:foreach(fun(Button_type) -> driver ! {set_order_button_LED, Button_type, ?NUMBER_OF_FLOORS, off} end, [down_button, cab_button]);
+    lists:foreach(fun(Button_type) -> driver ! {set_order_button_LED, off, {Button_type, ?NUMBER_OF_FLOORS}} end, [down_button, cab_button]);
 
 turn_off_all_order_LEDs(Floor) ->
-    lists:foreach(fun(Button_type) -> driver ! {set_order_button_LED, Button_type, Floor, off} end, [up_button, down_button, cab_button]),
+    lists:foreach(fun(Button_type) -> driver ! {set_order_button_LED, off, {Button_type, Floor}} end, [up_button, down_button, cab_button]),
     turn_off_all_order_LEDs(Floor + 1).
