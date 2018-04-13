@@ -195,7 +195,7 @@ main_loop(Orders, Elevator_states) ->
 
         {existing_hall_orders_and_states, Updated_assigned_hall_orders, Updated_unassigned_hall_orders, Updated_elevator_states} ->
             fsm ! {update_order_list, Orders#orders.cab_orders ++ Updated_unassigned_hall_orders},
-            lists:foreach(fun({Hall_order, _Node}) -> watchdog ! {start_watching_order, Hall_order} end, Updated_assigned_hall_orders),
+            lists:foreach(fun({Hall_order, _Node})   -> watchdog     ! {start_watching_order, Hall_order} end, Updated_assigned_hall_orders),
 
             lists:foreach(fun(Cab_order)             -> communicator ! {set_order_button_LED, on, Cab_order}             end, Orders#orders.cab_orders),
             lists:foreach(fun(Assigned_hall_order)   -> communicator ! {set_order_button_LED, on, Assigned_hall_order}   end, Updated_assigned_hall_orders),
