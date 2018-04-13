@@ -40,7 +40,7 @@ main_loop() ->
             communicator ! {set_order_button_LED, on, {cab_button, Floor}};
 
         {ack_order, Hall_order} ->
-            data_manager ! {add_order, Order, node()},
+            data_manager ! {add_order, Hall_order, node()},
             lists:foreach(fun(Node) -> {communicator, Node} ! {set_order_button_LED, on, Hall_order} end, [node()|nodes()]);
         
 
@@ -63,29 +63,29 @@ main_loop() ->
         {order_served, {cab_button, Floor}} ->
             communicator ! {clear_order, {cab_button, Floor}};
         
-        {order_served, {Hall_button, Floor}} ->
-            lists:foreach(fun(Node) -> {communicator, Node} ! {clear_order, {Hall_button, Floor}} end, [node()|nodes()]);
+        {order_served, Hall_order} ->
+            lists:foreach(fun(Node) -> {communicator, Node} ! {clear_order, Hall_order} end, [node()|nodes()]);
 
-        {clear_order, {Button_type, Floor}} ->
-            data_manager ! {remove_order, {Button_type, Floor}},
-            driver       ! {set_order_button_LED, Button_type, Floor, off};
+        {clear_order, Order} ->
+            data_manager ! {remove_order, Order},
+            driver       ! {set_order_button_LED, off, Order};
 
 
         
         %--------------------------------------------------------------------------------------------------
         % Calls for LEDs to be turned on/off is sent to 'driver' to be handled independently on each node.
         %--------------------------------------------------------------------------------------------------
-        {set_order_button_LED, on, {Button_type, Floor}} ->
-            driver ! {set_order_button_LED, Button_type, Floor, on};
+        {set_order_button_LED, on, Order} ->
+            driver ! {set_order_button_LED, on, Order};
 
-        {set_order_button_LED, off, {Button_type, Floor}} ->
-            driver ! {set_order_button_LED, Button_type, Floor, off};
+        {set_order_button_LED, off, Order} ->
+            driver ! {set_order_button_LED, off, Order};
 
 
 
         %--------------------------------------------------------------------------------------------------
-        % When a node changes state, this module is notified by 'fsm' and send a 'update_state' message to
-        % all nodes. Each node locally and independently then updates their list of states.
+        % When a node changes state, this module is notified by 'fsm' and sends an 'update_state' message
+        % to all nodes. Each node locally and independently then updates their dictionary of states.
         %--------------------------------------------------------------------------------------------------      
         {reached_new_state, State} ->
             lists:foreach(fun(Node) -> {communicator, Node} ! {update_state, node(), State} end, [node()|nodes()]);
@@ -96,15 +96,15 @@ main_loop() ->
 
 
         %--------------------------------------------------------------------------------------------------
-        % When a new node is connected to the node cluster, all other nodes sends a copy of their orders
-        % and states to the new node. LEDs on the new node is then reset and set accordingly.
+        % When a new node is connected to the node cluster, all other nodes send a copy of their orders
+        % and states to the new node. LEDs on the new node is then set accordingly.
         %--------------------------------------------------------------------------------------------------
-        {sync_hall_orders_and_states, New_node, Assigned_hall_orders, Unassigned_hall_orders, Elevator_states} ->
-            {communicator, New_node} ! {existing_hall_orders_and_states, Assigned_hall_orders, Unassigned_hall_orders, Elevator_states};
+        {sync_data_with_new_node, New_node, Assigned_hall_orders, Unassigned_hall_orders, Elevator_states} ->
+            {communicator, New_node} ! {existing_data, Assigned_hall_orders, Unassigned_hall_orders, Elevator_states};
         
-        {existing_hall_orders_and_states, Assigned_hall_orders, Unassigned_hall_orders, Elevator_states} ->
+        {existing_data, Assigned_hall_orders, Unassigned_hall_orders, Elevator_states} ->
             driver       ! turn_off_all_leds,
-            data_manager ! {existing_hall_orders_and_states, Assigned_hall_orders, Unassigned_hall_orders, Elevator_states};
+            data_manager ! {existing_data, Assigned_hall_orders, Unassigned_hall_orders, Elevator_states};
 
 
 
