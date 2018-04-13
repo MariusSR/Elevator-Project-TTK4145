@@ -29,17 +29,22 @@ read_floor_sensor_loop() ->
     receive
         between_floors ->
             fsm !  {floor_sensor, between_floors} ;
+
         {floor, Read_floor} ->
             fsm !  {floor_sensor, Read_floor};
+
         {error, Reason} ->
             io:format("ERROR: receiving floor status failed due to: ~s~n", [Reason]),
             timer:sleep(1000);
+
         Unexpected ->
             io:format("Unexpected msg in read_floor_sensor: ~p\n", [Unexpected])
+
     after
         ?RECEIVE_TIMEOUT ->
             io:format("Timeout reading floor sensor in button reader module\n")
     end,
+    
     timer:sleep(?READ_FLOOR_SENSOR_INTERVAL),
     read_floor_sensor_loop().
 
@@ -50,15 +55,15 @@ read_floor_sensor_loop() ->
 % Loop iterating over all order buttons, periodically sampling/checking for new orders.
 %--------------------------------------------------------------------------------------------------
 read_button_loop(1) ->
-    lists:foreach(fun(Button_type) -> timer:sleep(?SLEEP_TIME_BETWEEN_BUTTON_READ), send_new_order_to_ordermanager(Button_type, 1) end, [up_button, cab_button]),
+    lists:foreach(fun(Button_type) -> timer:sleep(?SLEEP_TIME_BETWEEN_BUTTON_READ), send_new_order_to_ordermanager({Button_type, 1}) end, [up_button, cab_button]),
     read_button_loop(2);
 
 read_button_loop(?NUMBER_OF_FLOORS) -> 
-    lists:foreach(fun(Button_type) -> timer:sleep(?SLEEP_TIME_BETWEEN_BUTTON_READ), send_new_order_to_ordermanager(Button_type, ?NUMBER_OF_FLOORS) end, [down_button, cab_button]),
+    lists:foreach(fun(Button_type) -> timer:sleep(?SLEEP_TIME_BETWEEN_BUTTON_READ), send_new_order_to_ordermanager({Button_type, ?NUMBER_OF_FLOORS}) end, [down_button, cab_button]),
     read_button_loop(1);
 
 read_button_loop(Floor) ->
-    lists:foreach(fun(Button_type) -> timer:sleep(?SLEEP_TIME_BETWEEN_BUTTON_READ), send_new_order_to_ordermanager(Button_type, Floor) end, [up_button, down_button, cab_button]),
+    lists:foreach(fun(Button_type) -> timer:sleep(?SLEEP_TIME_BETWEEN_BUTTON_READ), send_new_order_to_ordermanager({Button_type, Floor}) end, [up_button, down_button, cab_button]),
     read_button_loop(Floor + 1).
 
 
@@ -66,18 +71,21 @@ read_button_loop(Floor) ->
 %--------------------------------------------------------------------------------------------------
 % Checks if 'Button_type' at 'Floor' is pressed. If pressed, sends order to 'data_manager'.
 %--------------------------------------------------------------------------------------------------
-send_new_order_to_ordermanager(Button_type, Floor) ->
-    driver ! {get_order_button_status, Button_type, Floor, self()},
+send_new_order_to_ordermanager(Order) ->
+    driver ! {get_order_button_status, Order, self()},
     receive
-        {order_button_status, Button_type, Floor , 1} ->
-            communicator ! {new_order, {Button_type, Floor}};
-        {order_button_status, _Receive_Button_type, _Receive_Floor, 0} ->
-            ok;
+        {order_button_status, Order , 1} ->
+            communicator ! {new_order, Order};
+
+        {order_button_status, _Order, 0} ->
+            button_not_pressed;
+
         {error, Reason} ->
-            io:format("ERROR: receiving button status for button type ~p on floor ~p failed due to: ~s~n", [Button_type, Floor, Reason]),
+            io:format("ERROR: receiving button status for ~p failed due to: ~p\n", [Order, Reason]),
             timer:sleep(1000);
+
         Unexpected ->
-            io:format("Unexpexted message received for button type ~p on floor ~p in the button_reader module: ~p\n", [Button_type, Floor, Unexpected])
+            io:format("Unexpexted message received for ~p in the button_reader module: ~p\n", [Order, Unexpected])
     after
         ?RECEIVE_TIMEOUT ->
             io:format("Timeout asking for order button status in button reader module\n")
