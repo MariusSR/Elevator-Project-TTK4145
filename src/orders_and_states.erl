@@ -97,7 +97,7 @@ main_loop(Orders, Elevator_states) ->
             %Updated_elevator_states = dict:store(Node, Elevator_state#state{assigned_order = Order}),
             io:format("HERERERERERERERERERERER ~p\n", [Elevator_states]),
             Updated_elevator_states = dict:update(Node, fun(Old_state) -> Old_state#state{assigned_order = Order} end, Elevator_states),
-            io:format("DDERDERDERDERDDDDDDDDDD ~p", [Updated_elevator_states]),
+            io:format("DDERDERDERDERDDDDDDDDDD ~p\n", [Updated_elevator_states]),
             case element(1, Order) of
                 cab_button  -> main_loop(Orders, Updated_elevator_states);
                 _Hall_button -> continue
