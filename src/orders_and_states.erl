@@ -122,7 +122,6 @@ main_loop(Orders, Elevator_states) ->
         % Move 'Hall_order' from being assigned back to the list of unassigned 'Orders'.
         %----------------------------------------------------------------------------------------------
         {unmark_order_assigned, Hall_order} -> % Happens when an assigned order timed out
-                true ->  % Order aldready assigned to some node
             Should_keep_order_in_list      = fun(Assigned_hall_order) -> element(1, Assigned_hall_order) /= Hall_order end,
             Updated_assigned_hall_orders   = lists:filter(Should_keep_order_in_list, Orders#orders.assigned_hall_orders),
             Updated_unassigned_hall_orders = [Hall_order] ++ Orders#orders.unassigned_hall_orders,
