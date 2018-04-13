@@ -64,8 +64,7 @@ main_loop(Watch_list, Movement_watcher_PID) ->
             Movement_watcher_PID ! reached_floor,
             main_loop(Watch_list, no_pid);
 
-        stop_watching_movement -> % Unexpected behaviour
-            io:format("~s Stopped watching movement when no watching had started.\n", [color:red("Watchdog:")]),
+        stop_watching_movement ->
             main_loop(Watch_list, no_pid);
 
 
@@ -82,7 +81,8 @@ main_loop(Watch_list, Movement_watcher_PID) ->
         movement_timed_out ->
             io:format("~s Movement between floors timed out.\n", [color:magenta("Watchdog:")]),
             fsm ! timeout_movement,
-            main_loop(Watch_list, no_pid)
+            lists:foreach(fun({PID, _Order} -> PID ! order_finished end, Watch_list)),
+            main_loop([]], no_pid)
 
     end.
 
