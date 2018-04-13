@@ -109,7 +109,7 @@ main_loop() ->
 
 
         Unexpected ->
-            io:format("Unexpected message in communicator: ~p~n", [Unexpected])
+            io:format("~s Unexpected message in communicator: ~p\n", [color:red("Communication_interface:"), Unexpected])
 
     end,
 
