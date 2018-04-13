@@ -2,7 +2,7 @@
 %% This module spawns every other module and prints the corresponding PIDs. The depencies are as
 %% follows:
 %% 
-%% This module                 Communicates with these modules
+%%       This module                           Communicates with these modules
 %% ________________________________________________________________________________________________
 %%   init_node                :  N/A
 %%   driver_interface         :  Receives msgs from communication_interface and hardware_reader
