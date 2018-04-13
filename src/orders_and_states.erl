@@ -95,9 +95,10 @@ main_loop(Orders, Elevator_states) ->
         {mark_order_assigned, Order, Node} ->
             %{ok, Elevator_state} = dict:find(Node, Elevator_states),
             %Updated_elevator_states = dict:store(Node, Elevator_state#state{assigned_order = Order}),
-            io:format("###################################### ~p\n######################################\n", [Elevator_states]),
+            io:format("~s ORDER = ~p     NODE = ~p\n", [color:redb("MARK ORDER ASSIGNED:"), Order, Node]),
+            io:format("######################################1 ~p\n######################################\n", [Elevator_states]),
             Updated_elevator_states = dict:update(Node, fun(Old_state) -> Old_state#state{assigned_order = Order} end, Elevator_states),
-            io:format("###################################### ~p\n######################################\n", [Updated_elevator_states]),
+            io:format("######################################2 ~p\n######################################\n", [Updated_elevator_states]),
             case element(1, Order) of
                 cab_button  -> main_loop(Orders, Updated_elevator_states);
                 _Hall_button -> continue
@@ -190,7 +191,8 @@ main_loop(Orders, Elevator_states) ->
         %----------------------------------------------------------------------------------------------
         {node_up, New_node} ->
             communicator ! {sync_hall_orders_and_states, New_node, Orders#orders.assigned_hall_orders, Orders#orders.unassigned_hall_orders, Elevator_states},
-            main_loop(Orders, Elevator_states);
+            Updated_elevator_states = dict:store(New_node, #state{movement = uninitialized, floor = undefined, assigned_order = none}),
+            main_loop(Orders, Updated_elevator_states);
 
         {existing_hall_orders_and_states, Updated_assigned_hall_orders, Updated_unassigned_hall_orders, Updated_elevator_states} ->
             fsm ! {update_order_list, Orders#orders.cab_orders ++ Updated_unassigned_hall_orders},
