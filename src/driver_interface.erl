@@ -118,6 +118,6 @@ turn_off_all_order_LEDs(1) ->
 turn_off_all_order_LEDs(?NUMBER_OF_FLOORS) -> 
     lists:foreach(fun(Button_type) -> driver ! {set_order_button_LED, Button_type, ?NUMBER_OF_FLOORS, off} end, [down_button, cab_button]);
 
-turn_off_all_order_LEDs(Floor) when is_integer(Floor) andalso Floor > 1 andalso Floor < ?NUMBER_OF_FLOORS ->
+turn_off_all_order_LEDs(Floor) ->
     lists:foreach(fun(Button_type) -> driver ! {set_order_button_LED, Button_type, Floor, off} end, [up_button, down_button, cab_button]),
     turn_off_all_order_LEDs(Floor + 1).
