@@ -317,32 +317,32 @@ should_elevator_stop(Floor, Moving_dir, {Assigned_order_button_type, Assigned_or
 %----------------------------------------------------------------------------------------------
 clear_orders(Current_floor, none) ->
     % Only clear cab orders when nothing assigned
-    communicator ! {order_finished, {cab_button, Current_floor}};
+    communicator ! {order_served, {cab_button, Current_floor}};
 
 clear_orders(1, _Assigned_order) ->
     % Clear everything at ground floor
-    communicator ! {order_finished, {cab_button, 1}},
-    communicator ! {order_finished, {up_button,  1}};
+    communicator ! {order_served, {cab_button, 1}},
+    communicator ! {order_served, {up_button,  1}};
 
 clear_orders(?NUMBER_OF_FLOORS, _Assigned_order) ->
     % Clear everything at final floor
-    communicator ! {order_finished, {cab_button,  ?NUMBER_OF_FLOORS}},
-    communicator ! {order_finished, {down_button, ?NUMBER_OF_FLOORS}};
+    communicator ! {order_served, {cab_button,  ?NUMBER_OF_FLOORS}},
+    communicator ! {order_served, {down_button, ?NUMBER_OF_FLOORS}};
 
 clear_orders(Current_floor, {Assigned_order_button_type, Assigned_order_floor}) ->
     % General case, clears relevant orders on its way to the assigned order
-    communicator ! {order_finished, {cab_button, Current_floor}},
+    communicator ! {order_served, {cab_button, Current_floor}},
     case Assigned_order_floor of
-        1                 -> communicator ! {order_finished, {down_button, Current_floor}};
-        ?NUMBER_OF_FLOORS -> communicator ! {order_finished, {up_button, Current_floor}};
-        Current_floor     -> communicator ! {order_finished, {Assigned_order_button_type, Current_floor}};
+        1                 -> communicator ! {order_served, {down_button, Current_floor}};
+        ?NUMBER_OF_FLOORS -> communicator ! {order_served, {up_button, Current_floor}};
+        Current_floor     -> communicator ! {order_served, {Assigned_order_button_type, Current_floor}};
         _Destination      ->
             case Assigned_order_floor > Current_floor of
                 true  when Assigned_order_button_type == up_button ->
-                    communicator ! {order_finished, {up_button,   Current_floor}};
+                    communicator ! {order_served, {up_button,   Current_floor}};
 
                 false when Assigned_order_button_type == down_button ->
-                    communicator ! {order_finished, {down_button, Current_floor}};
+                    communicator ! {order_served, {down_button, Current_floor}};
                 
                 _Else ->
                     continue
