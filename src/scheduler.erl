@@ -52,24 +52,30 @@ get_optmial_elevator_for_order([Node|Remaining_nodes_to_evaluate], Order, Elevat
 %-------------------------------------------------------------------------------------------------
 calculate_FS({Button_type, Floor}, State_of_elevator) ->
     io:format("~s Bt: ~p, Fl: ~p, SoE: ~p\n", [color:redb("CALCULATE_FS"), Button_type, Floor, State_of_elevator]),
-    case abs(Floor - State_of_elevator#state.floor) of         % Calculates the distance between an order and an eevator
-        0 when State_of_elevator#state.movement == idle ->  % Idle elevator at the same floor as the order
-            _FS = ?NUMBER_OF_FLOORS + 2;
-        
-        _Distance when (element(2, State_of_elevator#state.assigned_order) == Floor) and
-                      ((Floor == 1) or (Floor == ?NUMBER_OF_FLOORS) or (element(1, State_of_elevator#state.assigned_order) == cab_button)) ->
-            _FS = ?NUMBER_OF_FLOORS + 1;
+    case State_of_elevator#state.movement == uninitialized of
+        true  ->
+            _FS = 1 - 2 * ?NUMBER_OF_FLOORS;
 
-        Distance ->
-            case is_elevator_moving_towards_order(Floor, State_of_elevator) of
-                true ->
-                    case is_order_in_same_direction_as_elevator_is_moving(Floor, Button_type, State_of_elevator) of
-                        true  -> _FS = ?NUMBER_OF_FLOORS - Distance + 1;
-                        false -> _FS = ?NUMBER_OF_FLOORS - Distance
-                    end;
+        false ->
+            case abs(Floor - State_of_elevator#state.floor) of         % Calculates the distance between an order and an eevator
+                0 when State_of_elevator#state.movement == idle ->  % Idle elevator at the same floor as the order
+                    _FS = ?NUMBER_OF_FLOORS + 2;
+                
+                _Distance when (element(2, State_of_elevator#state.assigned_order) == Floor) and
+                            ((Floor == 1) or (Floor == ?NUMBER_OF_FLOORS) or (element(1, State_of_elevator#state.assigned_order) == cab_button)) ->
+                    _FS = ?NUMBER_OF_FLOORS + 1;
 
-                false ->
-                    _FS = 1 - Distance
+                Distance ->
+                    case is_elevator_moving_towards_order(Floor, State_of_elevator) of
+                        true ->
+                            case is_order_in_same_direction_as_elevator_is_moving(Floor, Button_type, State_of_elevator) of
+                                true  -> _FS = ?NUMBER_OF_FLOORS - Distance + 1;
+                                false -> _FS = ?NUMBER_OF_FLOORS - Distance
+                            end;
+
+                        false ->
+                            _FS = 1 - Distance
+                    end
             end
     end.
 
