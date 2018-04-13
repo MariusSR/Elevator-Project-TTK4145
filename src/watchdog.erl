@@ -15,15 +15,20 @@ start() ->
 
 
 main_loop(Watch_list, Movement_watcher_PID) ->
-    io:format("Watcherlist: ~p      MovementPID: ~p\n", [Watch_list, Movement_watcher_PID]),
+    io:format("~s: ~p      MovementPID: ~p\n", [color:greenb("Watcherlist"), Watch_list, Movement_watcher_PID]),
     receive
 
         %--------------------------------------------------------------------------------------------------
         % Starts watching 'Hall_order'. A timer is spawned whos PID is stored in 'Watch_list'.
         %--------------------------------------------------------------------------------------------------
         {start_watching_order, Hall_order} ->
-            PID = spawn(fun() -> watchdog_timer(assigned_hall_order, Hall_order) end),
-            main_loop(Watch_list ++ [{PID, Hall_order}], Movement_watcher_PID);
+            case lists:keyfind(Hall_order, 2, Watch_list) of
+                false ->
+                    PID = spawn(fun() -> watchdog_timer(assigned_hall_order, Hall_order) end),
+                    main_loop(Watch_list ++ [{PID, Hall_order}], Movement_watcher_PID);
+                _Already_watched  ->
+                    main_loop(Watch_list, Movement_watcher_PID)
+            end;
 
 
 
