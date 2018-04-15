@@ -26,7 +26,7 @@
 %%   scheduler         :   data_manager                                 :   data_manager
 %% _____________________________________________________________________________________________________________________________________________
 %%
-%% The color module is forked from [INSERT SOURCE] and used extensively in prints throughout the project:
+%% The color module is forked from https://github.com/julianduque/erlang-color and used extensively in prints throughout the project:
 %%   - Red     prints indicate an error or an unexpected message/behaviour
 %%   - Cyan    prints indicate PIDs of processes spawned from this module
 %%   - Green   prints indicate a node connecting
