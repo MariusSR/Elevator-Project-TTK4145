@@ -32,7 +32,7 @@ read_floor_sensor_loop() ->
 
         {error, Reason} ->
             io:format("~s Error message in read_floor: ~p\n", [color:red("Hardware_reader:"), Reason]),
-            timer:sleep(1000);
+            timer:sleep(500);
 
         Unexpected ->
             io:format("~s Unexpected message in read_floor: ~p\n", [color:red("Hardware_reader:"), Unexpected])
@@ -78,7 +78,7 @@ send_new_order_to_ordermanager(Order) ->
 
         {error, Reason} ->
             io:format("~s Error message in send_new_order: ~p\n", [color:red("Hardware_reader:"), Reason]),
-            timer:sleep(1000);
+            timer:sleep(500);
 
         Unexpected ->
             io:format("~s Unexpected message in send_new_order: ~p\n", [color:red("Hardware_reader:"), Unexpected])
