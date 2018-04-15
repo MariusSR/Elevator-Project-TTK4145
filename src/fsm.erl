@@ -26,7 +26,7 @@ fsm_loop(State, Latest_floor, Moving_dir, Assigned_order, Unassigned_orders) ->
     receive
         
         %----------------------------------------------------------------------------------------------
-        % Receives a new order to be completed by this elevator.
+        % Receives (from data_manager) a new order to be completed by this elevator.
         %----------------------------------------------------------------------------------------------
         {assigned_order, New_assigned_order, Updated_unassigned_orders} when State == idle ->
             case choose_direction(New_assigned_order, Latest_floor) of 
@@ -47,7 +47,7 @@ fsm_loop(State, Latest_floor, Moving_dir, Assigned_order, Unassigned_orders) ->
 
 
         %----------------------------------------------------------------------------------------------
-        % Cancels the assigend order if it is already served by another elevator.
+        % Cancels (from data_manager) the assigend order if it is already served by another elevator.
         %----------------------------------------------------------------------------------------------
         cancel_assigned_order when Assigned_order == none -> ignore; % Should never happen
         cancel_assigned_order ->
@@ -57,7 +57,7 @@ fsm_loop(State, Latest_floor, Moving_dir, Assigned_order, Unassigned_orders) ->
 
 
         %---------------------------------------------------------------------------------------------->
-        % Receives and updates an updated list of unassigned orders (including cab orders).
+        % Receives (from data_manager) an updated list of unassigned orders (including cab orders).
         %----------------------------------------------------------------------------------------------
         {update_order_list, Updated_unassigned_orders} ->
             fsm_loop(State, Latest_floor, Moving_dir, Assigned_order, Updated_unassigned_orders);
@@ -65,7 +65,7 @@ fsm_loop(State, Latest_floor, Moving_dir, Assigned_order, Unassigned_orders) ->
 
 
         %----------------------------------------------------------------------------------------------
-        % Handles new samples from the hardware_reader module:
+        % Handles new florr sensor samples from the hardware_reader module:
         %----------------------------------------------------------------------------------------------
         {floor_sensor, Read_floor} ->
             case {State, Read_floor} of
@@ -167,7 +167,7 @@ fsm_loop(State, Latest_floor, Moving_dir, Assigned_order, Unassigned_orders) ->
         
 
         %----------------------------------------------------------------------------------------------
-        % Receives message for door to close after being open for 'DOOR_OPEN_TIME' ms.
+        % Receives (locally) message for door to close after being open for 'DOOR_OPEN_TIME' ms.
         %----------------------------------------------------------------------------------------------
         close_door ->
             driver ! {set_door_open_LED, off},
@@ -200,8 +200,8 @@ fsm_loop(State, Latest_floor, Moving_dir, Assigned_order, Unassigned_orders) ->
 
 
         %----------------------------------------------------------------------------------------------
-        % Elevator movement between floors or an assigned order timed out. Disconnects the node, waits
-        % 'DISCONNECTED_TIME' ms before it restarts 'fsm'. 'node_connection' then reconnects the node.
+        % Timeout for movement or an order received from 'watchdog'. Disconnects the node, waits
+        % 'DISCONNECTED_TIME' ms before it restarts 'fsm'. 'node_connector' then reconnects the node.
         %----------------------------------------------------------------------------------------------
         Timeout when (Timeout == timeout_movement) or (Timeout == timeout_order) ->
             driver   ! {set_motor_dir, stop_dir},            
@@ -226,11 +226,11 @@ fsm_loop(State, Latest_floor, Moving_dir, Assigned_order, Unassigned_orders).
 %%=============================================================================================
 
 %----------------------------------------------------------------------------------------------
-% Tells 'node_connection' to disconnect this node. Then sleeps for 'DISCONNECTED_TIME' ms,
+% Tells 'node_connector' to disconnect this node. Then sleeps for 'DISCONNECTED_TIME' ms,
 % disregarding all (if any) received messages before it restarts the 'fsm'.
 %----------------------------------------------------------------------------------------------
 disconnect_node_and_sleep() ->
-    node_connection ! disconnect_node,
+    node_connector ! disconnect_node,
     spawn(fun() -> timer:sleep(?DISCONNECTED_TIME), fsm ! {disconnection, timeout} end),
     sleep_loop().
 
