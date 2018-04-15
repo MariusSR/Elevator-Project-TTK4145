@@ -170,7 +170,7 @@ start_tcp_connection(Port) ->
 
 
 %--------------------------------------------------------------------------------------------------
-% Flushes all received msgs. To be used if the TCP connection has to be restarted.
+% Flushes all queued messages. To be used if the TCP connection has to restart.
 %--------------------------------------------------------------------------------------------------
 flush() ->
 	receive _Anything -> flush()
