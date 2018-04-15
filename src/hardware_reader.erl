@@ -73,7 +73,7 @@ read_button_loop(Floor) ->
 send_new_order_to_ordermanager(Order) ->
     driver ! {get_order_button_status, Order, self()},
     receive
-        {order_button_status, Order,  1} -> communicator ! {new_order, Order};
+        {order_button_status,  Order, 1} -> communicator ! {new_order, Order};
         {order_button_status, _Order, 0} -> button_not_pressed;
 
         {error, Reason} ->
