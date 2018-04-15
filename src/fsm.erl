@@ -66,7 +66,7 @@ fsm_loop(State, Latest_floor, Moving_dir, Assigned_order, Unassigned_orders) ->
 
 
         %----------------------------------------------------------------------------------------------
-        % Handles new florr sensor samples from the hardware_reader module:
+        % Handles new floor sensor samples from the hardware_reader module:
         %----------------------------------------------------------------------------------------------
         {floor_sensor, Read_floor} ->
             case {State, Read_floor} of
