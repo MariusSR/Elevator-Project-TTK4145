@@ -28,6 +28,7 @@ fsm_loop(State, Latest_floor, Moving_dir, Assigned_order, Unassigned_orders) ->
         %----------------------------------------------------------------------------------------------
         % Receives (from data_manager) a new order to be completed by this elevator.
         %----------------------------------------------------------------------------------------------
+        {assigned_order, _, _} when State /= idle -> ignore;
         {assigned_order, New_assigned_order, Updated_unassigned_orders} when State == idle ->
             case choose_direction(New_assigned_order, Latest_floor) of 
                 stop_dir ->
