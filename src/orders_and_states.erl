@@ -1,5 +1,5 @@
 %%=================================================================================================
-%% This module stores and maintains known orders and states.
+%% This module stores and maintains known orders and the elevator states.
 %%=================================================================================================
 
 -module(orders_and_states).
