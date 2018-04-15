@@ -1,7 +1,7 @@
 %%==============================================================================================================================================
 %% This module spawns every other module and prints the corresponding PIDs. Registered moduels are assigned the following names:
 %%
-%%            Module              Registered name
+%%           Module               Registered name
 %% _________________________________________________
 %%   driver_interface          :   driver
 %%   node_connection           :   node_connector
