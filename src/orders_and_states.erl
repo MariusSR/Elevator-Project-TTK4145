@@ -228,8 +228,6 @@ recover_cab_orders() ->
     lists:foreach(fun(Cab_order) -> communicator ! {set_order_button_LED, on, Cab_order} end, Cab_orders),
     #orders{cab = Cab_orders}.
 
-
-
 get_existing_cab_orders_from_file() ->
     File_name = list_to_atom("elevator@" ++ node_connection:get_IP()),
     dets:open_file(File_name, [{type, bag}]),
@@ -237,15 +235,11 @@ get_existing_cab_orders_from_file() ->
     dets:close(File_name),
     Cab_orders.
 
-
-
 write_cab_order_to_file(Floor) ->
     File_name = node(),
     dets:open_file(File_name, [{type, bag}]),
     dets:insert(File_name, {cab_button, Floor}),
     dets:close(File_name).
-
-
 
 remove_cab_order_from_file(Floor) ->
     File_name = node(),
@@ -266,7 +260,6 @@ cancel_order_if_assigned_locally(Hall_order, Orders) ->
         true  -> fsm ! cancel_assigned_order;
         false -> ignore
     end.
-
 
 suspend_fsm_if_order_was_locally_assigned(Hall_order, Orders, Updated_orders) ->
     Orders_assigned_to_local_node  = lists:filter(fun({_Order, Assigned_node}) -> Assigned_node == node() end, Orders#orders.assigned),
