@@ -201,7 +201,7 @@ main_loop(Orders, States) ->
             fsm ! {update_order_list, Orders#orders.cab ++ Updated_unassigned_orders},
 
             Assigned_extracted = lists:map(fun({Order, _Node}) -> Order end, Updated_assigned_orders),
-            All_orders         = Assigned_extracted ++ Updated_assigned_orders ++ Orders#orders.cab,
+            All_orders         = Assigned_extracted ++ Updated_unassigned_orders ++ Orders#orders.cab,
             lists:foreach(fun(Assigned_order) -> watchdog     ! {start_watching_order, Assigned_order} end, Assigned_extracted),
             lists:foreach(fun(Order)          -> communicator ! {set_order_button_LED, on, Order}      end, All_orders),
 
