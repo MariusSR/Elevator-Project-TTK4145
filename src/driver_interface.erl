@@ -141,7 +141,7 @@ turn_off_all_order_LEDs(Floor) ->
 %--------------------------------------------------------------------------------------------------
 restart_tcp_connection(Old_socket) ->
 	gen_tcp:close(Old_socket),
-	start_tcp_connection(),
+	start_tcp_connection().
 
 
 
