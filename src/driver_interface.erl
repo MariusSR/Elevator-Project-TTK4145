@@ -7,16 +7,17 @@
 -export([start/0, start/1]).
 
 -include("parameters.hrl").
+-define(TCP_PORT,       15657).
 -define(RECEIVE_TIMEOUT, 2000).
--define(MSG_LENGTH, 4).
+-define(MSG_LENGTH,         4).
 
 start() ->
-	{ok, Socket} = gen_tcp:connect(localhost, 15657, [list, {active, false}]),
+	Socket = start_tcp_connection(),
 	initialize_LEDs(Socket),
 	main_loop(Socket).
 
 start(Port) ->
-	{ok, Socket} = gen_tcp:connect(localhost, Port, [list, {active, false}]),
+	Socket = start_tcp_connection(Port),
 	initialize_LEDs(Socket),
 	main_loop(Socket).
 
@@ -54,6 +55,8 @@ main_loop(Socket) ->
 		{get_floor_status, PID} when is_pid(PID) -> return_floor_status(Socket, PID);
 
 		turn_off_all_leds -> turn_off_all_order_LEDs(1);
+
+		reconnect_tcp -> New_socket = restart_tcp_connection(Socket), flush(), main_loop(New_socket);
 		
 		Unexpected -> io:format("~s Unexpected message in main_loop of driver: ~p\n", [color:red("Driver_interface:"), Unexpected])
 
@@ -74,9 +77,11 @@ return_order_button_status(Socket, PID, Button_type_int, Floor) ->
 				PID ! {order_button_status, {Button_type_atom, Floor + 1}, Is_pressed};
 
 			{error, Reason} ->
+				driver ! reconnect_tcp,
 				PID ! {error, Reason};
 				
 			Unexpected ->
+				driver ! reconnect_tcp,
 				io:format("~s Unexpected message in return_order_button_status: ~p\n", [color:red("Driver_interface:"), Unexpected])
 		end.
 
@@ -95,9 +100,11 @@ return_floor_status(Socket, PID) ->
 				PID ! {floor, Latest_floor + 1};
 
 			{error, Reason} ->
+				driver ! reconnect_tcp,
 				PID ! {error, Reason};
 
 			Unexpected ->
+				driver ! reconnect_tcp,
 				io:format("~s Unexpected message in return_floor_status: ~p\n", [color:red("Driver_interface:"), Unexpected])
 		end.
 
@@ -126,3 +133,46 @@ turn_off_all_order_LEDs(?NUMBER_OF_FLOORS) ->
 turn_off_all_order_LEDs(Floor) ->
     lists:foreach(fun(Button_type) -> driver ! {set_order_button_LED, off, {Button_type, Floor}} end, [up_button, down_button, cab_button]),
     turn_off_all_order_LEDs(Floor + 1).
+
+
+
+%--------------------------------------------------------------------------------------------------
+% Restarts a TCP connection by closing the existing socket and then call start_tcp_connection().
+%--------------------------------------------------------------------------------------------------
+restart_tcp_connection(Old_socket) ->
+	gen_tcp:close(Old_socket),
+	start_tcp_connection(),
+
+
+
+%--------------------------------------------------------------------------------------------------
+% Starts a TCP connection to the specified port.
+%--------------------------------------------------------------------------------------------------
+start_tcp_connection() ->
+	case gen_tcp:connect(localhost, ?TCP_PORT, [list, {active, false}]) of
+		{ok, Socket} ->
+			Socket;
+		{error, Reason} ->
+			io:format("~s Could not start TCP connection in start_tcp_connection due to: ~p. Retries in 1 second.\n", [color:red("Driver_interface:"), Reason]),
+			timer:sleep(1000),
+			start_tcp_connection()
+	end.
+
+start_tcp_connection(Port) ->
+	case gen_tcp:connect(localhost, Port, [list, {active, false}]) of
+		{ok, Socket} ->
+			Socket;
+		{error, Reason} ->
+			io:format("~s Could not start TCP connection in start_tcp_connection due to: ~p. Retries in 1 second.\n", [color:red("Driver_interface:"), Reason]),
+			timer:sleep(1000),
+			start_tcp_connection()
+	end.
+
+
+%--------------------------------------------------------------------------------------------------
+% Flushes all received msgs. To be used if the TCP connection has to be restarted.
+%--------------------------------------------------------------------------------------------------
+flush() ->
+	receive _Anything -> flush()
+	after 0 -> finished_flushing
+end.
