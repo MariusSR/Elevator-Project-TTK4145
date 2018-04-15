@@ -6,7 +6,8 @@
 -export([start/0]).
 -include("parameters.hrl").
 
--define(RETRY_ASSIGNING_PERIOD, 300).
+-define(RETRY_ASSIGNING_PERIOD,   300).
+-define(PRINT_ORDER_LIST_PERIOD, 3000).
 -record(orders, {assigned_hall_orders = [], unassigned_hall_orders = [], cab_orders = []}).
 -record(state,  {movement, floor, assigned_order = none}).
 
@@ -16,12 +17,21 @@ start() ->
     timer:sleep(200),  % Sleep to better align PID prints at start up. None other uses and can thus be safely removed.
     Existing_cab_orders = recover_cab_orders(),
     fsm ! {update_order_list, Existing_cab_orders#orders.cab_orders},
+    spawn(fun() -> periodically_print_order_list() end),
     main_loop(Existing_cab_orders, dict:new()).
 
 main_loop(Orders, Elevator_states) ->
-    io:format("Assigned: ~p          Unassigned: ~p          Cab orders: ~p\n", [Orders#orders.assigned_hall_orders, Orders#orders.unassigned_hall_orders, Orders#orders.cab_orders]),
-    %io:format("ELEVATOR STATES: ~p\n\n", [Elevator_states]),
     receive
+
+        %----------------------------------------------------------------------------------------------
+        % Prints assigned, unassigned and cab orders. Periodically called by looping spawned process.
+        %----------------------------------------------------------------------------------------------
+        print_order_list ->
+            io:format("Assigned: ~p          Unassigned: ~p          Cab orders: ~p\n",
+            [Orders#orders.assigned_hall_orders, Orders#orders.unassigned_hall_orders, Orders#orders.cab_orders]),
+            main_loop(Orders, Elevator_states);
+
+
 
         %----------------------------------------------------------------------------------------------
         % Acknowledge the order and append it to correspoding list of 'Orders' if not already present.
@@ -273,4 +283,10 @@ suspend_fsm_if_order_was_locally_assigned(Hall_order, Orders, Updated_orders) ->
     case lists:member(Hall_order, Assigned_hall_orders_extracted) of
         true  -> fsm ! timeout_order, watchdog ! stop_watching_movement;
         false -> fsm ! {update_order_list, Updated_orders#orders.cab_orders ++ Updated_orders#orders.unassigned_hall_orders}
-    end.    
+    end.
+
+
+periodically_print_order_list() ->
+    timer:sleep(?PRINT_ORDER_LIST_PERIOD),
+    data_manager ! print_order_list,
+    periodically_print_order_list().
