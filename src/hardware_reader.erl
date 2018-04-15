@@ -14,10 +14,10 @@
 
 start() ->
     Button_reader_PID = spawn(fun()-> read_button_loop(1) end),
-    io:format("~s~p\n", [color:cyan("Button_reader PID:       "), Button_reader_PID]),
+    io:format("\n~s~p", [color:cyan("Button_reader PID:       "), Button_reader_PID]),
     
     Floor_sensor_reader_PID = spawn(fun()-> read_floor_sensor_loop() end),
-    io:format("~s~p\n", [color:cyan("Floor_sensor_reader PID: "), Floor_sensor_reader_PID]).
+    io:format("\n~s~p", [color:cyan("Floor_sensor_reader PID: "), Floor_sensor_reader_PID]).
 
 
 
