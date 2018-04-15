@@ -24,7 +24,7 @@ get_most_efficient_order([Order|Remaining_orders_to_evaluate], States) ->
 % whos FS value is the gratest. This is done by recurcively iterating over all elevators.
 %-------------------------------------------------------------------------------------------------
 get_optmial_elevator_for_order([], _Order, _States, {Best_node, _FS}) ->
-    Best_node;   % All elevators evaluated, returns the best node to serve 'Order'
+    Best_node;  % All elevators evaluated, returns the best node to serve 'Order'
 
 get_optmial_elevator_for_order([Node|Remaining_nodes_to_evaluate], Order, States, Best) ->
     case dict:find(Node, States) of
@@ -45,10 +45,12 @@ get_optmial_elevator_for_order([Node|Remaining_nodes_to_evaluate], Order, States
 
 %-------------------------------------------------------------------------------------------------
 % Caclulates the FS value (a meassure of gain) for an elevator. If the elevator is
-%   - idle at the same floor as the order:                    FS = number of floors + 2
-%   - moving towards an order in the same direction:          FS = number of floors - distance + 1
-%   - moving towards an order in the opposite direction:      FS = number of floors - distance
-%   - moving away from the order:                             FS = 1 - distance
+%   - uninitialized:                                          FS = 1 - 2 * number of floors (worst)
+%   - idle at the same floor as the order:                    FS = number of floors + 2     (best)
+%   - about to become idle at the same floor as the order:    FS = number of floors + 1
+%   - else moving towards an order in the same direction:     FS = number of floors - distance + 1
+%   - else moving towards an order in the opposite direction: FS = number of floors - distance
+%   - else moving away from the order:                        FS = 1 - distance
 %-------------------------------------------------------------------------------------------------
 calculate_FS({Button_type, Floor}, State) ->
     io:format("~s Bt: ~p, Fl: ~p, SoE: ~p\n", [color:redb("CALCULATE_FS"), Button_type, Floor, State]),
@@ -62,8 +64,8 @@ calculate_FS({Button_type, Floor}, State) ->
                     _FS = ?NUMBER_OF_FLOORS + 2;
                 
                 _Distance when (element(2, State#state.assigned_order) == Floor) and
-                            ((Floor == 1) or (Floor == ?NUMBER_OF_FLOORS) or (element(1, State#state.assigned_order) == cab_button)) ->
-                    _FS = ?NUMBER_OF_FLOORS + 1;
+                ((Floor == 1) or (Floor == ?NUMBER_OF_FLOORS) or (element(1, State#state.assigned_order) == cab_button)) ->
+                    _FS = ?NUMBER_OF_FLOORS + 1;        % About to become idle at the same floor
 
                 Distance ->
                     case is_elevator_moving_towards_order(Floor, State) of
@@ -98,8 +100,8 @@ is_order_in_same_direction_as_elevator_is_moving(_Floor, _Buton_type, State) whe
 is_order_in_same_direction_as_elevator_is_moving(1, up_button, _State)                                         -> true;
 is_order_in_same_direction_as_elevator_is_moving(?NUMBER_OF_FLOORS, down_button, _State)                       -> true;
 
-is_order_in_same_direction_as_elevator_is_moving(Floor, up_button,   State) ->
-    (State#state.movement == up_dir)   or ((Floor == 1) and (State#state.movement == down_dir));
+is_order_in_same_direction_as_elevator_is_moving(Floor, up_button, State) ->
+    (State#state.movement == up_dir) or ((Floor == 1) and (State#state.movement == down_dir));
     
 is_order_in_same_direction_as_elevator_is_moving(Floor, down_button, State) ->
     (State#state.movement == down_dir) or ((Floor == ?NUMBER_OF_FLOORS) and (State#state.movement == up_dir)).
