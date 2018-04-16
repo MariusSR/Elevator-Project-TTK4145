@@ -1,6 +1,6 @@
 -module(cost_function).
 -export([get_most_efficient_order/2]).
--include("parameters.hrl").
+-include("global_parameters.hrl").
 
 -record(state,  {movement, floor, assigned_order}).
 

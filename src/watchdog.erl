@@ -1,12 +1,12 @@
 %%=================================================================================================
-%% This module is a watchdog timer. Both movement time between flors and completion of hall orders
+%% This module is a watchdog timer. Both movement time between floors and completion of hall orders
 %% can be monitored. A timed out order is moved back to the list of unassigend orders, whereas
 %% movement timeouts forces the elevator to be suspended for a while before it reinitializes.
 %%=================================================================================================
 
 -module(watchdog).
 -export([start/0]).
--include("parameters.hrl").
+-include("global_parameters.hrl").
 
 -define(TIME_LIMIT_ORDER_PER_FLOOR, 6000).
 -define(TIME_LIMIT_MOVING_BETWEEN_FLOORS, 3000).

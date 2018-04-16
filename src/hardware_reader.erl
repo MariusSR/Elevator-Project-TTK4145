@@ -6,7 +6,7 @@
 
 -module(hardware_reader).
 -export([start/0]).
--include("parameters.hrl").
+-include("global_parameters.hrl").
 
 -define(RECEIVE_TIMEOUT, 200).
 -define(READ_FLOOR_SENSOR_INTERVAL, 100).
@@ -14,10 +14,12 @@
 
 
 start() ->
-    Button_reader_PID = spawn_link(fun() -> link(whereis(driver)), link(whereis(fsm)), link(whereis(communicator)), read_button_loop(1) end),
+    Button_reader_PID = spawn_link(fun() ->
+    link(whereis(driver)), link(whereis(fsm)), link(whereis(communicator)), read_button_loop(1) end),
     io:format("\n~s~p", [color:cyan("Button_reader PID:       "), Button_reader_PID]),
     
-    Floor_sensor_reader_PID = spawn_link(fun() -> link(whereis(driver)), link(whereis(fsm)), link(whereis(communicator)), read_floor_sensor_loop() end),
+    Floor_sensor_reader_PID = spawn_link(fun() ->
+    link(whereis(driver)), link(whereis(fsm)), link(whereis(communicator)), read_floor_sensor_loop() end),
     io:format("\n~s~p", [color:cyan("Floor_sensor_reader PID: "), Floor_sensor_reader_PID]).
 
 
