@@ -24,7 +24,7 @@ The [watchdog](./src/watchdog.erl) module ensure all orders will be served withi
 | driver          | hardware_reader, communicator, fsm           | hardware_reader (answer query)                                    
 | hardware_reader | driver                                       | driver, communicator, fsm                                         
 | node_connector  | fsm (upon errors only)                       | data_manager                                                      
-| communicator    |  hardware_reader, data_manager, fsm          | driver, data_manager                                         
+| communicator    | hardware_reader, data_manager, fsm           | driver, data_manager                                         
 | data_manager    | communicator, cost_function, watchdog        | communicator, cost_function, fsm, watchdog                        
 | fsm             | hardware_reader, data_manager, watchdog      | driver, communicator, watchdog, node_connector
 | watchdog        | data_manager, fsm                            | data_manager, fsm                                                 
