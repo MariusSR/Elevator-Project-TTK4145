@@ -17,6 +17,8 @@ The [hardware reader](./src/hardware_reader.erl) moule communicates withe the [d
 
 The [watchdog](./src/watchdog.erl) module ensure all orders will be served within reasonable time, whereas the [cost function](./src/cost_function.erl) calculates which order an elevator should serve.
 
+Dependencies between modules can be stated as follows. Note that modules are listed with their registered process names.
+
 
 | This module     | Receives msgs/function calls from            | Sends msgs/function calls to
 | --------------- |----------------------------------------------| ----------------------------
