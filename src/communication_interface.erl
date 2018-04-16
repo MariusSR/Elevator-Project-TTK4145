@@ -7,13 +7,10 @@
 -module(communication_interface).
 -export([start/0]).
 
--include("parameters.hrl").
-
-
 start() ->
     main_loop().
 
-    
+
 
 main_loop() ->
     receive
