@@ -38,27 +38,42 @@
 -export([start/0]).
 
 start() ->
-    %%timer:sleep(100), % KA FARSKEN GJØR DENNE SLEEPEN?%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%       INGENTING VIL JEG TRO :)
-    register(driver, spawn(fun() -> driver_interface:start() end)),
+    spawn(fun() -> start_monitoring(self()) end),
+    timer:sleep(50), % Sleep to better align PID prints (can be safely removed)
+    
+    register(driver, spawn_link(fun() -> driver_interface:start() end)),
     io:format("\n~s~p", [color:cyan("Driver PID:              "), whereis(driver)]),
     timer:sleep(100), % Wait for driver to finish its initialization
 
-    register(fsm, spawn(fun()-> fsm:start() end)),
+    register(fsm, spawn_link(fun()-> fsm:start() end)),
     io:format("\n~s~p", [color:cyan("FSM PID:                 "), whereis(fsm)]),
 
-    register(communicator, spawn(fun()-> communication_interface:start() end)),
+    register(communicator, spawn_link(fun()-> communication_interface:start() end)),
     io:format("\n~s~p", [color:cyan("Communicator PID:        "), whereis(communicator)]),
 
-    register(data_manager, spawn(fun() -> orders_and_states:start() end)),
+    register(data_manager, spawn_link(fun() -> orders_and_states:start() end)),
     io:format("\n~s~p", [color:cyan("Data Manager PID:        "), whereis(data_manager)]),
 
-    register(watchdog, spawn(fun() -> watchdog:start() end)),
+    register(watchdog, spawn_link(fun() -> watchdog:start() end)),
     io:format("\n~s~p", [color:cyan("Watchdog PID:            "), whereis(watchdog)]),
 
-    register(node_connector, spawn(fun() -> node_connection:start() end)),
+    register(node_connector, spawn_link(fun() -> node_connection:start() end)),
     io:format("\n~s~p", [color:cyan("Node Connector PID:      "), whereis(node_connector)]),
     timer:sleep(100), % Wait for node cluster to be started properly on this node
 
     hardware_reader:start(),
 
     io:format("\n\n").
+
+
+start_monitoring(PID) ->
+    erlang:monitor(process, PID),
+    receive
+        {'DOWN', Ref, process, PID, Reason} ->
+            io:format("~s Error in linked process: ~p\n", [color:red("Init_node:"), Reason]),
+            erlang:demonitor(Ref),
+            spawn(fun() -> start() end);
+
+        Unexpected ->
+            io:format("~s Unexpected message in main monitor: ~p.\n", [color:red("Init_node:"), Unexpected])
+    end.
