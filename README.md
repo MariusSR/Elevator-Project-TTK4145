@@ -2,7 +2,7 @@
 This repo contains our solution for the elevator project in TTK4145 Real-Time Programming spring 2018.
 
 ## For the Codereview
-The only module not entirely written by us is the color module (color.erl/hrl) forked from https://github.com/julianduque/erlang-color. The entry point of the code is [here] (src/init_node.erl). This module spawns neceessary modules with linkin. If one of the linked processes crashes, the entire module is restarted.
+The only module not entirely written by us is the color module (color.erl/hrl) forked from https://github.com/julianduque/erlang-color. The entry point of the code is [mer] (src/init_node.erl). This module spawns neceessary modules with linkin. If one of the linked processes crashes, the entire module is restarted.
 
 
 ## Introduction
