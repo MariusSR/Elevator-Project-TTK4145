@@ -10,7 +10,7 @@
 -record(orders, {assigned = [], unassigned = [], cab = []}).
 -record(state,  {movement, floor, assigned_order = none}).
 
-%% Vi kan lage en prosess som sender mld til odata_mgr om å printe ordrelisten, typ en gang i sekudnet elns? Eller vil vi det?
+
 
 start() ->
     timer:sleep(200),  % Sleep to better align PID prints at start up. None other uses and can thus be safely removed.
@@ -21,8 +21,7 @@ start() ->
     main_loop(Existing_cab_orders, dict:new()).
 
 main_loop(Orders, States) ->
-    % timer:sleep(4000),
-    % _A = simen * 2,
+   
     receive
 
         %----------------------------------------------------------------------------------------------
