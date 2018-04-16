@@ -6,7 +6,9 @@
 
 -module(watchdog).
 -export([start/0]).
--define(TIME_LIMIT_ORDER, 20000).
+-include("parameters.hrl").
+
+-define(TIME_LIMIT_ORDER_PER_FLOOR, 6000).
 -define(TIME_LIMIT_MOVING_BETWEEN_FLOORS, 3000).
 
 start() ->
@@ -95,7 +97,7 @@ main_loop(Watch_list, Movement_watcher_PID) ->
 watchdog_timer(assigned_hall_order, Order) ->
     receive order_served ->
         ok
-    after ?TIME_LIMIT_ORDER ->
+    after (?TIME_LIMIT_ORDER_PER_FLOOR * ?NUMBER_OF_FLOORS) ->
         watchdog ! {order_timed_out, self(), Order}
     end.
         

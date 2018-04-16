@@ -29,7 +29,7 @@ main_loop(Orders, States) ->
         % Prints assigned, unassigned and cab orders. Periodically called by looping spawned process.
         %----------------------------------------------------------------------------------------------
         print_order_list ->
-            io:format("Assigned: ~p          Unassigned: ~p          Cab orders: ~p\n",
+            io:format("Assigned:   ~p\nUnassigned: ~p\nCab orders: ~p\n\n",
             [Orders#orders.assigned, Orders#orders.unassigned, Orders#orders.cab]),
             main_loop(Orders, States);
 
