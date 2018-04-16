@@ -12,7 +12,7 @@
 %%   watchdog                  :   watchdog
 %% _________________________________________________
 %%
-%% The depencies between modules can then be stated as follows:
+%% The depencies between modules can be stated as follows:
 %% 
 %%     This module             Receives msgs/function calls from              Sends msgs/function calls to
 %% _____________________________________________________________________________________________________________________
@@ -32,7 +32,7 @@
 
 
 start() ->
-    process_flag(trap_exit, true),  % Convert exit signals to reguar messages to allow nodes to be restarted
+    process_flag(trap_exit, true),  % Convert exit signals to regular messages to allow nodes to be restarted
     timer:sleep(50),
     
     register(driver,         spawn_link(fun() -> driver_interface:start() end)),

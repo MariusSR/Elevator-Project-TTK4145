@@ -5,7 +5,7 @@
 
 -module(driver_interface).
 -export([start/0, start/1]).
--include("parameters.hrl").
+-include("global_parameters.hrl").
 
 -define(TCP_PORT,       15657).
 -define(RECEIVE_TIMEOUT, 2000).
