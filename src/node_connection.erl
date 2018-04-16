@@ -3,11 +3,6 @@
 %% by broadcasting its node name - correspondingly listen for other node names - on the network.
 %%=================================================================================================
 
-
-%%%%%%% Fjerne dissconect-print?
-%%%%%%% Måten vi suspender på; kan ikke den nå be om suspende, derettter kople fra,
-%%%%%%% mmen før suspendmeldingen trer i kraft receives en mld og node koples til på ny? I mena; LISTEN_TIMEPUT er drøy ...
-
 -module(node_connection).
 -export([start/0, get_IP/0]).
 
@@ -18,6 +13,7 @@
 -define(LISTEN_TIMEOUT,  2000).
 -define(TICKTIME,        1000).
 -define(COOKIE,  'top_secret').
+
 
 start() ->
 	link(whereis(data_manager)),

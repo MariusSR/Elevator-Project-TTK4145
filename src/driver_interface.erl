@@ -5,11 +5,12 @@
 
 -module(driver_interface).
 -export([start/0, start/1]).
-
 -include("parameters.hrl").
+
 -define(TCP_PORT,       15657).
 -define(RECEIVE_TIMEOUT, 2000).
 -define(MSG_LENGTH,         4).
+
 
 start() ->
 	Socket = start_tcp_connection(),

@@ -11,7 +11,6 @@
 -record(state,  {movement, floor, assigned_order = none}).
 
 
-
 start() ->
     timer:sleep(200),  % Sleep to better align PID prints at start up. None other uses and can thus be safely removed.
     link(whereis(fsm)), link(whereis(communicator)), link(whereis(watchdog)),

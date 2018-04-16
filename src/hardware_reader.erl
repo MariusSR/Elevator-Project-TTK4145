@@ -6,11 +6,12 @@
 
 -module(hardware_reader).
 -export([start/0]).
-
 -include("parameters.hrl").
+
 -define(RECEIVE_TIMEOUT, 200).
 -define(READ_FLOOR_SENSOR_INTERVAL, 100).
 -define(BUTTON_SAMPLE_PERIOD, 20).
+
 
 start() ->
     Button_reader_PID = spawn_link(fun() -> link(whereis(driver)), link(whereis(fsm)), link(whereis(communicator)), read_button_loop(1) end),

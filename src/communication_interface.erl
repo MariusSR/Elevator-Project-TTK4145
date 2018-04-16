@@ -7,10 +7,10 @@
 -module(communication_interface).
 -export([start/0]).
 
+
 start() ->
     link(whereis(driver)), 
     main_loop().
-
 
 
 main_loop() ->

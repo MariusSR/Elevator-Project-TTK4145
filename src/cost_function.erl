@@ -1,8 +1,9 @@
 -module(cost_function).
 -export([get_most_efficient_order/2]).
-
 -include("parameters.hrl").
+
 -record(state,  {movement, floor, assigned_order}).
+
 
 %-------------------------------------------------------------------------------------------------
 % Finds an order that is best served by the requesting node. Returns the order if found, else
