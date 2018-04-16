@@ -9,7 +9,7 @@ The only module not entirely written by us is the [color module](./src/color.erl
 - Magenta prints indicate timeouts and nodes disconnecting
 - Yellow  prints indicate change of state in fsm
 
-The entry point of the code is [init_node.erl](./src/init_node.erl). This module spawns neceessary modules with links. If one of the linked processes crashes, the entire module is restarted.
+The entry point of the code is [init_node](./src/init_node.erl). This module spawns neceessary modules with links. If one of the linked processes crashes, the entire module is restarted.
 
 Our solution uses the beauty of distributed Erlang. The [node connection](./src/node_conection.erl) module sets up a node cluster which automatically finds and conencts to other nodes by broadcasting and listening for node names.
 
@@ -24,7 +24,7 @@ The [watchdog](./src/watchdog.erl) module ensure all orders will be served withi
 | driver          | hardware_reader, communicator, fsm           | hardware_reader (answer query)                                    
 | hardware_reader | driver                                       | driver, communicator, fsm                                         
 | node_connector  | fsm (upon errors only)                       | data_manager                                                      
-| communicator    |  hardware_reader, data_manager, fsm          | driver, data_manager                                         
+| communicator    | hardware_reader, data_manager, fsm           | driver, data_manager                                         
 | data_manager    | communicator, cost_function, watchdog        | communicator, cost_function, fsm, watchdog                        
 | fsm             | hardware_reader, data_manager, watchdog      | driver, communicator, watchdog, node_connector
 | watchdog        | data_manager, fsm                            | data_manager, fsm                                                 
