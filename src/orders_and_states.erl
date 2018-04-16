@@ -16,7 +16,7 @@ start() ->
     timer:sleep(200),  % Sleep to better align PID prints at start up. None other uses and can thus be safely removed.
     Existing_cab_orders = recover_cab_orders(),
     fsm ! {update_order_list, Existing_cab_orders#orders.cab},
-    spawn(fun() -> periodically_print_order_list() end),
+    spawn_link(fun() -> periodically_print_order_list() end),
     main_loop(Existing_cab_orders, dict:new()).
 
 main_loop(Orders, States) ->
@@ -86,7 +86,7 @@ main_loop(Orders, States) ->
                 [] ->  % No cab order available
                     case scheduler:get_most_efficient_order(Orders#orders.unassigned, States) of
                         no_orders_available ->
-                            spawn(fun() -> timer:sleep(?RETRY_ASSIGNING_PERIOD), data_manager ! assign_order_to_fsm end);
+                            spawn_link(fun() -> timer:sleep(?RETRY_ASSIGNING_PERIOD), data_manager ! assign_order_to_fsm end);
                         Order ->
                             communicator ! {new_order_assigned, Order},
                             fsm          ! {assigned_order, Order, Orders#orders.cab ++ Orders#orders.unassigned -- [Order]}

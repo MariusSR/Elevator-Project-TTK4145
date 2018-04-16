@@ -24,7 +24,7 @@ main_loop(Watch_list, Movement_watcher_PID) ->
         {start_watching_order, Hall_order} ->
             case lists:keyfind(Hall_order, 2, Watch_list) of
                 false ->
-                    PID = spawn(fun() -> watchdog_timer(assigned_hall_order, Hall_order) end),
+                    PID = spawn_link(fun() -> watchdog_timer(assigned_hall_order, Hall_order) end),
                     main_loop(Watch_list ++ [{PID, Hall_order}], Movement_watcher_PID);
                 _Already_watched  ->
                     main_loop(Watch_list, Movement_watcher_PID)
@@ -52,7 +52,7 @@ main_loop(Watch_list, Movement_watcher_PID) ->
         % stored in 'Movement_watcher_PID'.
         %--------------------------------------------------------------------------------------------------
         start_watching_movement ->
-            PID = spawn(fun() -> watchdog_timer(between_floor) end),
+            PID = spawn_link(fun() -> watchdog_timer(between_floor) end),
             main_loop(Watch_list, PID);
 
 

@@ -33,7 +33,7 @@ fsm_loop(State, Latest_floor, Moving_dir, Assigned_order, Unassigned_orders) ->
             case choose_direction(New_assigned_order, Latest_floor) of 
                 stop_dir ->
                     driver ! {set_door_open_LED, on},
-                    spawn(fun() -> timer:sleep(?DOOR_OPEN_TIME), fsm ! close_door end),
+                    spawn_link(fun() -> timer:sleep(?DOOR_OPEN_TIME), fsm ! close_door end),
                     io:format("~s door open\n", [color:yellow("FSM state:")]),
                     fsm_loop(door_open, Latest_floor, stop_dir, New_assigned_order, Updated_unassigned_orders);
                 
@@ -87,7 +87,7 @@ fsm_loop(State, Latest_floor, Moving_dir, Assigned_order, Unassigned_orders) ->
                     case lists:member({cab_button, Read_floor}, Unassigned_orders) of
                         true  -> 
                             driver ! {set_door_open_LED, on},
-                            spawn(fun() -> timer:sleep(?DOOR_OPEN_TIME), fsm ! close_door end),
+                            spawn_link(fun() -> timer:sleep(?DOOR_OPEN_TIME), fsm ! close_door end),
                             io:format("~s door open\n", [color:yellow("FSM state:")]),
                             fsm_loop(door_open, Read_floor, stop_dir, {cab_button, Read_floor}, Unassigned_orders);
                         false -> 
@@ -130,7 +130,7 @@ fsm_loop(State, Latest_floor, Moving_dir, Assigned_order, Unassigned_orders) ->
                             driver   ! {set_motor_dir, stop_dir},
                             driver   ! {set_door_open_LED, on},
                             watchdog ! stop_watching_movement,
-                            spawn(fun() -> timer:sleep(?DOOR_OPEN_TIME), fsm ! close_door end),
+                            spawn_link(fun() -> timer:sleep(?DOOR_OPEN_TIME), fsm ! close_door end),
                             io:format("~s door open\n", [color:yellow("FSM state:")]),
                             fsm_loop(door_open, Read_floor, stop_dir, Assigned_order, Unassigned_orders);
                         false -> 
@@ -153,7 +153,7 @@ fsm_loop(State, Latest_floor, Moving_dir, Assigned_order, Unassigned_orders) ->
                         true ->
                             driver   ! {set_motor_dir, stop_dir},
                             driver   ! {set_door_open_LED, on},
-                            spawn(fun() -> timer:sleep(?DOOR_OPEN_TIME), fsm ! close_door end),
+                            spawn_link(fun() -> timer:sleep(?DOOR_OPEN_TIME), fsm ! close_door end),
                             io:format("~s door open\n", [color:yellow("FSM state:")]),
                             fsm_loop(door_open, Read_floor, stop_dir, Assigned_order, Unassigned_orders);
                         false ->
@@ -232,7 +232,7 @@ fsm_loop(State, Latest_floor, Moving_dir, Assigned_order, Unassigned_orders).
 %----------------------------------------------------------------------------------------------
 disconnect_node_and_sleep() ->
     node_connector ! disconnect_node,
-    spawn(fun() -> timer:sleep(?DISCONNECTED_TIME), fsm ! {disconnection, timeout} end),
+    spawn_link(fun() -> timer:sleep(?DISCONNECTED_TIME), fsm ! {disconnection, timeout} end),
     sleep_loop().
 
 sleep_loop() ->

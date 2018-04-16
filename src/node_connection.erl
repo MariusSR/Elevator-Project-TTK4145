@@ -21,9 +21,9 @@
 
 start() ->
 	init_node_cluster(),
-	Broadcast_PID  = spawn(fun() -> broadcast_self() end),
-	Listen_PID     = spawn(fun() -> listen_for_nodes() end),
-	Monitoring_PID = spawn(fun() -> start_node_monitoring() end),
+	Broadcast_PID  = spawn_link(fun() -> broadcast_self() end),
+	Listen_PID     = spawn_link(fun() -> listen_for_nodes() end),
+	Monitoring_PID = spawn_link(fun() -> start_node_monitoring() end),
 	loop([Broadcast_PID, Listen_PID, Monitoring_PID]).
 
 
