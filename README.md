@@ -9,7 +9,7 @@ The only module not entirely written by us is the [color module](./src/color.erl
 - Magenta prints indicate timeouts and nodes disconnecting
 - Yellow  prints indicate change of state in fsm
 
-The entry point of the code is [init_node.erl](./src/init_node.erl). This module spawns neceessary modules with links. If one of the linked processes crashes, the entire module is restarted.
+The entry point of the code is [init_node](./src/init_node.erl). This module spawns neceessary modules with links. If one of the linked processes crashes, the entire module is restarted.
 
 Our solution uses the beauty of distributed Erlang. The [node connection](./src/node_conection.erl) module sets up a node cluster which automatically finds and conencts to other nodes by broadcasting and listening for node names.
 
