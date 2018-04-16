@@ -103,12 +103,7 @@ main_loop(Orders, States) ->
         % Mark order as assigned, moving it from unassigned to assigned of 'Orders'.
         %----------------------------------------------------------------------------------------------
         {mark_order_assigned, Order, Node} ->
-            %{ok, State} = dict:find(Node, States),
-            %Updated_states = dict:store(Node, State#state{assigned_order = Order}),
-            io:format("~s ORDER = ~p     NODE = ~p\n", [color:redb("MARK ORDER ASSIGNED:"), Order, Node]),
-            io:format("##################1 ~p#################\n", [States]),
             Updated_states = dict:update(Node, fun(Old_state) -> Old_state#state{assigned_order = Order} end, States),
-            io:format("##################2 ~p#################\n", [States]),
             case element(1, Order) of
                 cab_button   -> main_loop(Orders, Updated_states);  % Only assigned hall orders are moved to 'assigned' of 'Orders'
                 _Hall_button -> continue
