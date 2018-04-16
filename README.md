@@ -1,6 +1,10 @@
 # TTK4145: Elevator Project Written i Erlang
 This repo contains our solution for the elevator project in TTK4145 Real-Time Programming spring 2018.
 
+## For the Codereview
+The only module not entirely written by us is the color module (color.erl/hrl) forked from https://github.com/julianduque/erlang-color. The entry point of the code is [here] (src/init_node.erl). This module spawns neceessary modules with linkin. If one of the linked processes crashes, the entire module is restarted.
+
+
 ## Introduction
 An elevators primary purpose is to transport people and items between floors. A sensible metric of performance could be something indicating how well and fast this primary task is done. This is not something not cared about in this project. The elevators should avoid starvation and "silly actions", other than that, not much attention is given to their performance as elevators. This project is really about faults, how they are bound to happen, and how to keep them from ruining the day. 
 
