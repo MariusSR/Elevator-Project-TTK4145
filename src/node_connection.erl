@@ -20,6 +20,7 @@
 -define(COOKIE,  'top_secret').
 
 start() ->
+	link(whereis(data_manager)),
 	init_node_cluster(),
 	Broadcast_PID  = spawn_link(fun() -> broadcast_self() end),
 	Listen_PID     = spawn_link(fun() -> listen_for_nodes() end),

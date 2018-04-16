@@ -10,6 +10,7 @@
 -define(TIME_LIMIT_MOVING_BETWEEN_FLOORS, 3000).
 
 start() ->
+    link(whereis(fsm)), link(whereis(data_manager)),
     main_loop([], no_pid).
 
 
