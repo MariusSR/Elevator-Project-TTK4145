@@ -53,7 +53,6 @@ get_optmial_elevator_for_order([Node|Remaining_nodes_to_evaluate], Order, States
 %   - else moving away from the order:                        FS = 1 - distance
 %-------------------------------------------------------------------------------------------------
 calculate_FS({Button_type, Floor}, State) ->
-    io:format("~s Bt: ~p, Fl: ~p, SoE: ~p\n", [color:redb("CALCULATE_FS"), Button_type, Floor, State]),
     case State#state.movement == uninitialized of
         true  ->
             _FS = 1 - 2 * ?NUMBER_OF_FLOORS;

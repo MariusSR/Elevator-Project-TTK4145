@@ -4,7 +4,6 @@
 
 -module(orders_and_states).
 -export([start/0]).
--include("parameters.hrl").
 
 -define(RETRY_ASSIGNING_PERIOD,   300).
 -define(PRINT_ORDER_LIST_PERIOD, 3000).
