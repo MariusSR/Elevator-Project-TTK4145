@@ -36,14 +36,15 @@ main_loop(Orders, States) ->
         % Acknowledge the order and append it to correspoding list of 'Orders' if not already present.
         %----------------------------------------------------------------------------------------------
         {add_order, {cab_button, Floor}} ->
-            communicator ! {set_order_button_LED, on, {cab_button, Floor}},
             case lists:member({cab_button, Floor}, Orders#orders.cab) of
                 true  ->  % Already existing cab order
+                    communicator ! {set_order_button_LED, on, {cab_button, Floor}},
                     main_loop(Orders, States);
                 false ->  % New cab order
                     Updated_orders = Orders#orders{cab = Orders#orders.cab ++ [{cab_button, Floor}]},
                     fsm ! {update_order_list, Updated_orders#orders.cab ++ Updated_orders#orders.unassigned},
                     write_cab_order_to_file(Floor),
+                    communicator ! {set_order_button_LED, on, {cab_button, Floor}},
                     main_loop(Updated_orders, States)
             end;
 
