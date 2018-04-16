@@ -37,7 +37,6 @@ get_optmial_elevator_for_order([Node|Remaining_nodes_to_evaluate], Order, States
         
         error ->
             io:format("~s States for ~p not present in States.\n", [color:red("Cost_function:"), Node]),
-            io:format("    -> Node, Remaining_nodes, Order, Elevator_stat, Best:  ~p,   ~p,   ~p,   ~p,   ~p\n", [Node, Remaining_nodes_to_evaluate, Order, States, Best]), %REMOVE THIS BEFORE DELIVERY
             get_optmial_elevator_for_order(Remaining_nodes_to_evaluate, Order, States, Best)
     end.
 
