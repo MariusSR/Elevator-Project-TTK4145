@@ -15,6 +15,7 @@
 
 start() ->
     timer:sleep(200),  % Sleep to better align PID prints at start up. None other uses and can thus be safely removed
+    link(whereis(driver)), link(whereis(communicator)), link(whereis(watchdog)), link(whereis(node_connector)),
     io:format("~s uninitialized\n", [color:yellow("FSM state:")]),
     watchdog ! start_watching_movement,
     fsm_loop(uninitialized, undefined, stop_dir, none, []).
@@ -70,16 +71,13 @@ fsm_loop(State, Latest_floor, Moving_dir, Assigned_order, Unassigned_orders) ->
         %----------------------------------------------------------------------------------------------
         {floor_sensor, Read_floor} ->
             case {State, Read_floor} of
-                %----------------------------------------------------------------------------------------------
+
                 % Elevator not yet initialized, starts moving down until it reaches a defined floor.
-                %----------------------------------------------------------------------------------------------
                 {uninitialized, between_floors} ->
                     driver   ! {set_motor_dir, down_dir},
                     fsm_loop(uninitialized, undefined, down_dir, none, Unassigned_orders);
 
-                %----------------------------------------------------------------------------------------------
                 % Elevator not yet initialized, reached a defined floor and finishes initialization.
-                %----------------------------------------------------------------------------------------------
                 {uninitialized, Read_floor} ->
                     driver   ! {set_motor_dir, stop_dir},
                     driver   ! {set_floor_LED, Read_floor},
@@ -96,24 +94,16 @@ fsm_loop(State, Latest_floor, Moving_dir, Assigned_order, Unassigned_orders) ->
                             fsm_loop(idle, Read_floor, stop_dir, none, Unassigned_orders)
                     end;
 
-                %----------------------------------------------------------------------------------------------
                 % Elevator idle, ignores floor sensor data and remains idle.
-                %----------------------------------------------------------------------------------------------
                 {idle, _} -> ignore;
 
-                %----------------------------------------------------------------------------------------------
                 % Elevator door open, ignores floor sensor data and door remains open.
-                %----------------------------------------------------------------------------------------------
                 {door_open, _} -> ignore;
 
-                %----------------------------------------------------------------------------------------------
                 % Elevator in process of reaching a defined floor to become idle, continues unchanged.
-                %----------------------------------------------------------------------------------------------
                 {cancel_assigned_order, between_floors} -> continue;
 
-                %----------------------------------------------------------------------------------------------
                 % Readched a defined floor after canceling its assigned order, stops and changes state to idle.
-                %----------------------------------------------------------------------------------------------
                 {cancel_assigned_order, Read_floor} ->
                     driver       ! {set_motor_dir, stop_dir},
                     watchdog     ! stop_watching_movement,
@@ -121,9 +111,7 @@ fsm_loop(State, Latest_floor, Moving_dir, Assigned_order, Unassigned_orders) ->
                     io:format("~s idle\n", [color:yellow("FSM state:")]),
                     fsm_loop(idle, Read_floor, stop_dir, none, Unassigned_orders); 
 
-                %----------------------------------------------------------------------------------------------
                 % Elevator still at its previous floor, checks if it should stop or continue moving.
-                %----------------------------------------------------------------------------------------------
                 {moving, Latest_floor} ->
                     case should_elevator_stop(Latest_floor, Moving_dir, Assigned_order, Unassigned_orders) of
                         true  -> 
@@ -137,14 +125,10 @@ fsm_loop(State, Latest_floor, Moving_dir, Assigned_order, Unassigned_orders) ->
                             ignore
                     end;
 
-                %----------------------------------------------------------------------------------------------
                 % Elevator moving between floors, continues unchanged.
-                %----------------------------------------------------------------------------------------------
                 {moving, between_floors} -> continue;
                 
-                %----------------------------------------------------------------------------------------------
                 % Elevator reached a new floor, checks if it should stop or continue moving.
-                %----------------------------------------------------------------------------------------------
                 {moving, Read_floor} ->
                     driver           ! {set_floor_LED, Read_floor},
                     watchdog         ! stop_watching_movement,

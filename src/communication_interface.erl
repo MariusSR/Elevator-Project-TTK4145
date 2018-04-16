@@ -8,6 +8,7 @@
 -export([start/0]).
 
 start() ->
+    link(whereis(driver)), 
     main_loop().
 
 

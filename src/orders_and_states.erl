@@ -14,12 +14,15 @@
 
 start() ->
     timer:sleep(200),  % Sleep to better align PID prints at start up. None other uses and can thus be safely removed.
+    link(whereis(fsm)), link(whereis(communicator)), link(whereis(watchdog)),
     Existing_cab_orders = recover_cab_orders(),
     fsm ! {update_order_list, Existing_cab_orders#orders.cab},
     spawn_link(fun() -> periodically_print_order_list() end),
     main_loop(Existing_cab_orders, dict:new()).
 
 main_loop(Orders, States) ->
+    % timer:sleep(4000),
+    % _A = simen * 2,
     receive
 
         %----------------------------------------------------------------------------------------------
