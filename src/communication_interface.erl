@@ -32,7 +32,7 @@ main_loop() ->
 
         {order_added, Order, From_node} ->
             {communicator, From_node} ! {ack_order, Order};
-        
+
         {ack_order, {cab_button, Floor}} ->
             data_manager ! {add_order, {cab_button, Floor}, node()},
             communicator ! {set_order_button_LED, on, {cab_button, Floor}};
