@@ -131,7 +131,7 @@ node_monitoring_loop() ->
 			net_kernel:monitor_nodes(false),
 			timer:sleep(?OFFLINE_SLEEP),
 			start_node_monitoring();
-		
+
 		Unexpected ->
 			io:format("~s Unexpected message in node_monitoring: ~p.\n", [color:red("Node_connection:"), Unexpected])
 	end,
