@@ -17,6 +17,19 @@ The [hardware reader](./src/hardware_reader.erl) moule communicates withe the [d
 
 The [watchdog](./src/watchdog.erl) module ensure all orders will be served within reasonable time, whereas the [cost function](./src/cost_function.erl) calculates which order an elevator should serve.
 
+
+| This module     | Receives msgs/function calls from            | Sends msgs/function calls to
+| --------------- |----------------------------------------------| ----------------------------
+| init_node       | N/A                                          | N/A                                                               
+| driver          | hardware_reader, communicator, fsm           | hardware_reader (answer query)                                    
+| hardware_reader | driver                                       | driver, communicator, fsm                                         
+| node_connector  | fsm (upon errors only)                       | data_manager                                                      
+| communicator    |  hardware_reader, data_manager, fsm          | driver, data_manager                                         
+| data_manager    | communicator, cost_function, watchdog        | communicator, cost_function, fsm, watchdog                        
+| fsm             | hardware_reader, data_manager, watchdog      | driver, communicator, watchdog, node_connector
+| watchdog        | data_manager, fsm                            | data_manager, fsm                                                 
+| cost_function   | data_manager                                 | data_manager                                                      
+
 ## Introduction
 An elevators primary purpose is to transport people and items between floors. A sensible metric of performance could be something indicating how well and fast this primary task is done. This is not something not cared about in this project. The elevators should avoid starvation and "silly actions", other than that, not much attention is given to their performance as elevators. This project is really about faults, how they are bound to happen, and how to keep them from ruining the day. 
 
