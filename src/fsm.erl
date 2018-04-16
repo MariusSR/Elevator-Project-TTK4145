@@ -4,8 +4,8 @@
 
 -module(fsm).
 -export([start/0]).
-
 -include("parameters.hrl").
+
 -define(DOOR_OPEN_TIME,    3000).
 -define(DISCONNECTED_TIME, 5000).
 
