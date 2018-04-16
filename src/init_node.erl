@@ -1,5 +1,6 @@
-%%==============================================================================================================================================
-%% This module spawns every other module and prints the corresponding PIDs. Registered moduels are assigned the following names:
+%%======================================================================================================================
+%% This module spawns every other module and prints the corresponding PIDs.
+%% Registered moduels are assigned the following names:
 %%
 %%           Module               Registered name
 %% _________________________________________________
@@ -13,26 +14,18 @@
 %%
 %% The depencies between modules can then be stated as follows:
 %% 
-%%       This module            Receives msgs/function calls from                             Sends msgs/function calls to
-%% _____________________________________________________________________________________________________________________________________________
-%%   init_node         :   N/A                                          :   N/A
-%%   driver            :   hardware_reader, communicator, fsm           :   hardware_reader (answer query)
-%%   hardware_reader   :   driver                                       :   driver, communicator, fsm
-%%   node_connector    :   fsm (upon errors only)                       :   data_manager
-%%   communicator      :   hardware_reader, data_manager, fsm, itself   :   driver, data_manager, itself
-%%   data_manager      :   communicator, cost_function, watchdog        :   communicator, cost_function, fsm, watchdog
-%%   fsm               :   hardware_reader, data_manager, watchdog      :   driver, communicator, watchdog, node_connector (upon errors only)
-%%   watchdog          :   data_manager, fsm                            :   data_manager, fsm
-%%   cost_function     :   data_manager                                 :   data_manager
-%% _____________________________________________________________________________________________________________________________________________
-%%
-%% The color module is forked from https://github.com/julianduque/erlang-color and used extensively in prints throughout the project:
-%%   - Red     prints indicate an error or an unexpected message/behaviour
-%%   - Cyan    prints indicate PIDs of processes spawned from this module
-%%   - Green   prints indicate a node connecting
-%%   - Magenta prints indicate timeouts and nodes disconnecting
-%%   - Yellow  prints indicate change of state in fsm
-%%==============================================================================================================================================
+%%     This module             Receives msgs/function calls from              Sends msgs/function calls to
+%% _____________________________________________________________________________________________________________________
+%%   init_node         :   N/A                                        :   N/A
+%%   driver            :   hardware_reader, communicator, fsm         :   hardware_reader (answer query)
+%%   hardware_reader   :   driver                                     :   driver, communicator, fsm
+%%   node_connector    :   fsm                                        :   data_manager
+%%   communicator      :   hardware_reader, data_manager, fsm         :   driver, data_manager
+%%   data_manager      :   communicator, cost_function, watchdog      :   communicator, cost_function, fsm, watchdog
+%%   fsm               :   hardware_reader, data_manager, watchdog    :   driver, communicator, watchdog, node_connector  
+%%   watchdog          :   data_manager, fsm                          :   data_manager, fsm
+%%   cost_function     :   data_manager                               :   data_manager
+%%======================================================================================================================
 
 -module(init_node).
 -export([start/0]).
