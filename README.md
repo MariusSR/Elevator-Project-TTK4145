@@ -4,7 +4,9 @@ This repo contains our solution for the elevator project in TTK4145 Real-Time Pr
 ## For the Codereview
 The only module not entirely written by us is the [color module](./src/color.erl) forked from [julianduque](https://github.com/julianduque/erlang-color). The entry point of the code is [init_node.erl](./src/init_node.erl). This module spawns neceessary modules with linkin. If one of the linked processes crashes, the entire module is restarted.
 
-The [hardware reader](./src/hardware_reader.erl) moule detects new floors and orders. A new order is sent to the [communication interface](./src/communication_interface.erl), which further distributes the order to all other nodes. They add the order to their [orders and states](./src/orders_and_states.erl) module and sends an acknowledge message back to the original node. This node then adds the order locally and distributes a message to all nodes to lit the order button LED. Detection of new floors is handled by the [state_machine](./src/fsm.erl).
+The [hardware reader](./src/hardware_reader.erl) moule detects new floors and orders. A new order is sent to the [communication interface](./src/communication_interface.erl), which further distributes the order to all other nodes. They add the order to their [orders and states](./src/orders_and_states.erl) module and sends an acknowledge message back to the original node. This node then adds the order locally and distributes a message to all nodes to lit the order button LED. Detection of new floors is handled by the [state machine](./src/fsm.erl) module.
+
+A [watchdog](./src/watchdog.erl) module ensure all orders will be served within reasonable time, whereas the [cost function](./src/cost_function.erl) calculates which order an elevator should serve.
 
 
 ## Introduction
