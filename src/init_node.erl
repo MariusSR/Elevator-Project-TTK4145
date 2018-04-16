@@ -30,13 +30,14 @@
 -module(init_node).
 -export([start/0]).
 
+
 start() ->
-    process_flag(trap_exit, true),
+    process_flag(trap_exit, true),  % Convert exit signals to reguar messages to allow nodes to be restarted
     timer:sleep(50),
     
     register(driver,         spawn_link(fun() -> driver_interface:start() end)),
     io:format("\n~s~p", [color:cyan("Driver PID:              "), whereis(driver)]),
-    timer:sleep(100), % Wait for driver to finish its initialization
+    timer:sleep(100),  % Wait for driver to finish its initialization
 
     register(fsm,            spawn_link(fun() -> fsm:start() end)),
     io:format("\n~s~p", [color:cyan("FSM PID:                 "), whereis(fsm)]),
@@ -52,7 +53,7 @@ start() ->
 
     register(node_connector, spawn_link(fun() -> node_connection:start() end)),
     io:format("\n~s~p", [color:cyan("Node Connector PID:      "), whereis(node_connector)]),
-    timer:sleep(100), % Wait for node cluster to be started properly on this node
+    timer:sleep(100),  % Wait for node cluster to be started properly on this node
 
     hardware_reader:start(),
 

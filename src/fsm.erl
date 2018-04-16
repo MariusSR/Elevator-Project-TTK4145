@@ -8,9 +8,7 @@
 
 -define(DOOR_OPEN_TIME,    3000).
 -define(DISCONNECTED_TIME, 5000).
-
 -record(state, {movement, floor, assigned_order}).
-
 
 
 start() ->
