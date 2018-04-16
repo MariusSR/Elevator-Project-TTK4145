@@ -38,7 +38,7 @@
 -export([start/0]).
 
 start() ->
-    timer:sleep(100), % KA FARSKEN GJØR DENNE SLEEPEN?%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%       INGENTING VIL JEG TRO :)
+    %%timer:sleep(100), % KA FARSKEN GJØR DENNE SLEEPEN?%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%       INGENTING VIL JEG TRO :)
     register(driver, spawn(fun() -> driver_interface:start() end)),
     io:format("\n~s~p", [color:cyan("Driver PID:              "), whereis(driver)]),
     timer:sleep(100), % Wait for driver to finish its initialization
