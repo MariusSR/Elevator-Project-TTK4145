@@ -20,10 +20,10 @@
 %%   hardware_reader   :   driver                                       :   driver, communicator, fsm
 %%   node_connector    :   fsm (upon errors only)                       :   data_manager
 %%   communicator      :   hardware_reader, data_manager, fsm, itself   :   driver, data_manager, itself
-%%   data_manager      :   communicator, scheduler, watchdog            :   communicator, scheduler, fsm, watchdog
+%%   data_manager      :   communicator, cost_function, watchdog        :   communicator, cost_function, fsm, watchdog
 %%   fsm               :   hardware_reader, data_manager, watchdog      :   driver, communicator, watchdog, node_connector (upon errors only)
 %%   watchdog          :   data_manager, fsm                            :   data_manager, fsm
-%%   scheduler         :   data_manager                                 :   data_manager
+%%   cost_function     :   data_manager                                 :   data_manager
 %% _____________________________________________________________________________________________________________________________________________
 %%
 %% The color module is forked from https://github.com/julianduque/erlang-color and used extensively in prints throughout the project:
@@ -45,10 +45,10 @@ start() ->
     io:format("\n~s~p", [color:cyan("Driver PID:              "), whereis(driver)]),
     timer:sleep(100), % Wait for driver to finish its initialization
 
-    register(fsm,            spawn_link(fun()-> fsm:start() end)),
+    register(fsm,            spawn_link(fun() -> fsm:start() end)),
     io:format("\n~s~p", [color:cyan("FSM PID:                 "), whereis(fsm)]),
 
-    register(communicator,   spawn_link(fun()-> communication_interface:start() end)),
+    register(communicator,   spawn_link(fun() -> communication_interface:start() end)),
     io:format("\n~s~p", [color:cyan("Communicator PID:        "), whereis(communicator)]),
 
     register(data_manager,   spawn_link(fun() -> orders_and_states:start() end)),

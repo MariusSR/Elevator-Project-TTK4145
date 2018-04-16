@@ -87,7 +87,7 @@ main_loop(Orders, States) ->
                     communicator ! {new_order_assigned, Cab_order},
                     fsm          ! {assigned_order, Cab_order, Remaining_cab_orders ++ Orders#orders.unassigned};
                 [] ->  % No cab order available
-                    case scheduler:get_most_efficient_order(Orders#orders.unassigned, States) of
+                    case cost_function:get_most_efficient_order(Orders#orders.unassigned, States) of
                         no_orders_available ->
                             spawn_link(fun() -> timer:sleep(?RETRY_ASSIGNING_PERIOD), data_manager ! assign_order_to_fsm end);
                         Order ->
