@@ -59,6 +59,7 @@ start() ->
 
     io:format("\n\n"),
 
+    % Restarts the entire node if a linked process crashes
     receive
         {'EXIT', PID, Reason} ->
             io:format("~s Restarting node. Process ~p crashed with the followng error: ~p.\n", [color:red("Init_node:"), PID, Reason]),
