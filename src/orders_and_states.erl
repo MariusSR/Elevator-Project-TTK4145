@@ -118,7 +118,7 @@ main_loop(Orders, States) ->
                     fsm      ! {update_order_list, Orders#orders.cab ++ Updated_unassigned_orders},
                     main_loop(Updated_orders, Updated_states)
             end;
-        
+
 
 
         %----------------------------------------------------------------------------------------------
