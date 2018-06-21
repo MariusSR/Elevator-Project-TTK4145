@@ -14,7 +14,7 @@ On the good days, the elevator system is bound to be under-appreciated. Corporat
 ### Technical Specification
 The "technical specification" of the elevator system was simple but ambiguous and incomplete. It was only to be regarded as a subset of the "complete specification". However, one should be able to create a system adhering to specification just by reading the "technical specification". The technical specification can be found [here](SPECIFICATION.md)
 
-## Stuff
+## Design details
 The only module not entirely written by us is the [color module](./src/color.erl) forked from [julianduque](https://github.com/julianduque/erlang-color) used for ANSI coloring of terminal output.
 
 The entry point of the code is [init_node](./src/init_node.erl). This module spawns neceessary modules with links. If one of the linked processes crashes, the entire module is restarted.
