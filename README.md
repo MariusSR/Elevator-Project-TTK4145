@@ -1,5 +1,6 @@
 # TTK4145: Elevator Project Written i Erlang
 Authors: Simen Keiland Fondevik, Marius Rundhovde
+
 This repo contains our solution for the elevator project in TTK4145 Real-Time Programming spring 2018. 25% of the final grade was based on the elevator project. We scored second best out of almost 100 groups taking the course this year, with the points distributed as follows on the three evaluation criterias design, code quality and functionality.
 
 | Design review | Code review | Completion |  Total  |
