@@ -10,8 +10,7 @@ An elevators primary purpose is to transport people and items between floors. A 
 
 On the good days, the elevator system is bound to be under-appreciated. Corporate procurement officers will perhaps favor cheaper or faster alternatives. But when the day comes that an especially large earthquake simultaneously causes the largest tsunami the world has ever seen, cracks the concrete in a biological warfare lab and cause a nuclear reactor meltdown, this elevator system should be all worth it. Most of the server rooms will be flooded. Radioactive zombies will be chewing on the network cables. And most of the disks will be wiped out by the earthquake itself. In this chaotic post apocalyptic world, the only constant will be that the elevator system will remain in working order, and every order that is taken, will also be served.
 
-## Specification
-### Technical Specification
+## Technical Specification
 The "technical specification" of the elevator system was simple but ambiguous and incomplete. It was only to be regarded as a subset of the "complete specification". However, one should be able to create a system adhering to specification just by reading the "technical specification". The technical specification can be found [here](SPECIFICATION.md)
 
 ## Design details
