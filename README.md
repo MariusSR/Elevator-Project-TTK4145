@@ -40,7 +40,7 @@ Dependencies between modules can be stated as follows. Note that modules are lis
 | watchdog        | data_manager, fsm                            | data_manager, fsm                                                 
 | cost_function   | data_manager                                 | data_manager                                                      
 
-Throughtout the project, the following color scheme in terminal printing is used:
+Throughtout the project, the following color scheme for terminal printing is used:
 - Red     prints indicate an error or an unexpected message/behaviour
 - Cyan    prints indicate PIDs of processes spawned from this module
 - Green   prints indicate a node connecting
